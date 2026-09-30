@@ -116,7 +116,8 @@
     origen: ['mama'],
     fijo: ['monto', 'cuenta', 'mama', '_montoAuto'],
     desde: ['hacia'],
-    para: ['paraNueva']
+    para: ['paraQuien', 'paraNueva'],
+    paraQuien: ['paraNueva']
   };
 
   function reiniciar() {
@@ -159,8 +160,13 @@
         h += fChips('apartar', '¿Apartas el valor en "' + esc(d.bolsillo) + '"?', [['si', '🎯 Sí, apartar' + (d.desde ? ' desde ' + d.desde : '')], ['no', 'Ahora no']]);
       }
       if (st.para == null) st.para = '';
-      h += fChips('para', '¿Para quién es?', [['', '🙋 Para mí']].concat(cfg.personas.map(function (p) { return [p.n, '🤝 ' + p.n]; }), [['__nueva', '➕ Otra persona']]));
-      if (st.para === '__nueva') h += fTexto('paraNueva', '¿Cómo se llama?', 'Nombre');
+      h += fChips('para', '¿Para quién es?', [['', '🙋 Para mí'], ['__otra', '🤝 Otra persona']]);
+      // Solo al elegir "Otra persona" aparecen tus personas (o escribes una nueva).
+      if (st.para === '__otra') {
+        if (!cfg.personas.length) st.paraQuien = '__nueva';
+        h += fChips('paraQuien', '¿Quién?', cfg.personas.map(function (p) { return [p.n, p.n]; }).concat([['__nueva', '➕ Alguien nuevo']]));
+        if (st.paraQuien === '__nueva') h += fTexto('paraNueva', '¿Cómo se llama?', 'Nombre');
+      }
       return h + fFecha();
     },
     ingreso: function () {
@@ -277,8 +283,12 @@
           cuotas = st.cuotas === 'otro' ? Math.min(st.cuotasOtro || 0, d.max) : Number(st.cuotas) || 1;
           if (!(cuotas > 0)) falta('Escribe a cuántas cuotas.');
         }
-        var para = st.para === '__nueva' ? String(st.paraNueva || '').trim() : st.para || '';
-        if (st.para === '__nueva' && !para) falta('Escribe el nombre de la persona.');
+        var para = '';
+        if (st.para === '__otra') {
+          if (!st.paraQuien) falta('Elige para quién es.');
+          para = st.paraQuien === '__nueva' ? String(st.paraNueva || '').trim() : st.paraQuien;
+          if (!para) falta('Escribe el nombre de la persona.');
+        }
         return { accion: 'gasto', fecha: f, descripcion: st.desc.trim(), monto: st.monto, categoria: st.cat || '', para: para, cuenta: st.cuenta,
           cuotas: cuotas, valorCuota: d && d.valor && st.valorCuota > 0 ? st.valorCuota : '', apartar: d && d.bolsillo && st.apartar === 'si' ? 'si' : '' };
       }
