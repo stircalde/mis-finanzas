@@ -184,7 +184,22 @@
     return { v: h[0] || 'inicio', nombre: h[1] ? decodeURIComponent(h[1]) : '' };
   }
   function ir(hash) { location.hash = hash; }
-  window.addEventListener('hashchange', function () { abiertos = {}; pintar(); window.scrollTo(0, 0); });
+  // Al volver de una cuenta o un crédito, regresa al mismo punto de la pantalla anterior (y con lo que tenías abierto).
+  var rutaActual = location.hash || '#/inicio', posiciones = {}, abiertosPor = {};
+  window.addEventListener('scroll', function () { posiciones[rutaActual] = window.scrollY; }, { passive: true });
+  window.addEventListener('hashchange', function () {
+    var nuevo = location.hash || '#/inicio';
+    var desdeDetalle = /^#\/(cuenta|credito)\//.test(rutaActual) && !/^#\/(cuenta|credito)\//.test(nuevo);
+    abiertosPor[rutaActual] = abiertos;
+    var volver = desdeDetalle && posiciones[nuevo] != null;
+    rutaActual = nuevo;
+    abiertos = volver ? (abiertosPor[nuevo] || {}) : {};
+    var y = volver ? posiciones[nuevo] : 0;
+    pintar();
+    window.scrollTo(0, y);
+    posiciones[nuevo] = y;
+  });
+  document.addEventListener('click', function (e) { if (!e.target.closest('.hit, .seg')) ocultarTip(); });
 
   function mostrarTip(ev, html) {
     tip.innerHTML = html; tip.hidden = false;
@@ -456,7 +471,11 @@
       }
     }
     function soltar() { if (svg) svg.classList.remove('dim'); n.querySelectorAll('.on').forEach(function (x) { x.classList.remove('on'); }); ocultarTip(); }
-    n.querySelectorAll('.seg').forEach(function (s) { s.addEventListener('pointermove', function (ev) { activar(+s.dataset.i, ev); }); s.addEventListener('pointerleave', soltar); });
+    n.querySelectorAll('.seg').forEach(function (s) {
+      s.addEventListener('pointermove', function (ev) { if (ev.pointerType !== 'touch') activar(+s.dataset.i, ev); });
+      s.addEventListener('click', function (ev) { ev.stopPropagation(); activar(+s.dataset.i, ev); });
+      s.addEventListener('pointerleave', function (ev) { if (ev.pointerType !== 'touch') soltar(); });
+    });
     n.querySelectorAll('.cat-list button').forEach(function (b) {
       b.addEventListener('pointerenter', function () { activar(+b.dataset.i); }); b.addEventListener('pointerleave', soltar);
       b.addEventListener('click', function () { busq = { q: '', tipo: 'Gasto', cat: top[+b.dataset.i].detalle ? '' : top[+b.dataset.i].nombre, cuenta: '', mes: d.mes }; ir('#/movimientos'); });
@@ -515,13 +534,15 @@
       opts.series.map(function (x) { return '<span><i style="background:' + x.color + '"></i>' + esc(x.nombre) + '</span>'; }).join('') + '</div></div>');
     var bands = wrap.querySelector('.bands');
     wrap.querySelectorAll('.hit').forEach(function (h) {
-      h.addEventListener('pointermove', function (ev) {
+      function mostrar(ev) {
         var f = filas[+h.dataset.i];
         bands.innerHTML = '<rect class="band-hover" x="' + h.getAttribute('x') + '" y="' + T + '" width="' + banda + '" height="' + (H - T - B) + '" rx="6"/>';
         var rows = opts.series.map(function (x, k) { return opts.soloConValor && !f.valores[k] ? '' : '<div class="r"><span><i style="background:' + x.color + '"></i>' + esc(x.nombre) + '</span><b>' + pesos(f.valores[k]) + '</b></div>'; }).join('');
         mostrarTip(ev, '<div class="t">' + esc(f.titulo || f.etiqueta) + '</div>' + rows + (opts.pie ? opts.pie(f) : ''));
-      });
-      h.addEventListener('pointerleave', function () { bands.innerHTML = ''; ocultarTip(); });
+      }
+      h.addEventListener('pointermove', function (ev) { if (ev.pointerType !== 'touch') mostrar(ev); });
+      h.addEventListener('click', function (ev) { ev.stopPropagation(); mostrar(ev); });
+      h.addEventListener('pointerleave', function (ev) { if (ev.pointerType !== 'touch') { bands.innerHTML = ''; ocultarTip(); } });
     });
     return wrap;
   }
@@ -955,7 +976,7 @@
   function abrirPlan(p) {
     cerrarHoja();
     var pct = pctPlan(p);
-    var hoja = el('<div class="sheet-bg" role="dialog" aria-modal="true" aria-label="Plan de pagos de ' + esc(p.desc) + '"><div class="sheet">' +
+    var hoja = el('<div class="sheet-bg es-plan" role="dialog" aria-modal="true" aria-label="Plan de pagos de ' + esc(p.desc) + '"><div class="sheet glass-sheet">' +
       '<div class="sheet-h"><div class="who">' + icoPlan(p) + '<div><h2>' + esc(p.desc) + '</h2><div class="kind">' + etiqueta(p.cuenta) +
       (p.fecha ? ' · compra del ' + fechaCorta(p.fecha) + ' ' + p.fecha.slice(0, 4) : '') + '</div></div></div>' +
       '<button type="button" class="icon-btn" data-cerrar aria-label="Cerrar">' + ICON.close + '</button></div>' +
@@ -982,7 +1003,7 @@
     if (r && (e.key === 'Enter' || e.key === ' ')) { e.preventDefault(); if (PLANES[r.dataset.plan]) abrirPlan(PLANES[r.dataset.plan]); }
   });
   document.addEventListener('click', function (e) {
-    if (hojaAbierta && hojaAbierta.contains(e.target)) return;
+    if (hojaAbierta && hojaAbierta.classList.contains('es-plan') && hojaAbierta.contains(e.target)) return;
     var r = e.target.closest('[data-plan]');
     if (r && PLANES[r.dataset.plan]) { e.stopPropagation(); abrirPlan(PLANES[r.dataset.plan]); }
   }, true);
@@ -1064,18 +1085,34 @@
     });
     return g;
   }
+  function colorMov(m) {
+    if (m.tipo === 'Ingreso' || m.tipo === 'Me pagaron') return 'ingreso';
+    if (m.tipo === 'Gasto') return esDeuda(m.cuenta) ? 'credito' : 'gasto';
+    if (m.tipo === 'Transferencia' && esDeuda(m.destino)) return 'pago';
+    return 'mov';
+  }
+  function abrirHoja(html, onReady) {
+    cerrarHoja();
+    var hoja = el('<div class="sheet-bg" role="dialog" aria-modal="true"><div class="sheet glass-sheet">' + html + '</div></div>');
+    hoja.addEventListener('click', function (e) { if (e.target === hoja || e.target.closest('[data-cerrar]')) cerrarHoja(); });
+    document.body.appendChild(hoja); document.body.classList.add('con-hoja'); hojaAbierta = hoja;
+    if (onReady) onReady(hoja);
+  }
   function vistaCalendario() {
     var d = datos, hoyD = fecha(d.hoy);
     if (!calMes) calMes = clave7(hoyD);
+    if (calModo !== 'pagos' && calModo !== 'detallado') calModo = 'pagos';
     app.appendChild(barraSuperior(d, false));
     var p = calMes.split('-'), y = +p[0], mo = +p[1] - 1;
     var primero = new Date(y, mo, 1), dias = new Date(y, mo + 1, 0).getDate(), off = (primero.getDay() + 6) % 7;
-    var ev = calModo === 'pagos' ? eventosPagos(d) : [];
+    var ev = eventosPagos(d);
     var porDia = {};
     ev.forEach(function (e) { (porDia[e.fecha] = porDia[e.fecha] || []).push(e); });
-    var gd = calModo === 'gastos' ? gastosPorDia(d) : {};
-    var maxG = 0, totMes = 0, diasG = 0;
-    Object.keys(gd).forEach(function (k) { if (k.slice(0, 7) === calMes) { maxG = Math.max(maxG, gd[k]); totMes += gd[k]; diasG++; } });
+    var movDia = {};
+    d.movimientos.forEach(function (m) { if (m.fecha.slice(0, 7) === calMes) (movDia[m.fecha] = movDia[m.fecha] || []).push(m); });
+    var gd = gastosPorDia(d), maxG = 0, totMes = 0, nMov = 0;
+    Object.keys(gd).forEach(function (k) { if (k.slice(0, 7) === calMes) { maxG = Math.max(maxG, gd[k]); totMes += gd[k]; } });
+    Object.keys(movDia).forEach(function (k) { nMov += movDia[k].length; });
     var celdas = '';
     for (var i = 0; i < off; i++) celdas += '<div class="cal-d vacio"></div>';
     for (var dd = 1; dd <= dias; dd++) {
@@ -1083,86 +1120,100 @@
       if (calModo === 'pagos') {
         var es = porDia[f] || [];
         if (es.length) {
-          cls += ' con';
-          if (es.some(function (e) { return e.estado === 'vencido'; })) cls += ' t-vencido';
-          else if (es.some(function (e) { return e.estado === 'pendiente'; })) cls += ' t-pendiente';
-          else if (es.some(function (e) { return e.estado === 'pagado'; })) cls += ' t-pagado';
-          else cls += ' t-ingreso';
+          cls += ' con ' + (es.some(function (e) { return e.estado === 'vencido'; }) ? 't-vencido' : es.some(function (e) { return e.estado === 'pendiente'; }) ? 't-pendiente'
+            : es.some(function (e) { return e.estado === 'pagado'; }) ? 't-pagado' : 't-ingreso');
           inner = '<div class="marks">' + es.slice(0, 4).map(function (e) { return '<i class="' + e.estado + '"></i>'; }).join('') + '</div>' +
-            '<div class="labels">' + es.slice(0, 3).map(function (e) { return '<span class="' + e.estado + '">' + esc(e.nombre.replace(/^TC /, '')) + '</span>'; }).join('') + (es.length > 3 ? '<span>+' + (es.length - 3) + '</span>' : '') + '</div>';
+            '<div class="labels">' + es.slice(0, 3).map(function (e) { return '<span class="' + e.estado + '">' + esc(e.nombre.replace(/^TC /, '')) + '</span>'; }).join('') + (es.length > 3 ? '<span class="mas">+' + (es.length - 3) + ' más</span>' : '') + '</div>';
         }
-      } else if (gd[f]) {
-        var a = maxG ? 0.14 + 0.8 * Math.sqrt(gd[f] / maxG) : 0;
-        st = ' style="--heat:' + a.toFixed(2) + '"';
-        cls += ' con heat' + (a > 0.5 ? ' fuerte' : '');
-        inner = '<div class="gv num">' + corto(gd[f]) + '</div>';
+      } else {
+        var ms = movDia[f] || [];
+        if (ms.length) {
+          var a = gd[f] && maxG ? 0.08 + 0.32 * Math.sqrt(gd[f] / maxG) : 0;
+          st = ' style="--heat:' + a.toFixed(2) + '"';
+          cls += ' con det';
+          inner = (gd[f] ? '<div class="gv num">' + corto(gd[f]) + '</div>' : '') +
+            '<div class="marks">' + ms.slice(0, 4).map(function (m) { return '<i class="' + colorMov(m) + '"></i>'; }).join('') + '</div>' +
+            '<div class="labels">' + ms.slice(0, 2).map(function (m) { return '<span class="' + colorMov(m) + '">' + esc(m.desc) + '</span>'; }).join('') + (ms.length > 2 ? '<span class="mas">+' + (ms.length - 2) + ' más</span>' : '') + '</div>';
+        }
       }
       celdas += '<button type="button" class="' + cls + '" data-f="' + f + '"' + st + '><span class="dn">' + dd + '</span>' + inner + '</button>';
     }
-    var sec = el('<section class="card cal-card"><div class="cal-top"><div class="cal-nav"><button type="button" class="icon-btn" data-m="-1" aria-label="Mes anterior">' + ICON.left + '</button>' +
-      '<h2>' + cap(MESES[mo]) + ' ' + y + '</h2><button type="button" class="icon-btn" data-m="1" aria-label="Mes siguiente">' + ICON.right + '</button></div>' +
-      '<div class="filters" role="group" aria-label="Vista"><button type="button" data-modo="pagos" aria-pressed="' + (calModo === 'pagos') + '">Pagos</button>' +
-      '<button type="button" data-modo="gastos" aria-pressed="' + (calModo === 'gastos') + '">Gastos</button></div></div>' +
+    var ley = calModo === 'pagos'
+      ? '<span><i class="pendiente"></i>Por pagar</span><span><i class="vencido"></i>Vencido</span><span><i class="pagado"></i>Pagado</span><span><i class="ingreso"></i>Ingreso</span>'
+      : '<span><i class="gasto"></i>Gasto</span><span><i class="credito"></i>Con crédito</span><span><i class="ingreso"></i>Ingreso</span><span><i class="pago"></i>Pago de crédito</span>' +
+        '<span class="tot">' + nMov + ' movimiento' + (nMov === 1 ? '' : 's') + ' · gastaste <b>' + pesos(totMes) + '</b></span>';
+    var sec = el('<section class="card cal-glass"><div class="glow g1"></div><div class="glow g2"></div>' +
+      '<div class="cal-top"><div class="cal-nav"><button type="button" class="icon-btn glass-btn" data-m="-1" aria-label="Mes anterior">' + ICON.left + '</button>' +
+      '<h2>' + cap(MESES[mo]) + ' <span>' + y + '</span></h2><button type="button" class="icon-btn glass-btn" data-m="1" aria-label="Mes siguiente">' + ICON.right + '</button></div>' +
+      '<div class="seg-glass" role="group" aria-label="Vista"><button type="button" data-modo="pagos" aria-pressed="' + (calModo === 'pagos') + '">Pagos</button>' +
+      '<button type="button" data-modo="detallado" aria-pressed="' + (calModo === 'detallado') + '">Detallado</button></div></div>' +
       '<div class="cal-grid">' + DIAS_C.map(function (x) { return '<div class="cal-h">' + x + '</div>'; }).join('') + celdas + '</div>' +
-      (calModo === 'pagos' ? '<div class="cal-ley"><span><i class="pendiente"></i>Por pagar</span><span><i class="vencido"></i>Vencido</span><span><i class="pagado"></i>Pagado</span><span><i class="ingreso"></i>Ingreso</span></div>'
-        : '<div class="cal-ley heat-ley"><span>Menos</span><i></i><span>Más</span><span class="tot">Gastaste <b>' + pesos(totMes) + '</b> en ' + diasG + ' día' + (diasG === 1 ? '' : 's') + '</span></div>') + '</section>');
+      '<div class="cal-ley">' + ley + '</div></section>');
     var lado = el('<div class="cal-side"></div>');
     var wrap = el('<div class="cal-wrap"></div>');
     wrap.appendChild(sec); wrap.appendChild(lado);
     app.appendChild(wrap);
-    function panelDia() {
+    var ancho = window.innerWidth >= 1000;
+
+    function contenidoDia(f) {
+      var fd = fecha(f), titulo = cap(DIAS[fd.getDay()]) + ' ' + fechaCorta(f);
+      var h = '<div class="sheet-h"><div><h2>' + titulo + '</h2><div class="kind">' + (calModo === 'pagos' ? 'Pagos e ingresos' : 'Todo lo que registraste') + '</div></div>' +
+        (ancho ? '' : '<button type="button" class="icon-btn" data-cerrar aria-label="Cerrar">' + ICON.close + '</button>') + '</div>';
+      if (calModo === 'pagos') {
+        var es = porDia[f] || [];
+        h += es.length ? '<div class="cal-evs">' + es.map(function (e, i) {
+          var montos = e.tipo === 'credito' ? '<div class="ev-m"><span>Pago mínimo <b class="num">' + pesos(e.minimo) + '</b></span>' + (e.total ? '<span>Pago total <b class="num">' + pesos(e.total) + '</b></span>' : '') + '</div>'
+            : e.tipo === 'ingreso' ? '<div class="ev-m"><span>Entró <b class="num in">+' + pesos(e.minimo) + '</b> a ' + esc(e.cuenta) + '</span></div>'
+            : '<div class="ev-m"><span>Valor <b class="num">' + pesos(e.minimo) + '</b>' + (e.auto ? ' · cobro automático' : '') + '</span></div>';
+          var chip = { pendiente: 'Por pagar', vencido: 'Vencido', pagado: 'Pagado', ingreso: 'Ingreso' }[e.estado];
+          return '<button type="button" class="ev ' + e.estado + '" data-i="' + i + '">' + logo(e.tipo === 'ingreso' ? e.cuenta : e.nombre, e.tipo === 'fijo') +
+            '<div class="ev-b"><div class="ev-t"><span>' + esc(e.nombre) + '</span><span class="chip-e">' + chip + '</span></div>' + montos + '</div></button>';
+        }).join('') + '</div><p class="hint">Toca un pago para ver su detalle.</p>' : '<div class="empty">No hay pagos ni ingresos este día.</div>';
+      } else {
+        var ms = movDia[f] || [];
+        h += ms.length ? (gd[f] ? '<div class="dia-tot">Gastaste <b>' + pesos(gd[f]) + '</b></div>' : '') + '<div class="tx">' + ms.map(function (m) { return filaMovimiento(m); }).join('') + '</div>'
+          : '<div class="empty">No registraste movimientos este día.</div>';
+      }
+      return h;
+    }
+    function conectar(cont, f) {
+      var es = porDia[f] || [];
+      cont.querySelectorAll('.ev').forEach(function (b) { b.addEventListener('click', function () { cerrarHoja(); ir(es[+b.dataset.i].link); }); });
+    }
+    function pintarLado() {
       lado.innerHTML = '';
-      if (calSel) {
-        var fd = fecha(calSel), titulo = cap(DIAS[fd.getDay()]) + ' ' + fechaCorta(calSel);
-        var box = el('<section class="card"><div class="card-h"><h2>' + titulo + '</h2></div><div class="cal-evs"></div></section>');
-        var cont = box.querySelector('.cal-evs');
-        if (calModo === 'pagos') {
-          var es = porDia[calSel] || [];
-          cont.innerHTML = es.length ? es.map(function (e, i) {
-            var montos = e.tipo === 'credito' ? '<div class="ev-m"><span>Pago mínimo <b class="num">' + pesos(e.minimo) + '</b></span>' + (e.total ? '<span>Pago total <b class="num">' + pesos(e.total) + '</b></span>' : '') + '</div>'
-              : e.tipo === 'ingreso' ? '<div class="ev-m"><span>Entró <b class="num in">+' + pesos(e.minimo) + '</b> a ' + esc(e.cuenta) + '</span></div>'
-              : '<div class="ev-m"><span>Valor <b class="num">' + pesos(e.minimo) + '</b>' + (e.auto ? ' · cobro automático' : '') + '</span></div>';
-            var chip = { pendiente: 'Por pagar', vencido: 'Vencido', pagado: 'Pagado', ingreso: 'Ingreso' }[e.estado];
-            return '<button type="button" class="ev ' + e.estado + '" data-i="' + i + '">' + logo(e.tipo === 'ingreso' ? e.cuenta : e.nombre, e.tipo === 'fijo') +
-              '<div class="ev-b"><div class="ev-t"><span>' + esc(e.nombre) + '</span><span class="chip-e">' + chip + '</span></div>' + montos + '</div></button>';
-          }).join('') + '<p class="hint">Toca un pago, o el día otra vez, para ver su detalle.</p>' : '<div class="empty">No hay pagos ni ingresos este día.</div>';
-          cont.querySelectorAll('.ev').forEach(function (b) { b.addEventListener('click', function () { ir(es[+b.dataset.i].link); }); });
-        } else {
-          var movs = d.movimientos.filter(function (m) { return m.fecha === calSel && m.tipo === 'Gasto' && m.resumen !== false; });
-          cont.innerHTML = movs.length ? '<div class="tx">' + movs.map(function (m) { return filaMovimiento(m); }).join('') + '</div>' : '<div class="empty">No registraste gastos este día.</div>';
-          if (gd[calSel]) box.querySelector('.card-h').insertAdjacentHTML('beforeend', '<span class="aside">Total <b>' + pesos(gd[calSel]) + '</b></span>');
-        }
+      if (ancho && calSel) {
+        var box = el('<section class="card glass-card dia-card">' + contenidoDia(calSel) + '</section>');
+        conectar(box, calSel);
         lado.appendChild(box);
       }
-      if (calModo === 'pagos') {
-        var prox = ev.filter(function (e) { return e.fecha >= d.hoy && e.estado === 'pendiente'; }).sort(function (a, b) { return a.fecha < b.fecha ? -1 : 1; }).slice(0, 8);
-        var venc = ev.filter(function (e) { return e.estado === 'vencido'; });
-        var box2 = el('<section class="card"><div class="card-h"><h2>Lo que viene</h2>' + (venc.length ? '<span class="chip crit">' + venc.length + ' vencido' + (venc.length === 1 ? '' : 's') + '</span>' : '') + '</div><div class="cal-evs sm">' +
-          (prox.map(function (e) {
-            var f = fecha(e.fecha);
-            return '<button type="button" class="ev-s" data-f="' + e.fecha + '"><span class="dt"><b>' + f.getDate() + '</b>' + MES_C[f.getMonth()] + '</span>' + logo(e.nombre, e.tipo === 'fijo') +
-              '<span class="nm">' + esc(e.nombre) + '</span><b class="num">' + pesos(e.minimo) + '</b></button>';
-          }).join('') || '<div class="empty">Nada pendiente.</div>') + '</div></section>');
-        box2.querySelectorAll('.ev-s').forEach(function (b) { b.addEventListener('click', function () { calSel = b.dataset.f; calMes = calSel.slice(0, 7); pintar(); }); });
-        lado.appendChild(box2);
-      }
+      var prox = ev.filter(function (e) { return e.fecha >= d.hoy && e.estado === 'pendiente'; }).sort(function (a, b) { return a.fecha < b.fecha ? -1 : 1; }).slice(0, 8);
+      var venc = ev.filter(function (e) { return e.estado === 'vencido'; });
+      var box2 = el('<section class="card glass-card"><div class="card-h"><h2>Lo que viene</h2>' + (venc.length ? '<span class="chip crit">' + venc.length + ' vencido' + (venc.length === 1 ? '' : 's') + '</span>' : '') + '</div><div class="cal-evs sm">' +
+        (prox.map(function (e, i) {
+          var f = fecha(e.fecha);
+          return '<button type="button" class="ev-s" data-i="' + i + '"><span class="dt"><b>' + f.getDate() + '</b>' + MES_C[f.getMonth()] + '</span>' + logo(e.nombre, e.tipo === 'fijo') +
+            '<span class="nm">' + esc(e.nombre) + '</span><b class="num">' + pesos(e.minimo) + '</b></button>';
+        }).join('') || '<div class="empty">Nada pendiente.</div>') + '</div><p class="hint">Toca un pago para ir a su detalle.</p></section>');
+      box2.querySelectorAll('.ev-s').forEach(function (b) { b.addEventListener('click', function () { ir(prox[+b.dataset.i].link); }); });
+      lado.appendChild(box2);
     }
-    panelDia();
+    pintarLado();
     sec.querySelectorAll('.cal-d[data-f]').forEach(function (b) {
       b.addEventListener('click', function () {
         var f = b.dataset.f, es = porDia[f] || [];
-        if (calModo === 'pagos' && calSel === f && es.length === 1) { ir(es[0].link); return; }
-        calSel = calSel === f && calModo === 'gastos' ? null : f;
+        if (ancho && calModo === 'pagos' && calSel === f && es.length === 1) { ir(es[0].link); return; }
+        calSel = f;
         sec.querySelectorAll('.cal-d.sel').forEach(function (x) { x.classList.remove('sel'); });
-        if (calSel) b.classList.add('sel');
-        panelDia();
-        if (window.innerWidth < 900 && calSel) lado.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        b.classList.add('sel');
+        if (ancho) pintarLado();
+        else abrirHoja(contenidoDia(f), function (h) { conectar(h, f); });
       });
     });
     sec.querySelectorAll('[data-m]').forEach(function (b) {
       b.addEventListener('click', function () { var dt = new Date(y, mo + +b.dataset.m, 1); calMes = clave7(dt); calSel = null; pintar(); });
     });
-    sec.querySelectorAll('[data-modo]').forEach(function (b) { b.addEventListener('click', function () { calModo = b.dataset.modo; calSel = null; pintar(); }); });
+    sec.querySelectorAll('[data-modo]').forEach(function (b) { b.addEventListener('click', function () { calModo = b.dataset.modo; pintar(); }); });
   }
 
   /* ---------- arranque ---------- */
