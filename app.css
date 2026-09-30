@@ -304,7 +304,8 @@ body { min-height: 100vh; min-height: 100dvh; overscroll-behavior-y: contain; }
 .search input:focus { outline: none; border-color: var(--accent); }
 .search svg { position: absolute; left: 12px; top: 50%; transform: translateY(-50%); width: 17px; height: 17px; fill: none; stroke: var(--muted); stroke-width: 2; stroke-linecap: round; }
 .fil-row { display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 8px; }
-.fil-row .select { border-radius: 12px; width: 100%; }
+.fil-row .select { border-radius: 12px; width: 100%; min-width: 0; }
+.fil-row .select[data-k="cat"] { grid-column: 1 / -1; }
 .total-filtro { font-size: 0.82rem; color: var(--ink-2); }
 .total-filtro b { font-family: var(--font-display); }
 .tag-hist { font-size: 0.66rem; font-weight: 700; letter-spacing: 0.04em; text-transform: uppercase; color: var(--muted); border: 1px solid var(--line-strong); border-radius: 6px; padding: 1px 5px; }

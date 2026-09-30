@@ -15,8 +15,36 @@ window.LOGOS = (function () {
     claude: P + 'YeFCFSW5LkBVdsEAL_fjzxDxTbhKz31j1uZUfDbSaCeM0t4Bi3SqyHTWzWsUsZnbwjofXhYajitG_gr2_B2xil8=s128',
     hevy: P + 'bLlRnwjt0tKva6ob0ZrtxkUs-z4MhQ4cPIOnXeh_knD8QVAXSLFiMGyKo2kLF7PV2uSK1Wly1L4q-6Sv1k13=s128',
     rappi: P + 'od9rcMwok9kSOE1nFhLFKyG1daEuexpf5Rpox1VrFnWxI_fNnjC_CtP-eKC2OkgkcOTPPics_q31ssn_OLyk=s128',
-    credifin: 'https://www.google.com/s2/favicons?sz=128&domain=credifin.com.co'
+    credifin: 'https://www.google.com/s2/favicons?sz=128&domain=credifin.com.co',
+    terpel: P + '7QCowhje4Qmu4cM5lKw5T95Q_Wv3_Bm2SShhehki_S80NzOe103LY3-F-wrV2iJC3B0cLgePraT6oq-HbyKPKA=s128',
+    jumbo: P + 'gJGDzHGgk33fW5cB--voYZQe3TDrOfMLq8bCFwxtdzNJGcELJzzYse6LEZK6Q1Ste8d0nCoqm7K2H55631FW=s128',
+    metro: P + 'CbEXV98Ine68253x3Mo8Nq9Ho7_8FucUT6NZJvUf6F93ETKoBSuGLhspRIwT0oUHHK0VQJPjEyEmMdox_rtpfw=s128',
+    exito: P + 'NZwOq9-pul-gVF0e9e0xcrt6OXAcJ5_Ur_rRszxkbsRxFWjdXIy5oXhiJ3HKeyQ9_TLhZK1HDQi7YpZZsTI1JA=s128',
+    carulla: P + 'BAdVJ9RIIw3jscuSVf5VyEgKFSiOW6UUl5-HdUcPDoRxAF1GIqNpI4-t1XT1FheGWKWOUOMyJ1nkskSRjABA=s128',
+    d1: P + 'PSeD3fbDcUs8J0gcbnwoY6-juhMYkN6Bo4h-rF89dtUXfjd0_8PwIApW7oPd2uBjzI56sVD1hBDWkxC5iiIb=s128',
+    ara: P + 'sfKdZPGvpQF5bWF1CYQNWxw38nL9-pbLOX3AGV1eOGaOObvSupz3ws1cX2tT8NPZLf2JiCEAA_LAg7lEjuhr=s128'
   };
+  // Comercios donde compras seguido: se reconocen por palabras en la descripción del movimiento.
+  // Los que no tienen ícono oficial disponible se muestran con sus iniciales y colores de marca.
+  window.COMERCIOS = [
+    { p: /\b(terpel|eds)\b/, img: L.terpel, txt: 'TE', cat: 'Gasolina' },
+    { p: /\bjumbo\b/, img: L.jumbo, txt: 'JU' },
+    { p: /\bmetro\b/, img: L.metro, txt: 'ME' },
+    { p: /\bexito\b/, img: L.exito, txt: 'ÉX' },
+    { p: /\bcarulla\b/, img: L.carulla, txt: 'CA' },
+    { p: /\bd1\b/, img: L.d1, txt: 'D1' },
+    { p: /\bara\b/, img: L.ara, txt: 'AR' },
+    { p: /\bisimo\b/, txt: 'IS', c: '#5B2D8E', t: '#FFFFFF' },
+    { p: /\bmakro\b/, txt: 'MK', c: '#FFE600', t: '#E3000F' },
+    { p: /\bdollar ?city\b/, txt: 'DC', c: '#00A650', t: '#FFFFFF' },
+    { p: /\brappi/, img: L.rappi, txt: 'RA' },
+    { p: /\b(claude|anthropic)\b/, img: L.claude, txt: 'CL' },
+    { p: /\byoutube\b/, img: L.youtube, txt: 'YT' },
+    { p: /\bgoogle one\b/, img: L.googleone, txt: 'G1' },
+    { p: /\bsmart ?fit\b/, img: L.smartfit, txt: 'SF' },
+    { p: /\bmovistar\b/, img: L.movistar, txt: 'MO' },
+    { p: /\bhevy\b/, img: L.hevy, txt: 'HV' }
+  ];
   return {
     'Nequi': L.nequi,
     'Daviplata': L.daviplata,

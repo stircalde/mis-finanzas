@@ -100,12 +100,12 @@
   /* ---------- gráfica de línea para las tarjetas ---------- */
   function sparkline(serie, color, alto) {
     var pts = (serie || []).map(function (p) { return p.s; });
-    // Sin movimientos todavía (línea plana): no se dibuja nada.
-    if (pts.length < 2 || Math.max.apply(null, pts) === Math.min.apply(null, pts)) return '';
+    if (!pts.length) return '';
+    if (pts.length === 1) pts = [pts[0], pts[0]];
     var W = 200, H = alto || 60, min = Math.min.apply(null, pts), max = Math.max.apply(null, pts);
     var rango = max - min || 1, pad = 6;
     var x = function (i) { return (i / (pts.length - 1)) * W; };
-    var y = function (v) { return max === min ? H * 0.55 : pad + (H - 2 * pad) * (1 - (v - min) / rango); };
+    var y = function (v) { return max === min ? H * 0.7 : pad + (H - 2 * pad) * (1 - (v - min) / rango); };
     var d = pts.map(function (v, i) { return (i ? 'L' : 'M') + x(i).toFixed(1) + ' ' + y(v).toFixed(1); }).join(' ');
     var id = 'g' + Math.random().toString(36).slice(2, 8);
     return '<svg class="spark" viewBox="0 0 ' + W + ' ' + H + '" preserveAspectRatio="none" aria-hidden="true">' +
@@ -538,6 +538,30 @@
   }
 
   /* =================== MOVIMIENTOS =================== */
+  /** Logo del comercio (Terpel, Metro, D1…) o de la suscripción, según la descripción. */
+  function icoComercio(m) {
+    var txt = norm(m.desc);
+    var lista = window.COMERCIOS || [];
+    for (var i = 0; i < lista.length; i++) {
+      var r = lista[i];
+      if (r.p.test(txt) || (r.cat && m.cat === r.cat && m.tipo === 'Gasto')) {
+        if (r.img) return '<span class="logo" style="--c:#1b2a4a;--t:#eaf1ff;width:40px;height:40px;border-radius:12px">' + (r.txt || '') + '<img alt="" loading="lazy" referrerpolicy="no-referrer" src="' + r.img + '" onerror="this.remove()"></span>';
+        return '<span class="logo" style="--c:' + r.c + ';--t:' + r.t + ';width:40px;height:40px;border-radius:12px">' + r.txt + '</span>';
+      }
+    }
+    if (m.tipo === 'Transferencia' && esDeuda(m.destino)) return logo(m.destino).replace('class="logo', 'style="width:40px;height:40px;border-radius:12px" class="logo');
+    return '';
+  }
+  /** Grupo para filtrar lo que no tiene categoría: pagos, retiros, ajustes… */
+  function grupoMov(m) {
+    if (m.tipo === 'Gasto' || m.tipo === 'Ingreso') return m.cat || 'Otros';
+    if (m.tipo === 'Me pagaron') return 'Me pagaron';
+    if (m.tipo === 'Ajuste') return 'Ajustes de saldo';
+    if (esDeuda(m.destino)) return 'Pagos de créditos';
+    if (m.destino === 'Efectivo') return 'Retiros en efectivo';
+    if (esDeuda(m.cuenta)) return 'Avances';
+    return 'Movimientos entre cuentas';
+  }
   function esDeuda(n) { var e = ent(n); return !!(e && e.tipo === 'Deuda') || n === 'Mamá'; }
   function filaMovimiento(m, ctx) {
     var meta = [], signo = '', cls = '', extra = '';
@@ -569,7 +593,8 @@
       else if (m.tipo === 'Transferencia' && m.cuenta === ctx) { signo = '+'; cls = ''; }
       else if (m.tipo === 'Ingreso') { signo = '−'; cls = 'in'; }
     }
-    return '<div class="tx-row"><div class="ico" aria-hidden="true">' + esc(m.emoji) + '</div><div style="min-width:0"><div class="d">' + esc(m.desc) + '</div>' +
+    var ico = icoComercio(m);
+    return '<div class="tx-row">' + (ico ? '<div aria-hidden="true">' + ico + '</div>' : '<div class="ico" aria-hidden="true">' + esc(m.emoji) + '</div>') + '<div style="min-width:0"><div class="d">' + esc(m.desc) + '</div>' +
       '<div class="m">' + meta.join('<span>·</span>') + '</div></div><div class="a ' + cls + '">' + signo + pesos(Math.abs(m.monto)).replace('−', '') + extra + '</div></div>';
   }
   function listaAgrupada(items, ctx) {
@@ -585,7 +610,7 @@
     var d = datos;
     app.appendChild(barraSuperior(d, false));
     var cats = {}, ctas = {};
-    d.movimientos.forEach(function (m) { if (m.cat) cats[m.cat] = 1; if (m.cuenta && m.cuenta !== 'Mamá (regalo)') ctas[m.cuenta] = 1; if (m.destino) ctas[m.destino] = 1; });
+    d.movimientos.forEach(function (m) { cats[grupoMov(m)] = 1; if (m.cuenta && m.cuenta !== 'Mamá (regalo)') ctas[m.cuenta] = 1; if (m.destino) ctas[m.destino] = 1; });
     var meses = {};
     d.movimientos.forEach(function (m) { meses[m.fecha.slice(0, 7)] = 1; });
     var opt = function (obj, sel, vacio) {
@@ -610,7 +635,7 @@
         if (busq.tipo === 'Gasto' && m.tipo !== 'Gasto') return false;
         if (busq.tipo === 'Ingreso' && !(m.tipo === 'Ingreso' || m.tipo === 'Me pagaron')) return false;
         if (busq.tipo === 'Transferencia' && !(m.tipo === 'Transferencia' || m.tipo === 'Ajuste')) return false;
-        if (busq.cat && m.cat !== busq.cat) return false;
+        if (busq.cat && grupoMov(m) !== busq.cat) return false;
         if (busq.cuenta && m.cuenta !== busq.cuenta && m.destino !== busq.cuenta) return false;
         if (busq.mes && m.fecha.slice(0, 7) !== busq.mes) return false;
         if (q && norm(m.desc + ' ' + m.cat + ' ' + m.cuenta + ' ' + m.destino + ' ' + m.para).indexOf(q) < 0) return false;
