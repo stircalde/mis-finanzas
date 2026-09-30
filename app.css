@@ -892,3 +892,17 @@ body.con-hoja .fab-wrap, body.con-reg .fab-wrap, .shell:has(#nav[hidden]) ~ .fab
 .dia-card, .tx { contain: layout paint; }
 .tx-row { contain: layout paint style; }
 .tx.cambia > *, .dia-card.entra * { will-change: transform, opacity; }
+
+/* ============ v5.39: imagen de tarjeta elegida del catálogo ============ */
+.plastic.foto img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: contain; padding: 5%; z-index: 2; filter: drop-shadow(0 10px 14px rgba(0, 0, 0, .35)); }
+.plastic.foto:not(.roto) .v-top, .plastic.foto:not(.roto) .v-name, .plastic.foto:not(.roto) .v-wave { visibility: hidden; }
+.plastic.foto:not(.roto) { background: linear-gradient(135deg, color-mix(in srgb, var(--bc) 55%, #0b1224), color-mix(in srgb, var(--bc) 28%, #0b1224)); }
+.bol-item.abierta .bol-tira .plastic.foto:not(.roto) .v-top, .bol-item.abierta .bol-tira .plastic.foto:not(.roto) .v-name { visibility: hidden; }
+.img-pick { display: grid; gap: 10px; }
+.img-act { display: flex; align-items: center; gap: 12px; }
+.img-act .mini { width: 92px; aspect-ratio: 1.586; border-radius: 10px; background: var(--surface-2); border: 1px solid var(--line); display: grid; place-items: center; overflow: hidden; font-size: .7rem; color: var(--muted); text-align: center; }
+.img-act .mini img { width: 100%; height: 100%; object-fit: contain; }
+.img-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(104px, 1fr)); gap: 8px; max-height: 260px; overflow-y: auto; padding: 2px; }
+.img-grid button { border: 1px solid var(--line); background: var(--surface-2); border-radius: 12px; padding: 6px; cursor: pointer; display: grid; gap: 4px; color: var(--ink-2); font: inherit; font-size: .68rem; text-align: center; }
+.img-grid button[aria-pressed="true"] { border-color: var(--accent); box-shadow: 0 0 0 2px var(--accent-soft); }
+.img-grid img { width: 100%; aspect-ratio: 1.586; object-fit: contain; }

@@ -1193,8 +1193,15 @@
     'Nequi': { img: 'cards/nequi.webp', nombre: 'Tarjeta Nequi Visa débito' },
     'Daviplata': { img: 'cards/daviplata.webp', nombre: 'MasterDebit Daviplata' }
   };
+  // Imagen elegida para una cuenta o tarjeta (se guarda en este dispositivo; ver admin.js).
+  function imgTarjeta(nombre) { try { var m = JSON.parse(leerLocal('imgTarjetas') || '{}'); return m && typeof m[nombre] === 'string' ? m[nombre] : ''; } catch (e) { return ''; } }
   function plastico(nombre) {
-    var t = PLASTICOS[nombre];
+    var t = PLASTICOS[nombre], foto = imgTarjeta(nombre);
+    if (foto) {
+      var e0 = ent(nombre) || {}, c0 = colorMarca(nombre);
+      return '<div class="plastic virtual foto" style="--bc:' + c0 + '"><div class="v-top">' + logo(nombre) + '<span>' + esc(nombre) + '</span></div><div class="v-name">' + esc(nombre) + '</div>' +
+        '<img src="' + esc(foto) + '" alt="' + esc(nombre) + '" loading="lazy" decoding="async" referrerpolicy="no-referrer" onerror="this.parentNode.classList.add(\'roto\');this.remove()"></div>';
+    }
     if (t) return '<div class="plastic"><img src="' + t.img + '" alt="' + esc(t.nombre) + '" loading="lazy" decoding="async"></div>';
     var e = ent(nombre) || {}, c = colorMarca(nombre);
     var tipo = nombre === 'Mamá' ? 'Préstamo familiar' : e.tipo === 'Deuda' ? 'Crédito' : /bolsillo/i.test(nombre) ? 'Bolsillo' : nombre === 'Efectivo' ? 'Efectivo' : 'Cuenta';
@@ -1490,7 +1497,7 @@
 
   /* ---------- lo que necesita el botón de registrar (registro.js) ---------- */
   window.MF = {
-    API: API, DEMO: DEMO, clave: clave, leerLocal: leerLocal, guardarLocal: guardarLocal, esc: esc, el: el, pesos: pesosReal,
+    API: API, imgTarjeta: imgTarjeta, DEMO: DEMO, clave: clave, leerLocal: leerLocal, guardarLocal: guardarLocal, esc: esc, el: el, pesos: pesosReal,
     datos: function () { return datos; }, abrirHoja: abrirHoja, cerrarHoja: function () { cerrarHoja(true); }, logo: logo, ir: ir, fechaCorta: fechaCorta, icon: ICON,
     hoy: function () { return datos && datos.hoy; },
     listo: function () { return !!datos && !nav.hidden; },

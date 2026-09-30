@@ -213,11 +213,35 @@
   var COLORES = ['#3D8BFF', '#7A2FD6', '#C3137A', '#D8263C', '#E0572D', '#C8952B', '#1FA35C', '#11A39A', '#0B0B0B', '#5B6B85'];
   function tipoDe(c) { return c.tipo === 'Plata' ? 'plata' : (c.modo === 'Corte mensual' && !c.pideValor) ? 'tarjeta' : 'credito'; }
 
+  /* ---------- imagen de la tarjeta (catálogo de cards.js; se guarda en este dispositivo) ---------- */
+  function guardarImagen(nombre, url) {
+    var m = {};
+    try { m = JSON.parse(MF.leerLocal('imgTarjetas') || '{}') || {}; } catch (e) { m = {}; }
+    if (url) m[nombre] = url; else delete m[nombre];
+    MF.guardarLocal('imgTarjetas', JSON.stringify(m));
+  }
+  function campoImagen(st) {
+    var cat = window.CATALOGO_TARJETAS || [];
+    if (!cat.length) return '';
+    var bancos = []; cat.forEach(function (x) { if (bancos.indexOf(x.b) < 0) bancos.push(x.b); });
+    var h = '<div class="img-act"><div class="mini">' + (st.imagen ? '<img src="' + esc(st.imagen) + '" alt="" referrerpolicy="no-referrer">' : 'Sin imagen') + '</div>' +
+      '<button type="button" class="btn-mini" data-op="pabierto" data-v="' + (st.pabierto ? '' : '1') + '">' + (st.pabierto ? 'Cerrar catálogo' : (st.imagen ? 'Cambiar imagen' : 'Elegir imagen')) + '</button>' +
+      (st.imagen ? '<button type="button" class="btn-mini" data-op="imagen" data-v="">Quitar</button>' : '') + '</div>';
+    if (st.pabierto) {
+      if (!st.pbanco) st.pbanco = bancos[0];
+      h += '<div class="img-pick">' + fSelect(st, 'pbanco', 'Banco', bancos.map(function (b) { return [b, b]; }));
+      var lista = cat.filter(function (x) { return x.b === st.pbanco; });
+      h += '<div class="img-grid">' + lista.map(function (x) {
+        return '<button type="button" data-op="imagen" data-v="' + esc(x.u) + '" aria-pressed="' + (st.imagen === x.u) + '"><img src="' + esc(x.u) + '" alt="" loading="lazy" referrerpolicy="no-referrer" onerror="this.style.opacity=.15"><span>' + esc(x.n) + (x.k === 'D' ? ' · débito' : '') + '</span></button>';
+      }).join('') + '</div></div>';
+    }
+    return campo('Imagen de la tarjeta (opcional)', h, 'Se ve solo en este dispositivo. Si la imagen no carga, se muestra la tarjeta dibujada de siempre.');
+  }
   function formCuenta(c) {
     var nuevo = !c;
     var st = c ? { tipo: tipoDe(c), nombre: c.nombre, color: c.color, cupo: c.cupo, tasa: c.tasa ? String(Math.round(c.tasa * 10000) / 100).replace('.', ',') : '',
       diaCorte: c.diaCorte, diaPago: c.diaPago, mesPago: c.mesPago || 'Siguiente', maxCuotas: c.maxCuotas, interesDesde1: c.interesDesde1 ? 'si' : 'no',
-      unaSinInteres: c.unaSinInteres ? 'si' : 'no', modo: c.modo === 'Por compra' ? 'Por compra' : 'Corte mensual' }
+      unaSinInteres: c.unaSinInteres ? 'si' : 'no', modo: c.modo === 'Por compra' ? 'Por compra' : 'Corte mensual', imagen: MF.imgTarjeta(c.nombre) }
       : { tipo: 'plata', color: COLORES[0], mesPago: 'Siguiente', maxCuotas: 36, interesDesde1: 'no', unaSinInteres: 'no', modo: 'Corte mensual' };
     var ctrl = hojaFormulario(nuevo ? 'Nueva cuenta o crédito' : c.nombre, nuevo ? 'Se agrega a tu billetera y al botón Registrar' : 'Cambia sus datos; para el saldo usa "Ajustar saldo"', st, function (st) {
       var h = '';
@@ -237,6 +261,7 @@
         h += fMonto(st, 'cupo', 'Cupo (opcional)');
         h += fNumero(st, 'maxCuotas', 'Máximo de cuotas', '24', 'Al registrar una compra te pediré el valor de cada cuota que te muestra la app del crédito.');
       }
+      h += campoImagen(st);
       h += campo('Color', '<div class="opciones">' + COLORES.map(function (col) {
         return '<button type="button" class="op swatch" data-op="color" data-v="' + col + '" aria-pressed="' + (String(st.color).toUpperCase() === col) + '" aria-label="Color ' + col + '" style="--sw:' + col + '"></button>';
       }).join('') + '</div>');
@@ -246,6 +271,7 @@
       if (!nombre) throw new Error('Escribe el nombre.');
       var d = MF.datos();
       if (nuevo && (d.cuentasCfg || []).some(function (x) { return x.nombre.toLowerCase() === nombre.toLowerCase(); })) throw new Error('Ya tienes una cuenta con ese nombre (revisa también las archivadas).');
+      guardarImagen(nombre, st.imagen);
       var datos = { accion: 'cuentaadmin', op: 'guardar', nombre: nombre, tipo: st.tipo === 'plata' ? 'Plata' : 'Deuda', color: st.color, saldo: st.saldo > 0 ? st.saldo : 0 };
       if (st.tipo !== 'plata') {
         var dia = function (x, q) { var n = parseInt(x, 10); if (!(n >= 1 && n <= 31)) throw new Error('Escribe el ' + q + ' (1 a 31).'); return n; };

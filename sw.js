@@ -1,6 +1,6 @@
 // Service worker: la app abre al instante y sin conexión; los datos siempre se piden en vivo.
-const VERSION = 'mf-v5-38';
-const ARCHIVOS = ['./', 'index.html', 'app.css', 'app.js', 'registro.js', 'admin.js', 'logos.js', 'manifest.webmanifest', 'icons/icon-192.png', 'icons/icon-512.png'];
+const VERSION = 'mf-v5-39';
+const ARCHIVOS = ['./', 'index.html', 'app.css', 'app.js', 'registro.js', 'admin.js', 'logos.js', 'cards.js', 'manifest.webmanifest', 'icons/icon-192.png', 'icons/icon-512.png'];
 
 self.addEventListener('install', (e) => {
   e.waitUntil(caches.open(VERSION).then((c) => c.addAll(ARCHIVOS.map((u) => new Request(u, { cache: 'reload' })))).then(() => self.skipWaiting()));
