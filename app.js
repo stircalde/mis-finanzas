@@ -1096,27 +1096,68 @@
     return '<div class="plastic virtual" style="--bc:' + c + '"><div class="v-top">' + logo(nombre) + '<span>' + tipo + '</span></div>' +
       '<div class="v-name">' + esc(nombre.replace(/^Bolsillo Daviplata /, 'Bolsillo · ')) + '</div><svg class="v-wave" viewBox="0 0 300 120" preserveAspectRatio="none" aria-hidden="true"><path d="M0 90 C 80 40, 150 130, 300 50 L300 120 L0 120Z"/></svg></div>';
   }
+  // Billetera: "Deslizar" (carrusel) o "Apilar" (bolsillo con las tarjetas asomando). Se recuerda en este dispositivo.
+  var modoBilletera = leerLocal('billetera') === 'apilar' ? 'apilar' : 'deslizar', bolSel = null;
   function billetera(d) {
     var cred = d.creditos.filter(function (c) { return !c.persona; });
     var items = [];
     cred.forEach(function (c) { items.push({ nombre: c.nombre, deuda: true, x: c }); });
     d.cuentas.forEach(function (c) { items.push({ nombre: c.nombre, deuda: false, x: c }); });
     items.sort(function (a, b) { return (PLASTICOS[b.nombre] ? 1 : 0) - (PLASTICOS[a.nombre] ? 1 : 0); });
-    var n = el('<section class="card wallet-card"><div class="card-h"><h2>Tu billetera</h2><span class="aside">Tienes <b>' + pesos(d.totalPlata) + '</b> · Debes <b>' + pesos(d.totalDeudas) + '</b></span></div><div class="wallet" role="list"></div></section>');
-    var w = n.querySelector('.wallet');
     items.forEach(function (it) {
       var c = it.x, info = '';
       if (it.deuda) {
         if (c.proximo) info = 'Próx. ' + pesos(c.proximo.monto) + ' · ' + fechaCorta(c.proximo.fecha);
         if (c.cupo > 0) info += (info ? ' · ' : '') + Math.round(c.saldo / c.cupo * 100) + ' % del cupo';
       } else if (c.apartaPara) info = 'Para ' + c.apartaPara;
+      it.info = info;
+      it.ruta = (it.deuda ? '#/credito/' : '#/cuenta/') + encodeURIComponent(it.nombre);
+    });
+    var apilar = modoBilletera === 'apilar';
+    var n = el('<section class="card wallet-card' + (apilar ? ' apilada' : '') + '"><div class="card-h"><h2>Tu billetera</h2>' +
+      '<div class="seg-mini" role="group" aria-label="Cómo ver tus tarjetas"><button type="button" data-bm="deslizar" aria-pressed="' + !apilar + '">Deslizar</button>' +
+      '<button type="button" data-bm="apilar" aria-pressed="' + apilar + '">Apilar</button></div></div></section>');
+    n.querySelectorAll('[data-bm]').forEach(function (b) {
+      b.addEventListener('click', function () { modoBilletera = b.dataset.bm; bolSel = null; guardarLocal('billetera', modoBilletera); pintarSuave(); });
+    });
+    if (apilar) { n.appendChild(bolsillo(d, items)); return n; }
+    n.appendChild(el('<p class="aside wallet-tot">Tienes <b>' + pesos(d.totalPlata) + '</b> · Debes <b>' + pesos(d.totalDeudas) + '</b></p>'));
+    var w = el('<div class="wallet" role="list"></div>');
+    items.forEach(function (it) {
+      var c = it.x;
       var b = el('<button type="button" class="wcard" role="listitem" aria-label="' + esc(it.nombre) + '">' + plastico(it.nombre) +
         '<div class="wstrip"><div><span class="k">' + (it.deuda ? 'Debes' : 'Saldo') + '</span><b class="num">' + pesos(c.saldo) + '</b></div>' +
-        (info ? '<span class="s">' + esc(info) + '</span>' : '') + '</div></button>');
-      b.addEventListener('click', function () { ir((it.deuda ? '#/credito/' : '#/cuenta/') + encodeURIComponent(it.nombre)); });
+        (it.info ? '<span class="s">' + esc(it.info) + '</span>' : '') + '</div></button>');
+      b.addEventListener('click', function () { ir(it.ruta); });
       w.appendChild(b);
     });
+    n.appendChild(w);
     return n;
+  }
+  function bolsillo(d, items) {
+    var sel = items.find(function (it) { return it.nombre === bolSel; }) || null;
+    var h = '<div class="bolsillo">';
+    if (sel) {
+      h += '<div class="bol-sel">' + plastico(sel.nombre) + '<div class="bol-det"><div><span class="k">' + (sel.deuda ? 'Debes' : 'Saldo') + '</span>' +
+        '<b class="num' + (sel.deuda ? ' rojo' : '') + '">' + pesos(sel.x.saldo) + '</b>' + (sel.info ? '<span class="s">' + esc(sel.info) + '</span>' : '') + '</div>' +
+        '<button type="button" class="bol-ver" data-ver>Ver detalle ' + ICON.right + '</button></div></div>';
+    }
+    h += '<div class="bol-pila">' + items.filter(function (it) { return it !== sel; }).map(function (it) {
+      return '<button type="button" class="bol-tira" data-n="' + esc(it.nombre) + '" aria-label="Sacar ' + esc(it.nombre) + ' del bolsillo">' + plastico(it.nombre) +
+        '<span class="bol-top"><span class="nm">' + esc(it.nombre.replace(/^Bolsillo Daviplata /, 'Bolsillo · ')) + '</span><b class="num">' + pesos(it.x.saldo) + '</b></span></button>';
+    }).join('') + '</div>';
+    h += '<div class="bol-bolsa"><svg class="bol-boca" viewBox="0 0 358 34" preserveAspectRatio="none" aria-hidden="true"><path class="f" d="M0 34 V26 Q0 4 22 4 H112 C140 4 150 30 179 30 C208 30 218 4 246 4 H336 Q358 4 358 26 V34 Z"/>' +
+      '<path class="c" d="M8 34 V27 Q8 11 24 11 H112 C142 11 150 36 179 36 C208 36 216 11 246 11 H334 Q350 11 350 27 V34"/></svg>' +
+      '<div class="bol-cuerpo"><div class="bol-cost"><span class="k">Tienes en tus cuentas</span><b class="num">' + pesos(d.totalPlata) + '</b>' +
+      '<span class="s">Debes en créditos <b class="rojo">' + pesos(d.totalDeudas) + '</b></span>' +
+      '<button type="button" class="bol-ojo" data-ojo>' + (oculto ? ICON.eye + ' Mostrar saldos' : ICON.eyeOff + ' Ocultar saldos') + '</button></div></div></div></div>';
+    var nodo = el(h);
+    nodo.querySelectorAll('.bol-tira').forEach(function (b) { b.addEventListener('click', function () { bolSel = b.dataset.n; pintarSuave(); }); });
+    var selN = nodo.querySelector('.bol-sel .plastic');
+    if (selN) selN.addEventListener('click', function () { bolSel = null; pintarSuave(); });
+    var ver = nodo.querySelector('[data-ver]'); if (ver) ver.addEventListener('click', function () { ir(sel.ruta); });
+    nodo.querySelector('[data-ojo]').addEventListener('click', function () { oculto = !oculto; guardarLocal('ocultar', oculto ? '1' : '0'); pintarSuave(); });
+    return nodo;
   }
 
   /* =================== CALENDARIO =================== */

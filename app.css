@@ -715,3 +715,49 @@ body.con-hoja .fab-wrap, body.con-reg .fab-wrap, .shell:has(#nav[hidden]) ~ .fab
 :root[data-theme="light"] .fab-tip { background: #fff; }
 .reg-sheet { grid-template-columns: minmax(0, 1fr); }
 .reg-cuerpo, .reg-form, .reg-tipos { min-width: 0; }
+
+/* ===== v5.23: billetera "Apilar" (bolsillo) ===== */
+.seg-mini { display: inline-flex; padding: 3px; gap: 2px; background: var(--surface-2); border: 1px solid var(--line-strong); border-radius: 999px; }
+.seg-mini button { border: 0; background: transparent; color: var(--muted); font: 600 .78rem var(--font-body); padding: 6px 12px; border-radius: 999px; cursor: pointer; }
+.seg-mini button[aria-pressed="true"] { background: var(--accent); color: #fff; }
+.wallet-card .card-h { align-items: center; }
+.wallet-tot { margin: -6px 0 10px; }
+.bolsillo { max-width: 440px; margin: 0 auto; display: flex; flex-direction: column; }
+.bol-sel { display: grid; gap: 4px; margin-bottom: 14px; animation: sube .25s ease-out; }
+.bol-sel .plastic { cursor: pointer; box-shadow: 0 22px 40px -18px rgba(0, 0, 0, .85); }
+.bol-det { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: flex-end; gap: 10px 12px; padding: 10px 4px 0; }
+.bol-det > div { display: grid; gap: 1px; min-width: 0; }
+.bol-det .k { font-size: .78rem; color: var(--ink-2); }
+.bol-det b { font-family: var(--font-display); font-size: 1.45rem; }
+.bol-det .s { font-size: .8rem; color: var(--ink-2); }
+.bol-ver { display: inline-flex; align-items: center; gap: 4px; white-space: nowrap; padding: 9px 14px; border-radius: 999px; border: 1px solid color-mix(in srgb, var(--accent-glow) 40%, transparent);
+  background: var(--accent-soft); color: var(--accent-glow); font: 600 .84rem var(--font-body); cursor: pointer; }
+.bol-ver svg { width: 15px; height: 15px; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+.bol-det b.rojo, .bol-cost .rojo { color: #ff8a96; }
+:root[data-theme="light"] .bol-det b.rojo { color: var(--crit); }
+/* tiras: la parte de arriba de cada tarjeta real, con sombra hacia arriba (como la pila tipo Wallet) */
+.bol-pila { display: flex; flex-direction: column; padding-top: 16px; }
+.bol-tira { position: relative; display: block; width: 100%; height: 64px; margin-top: -12px; padding: 0; border: 0; background: none; cursor: pointer; overflow: hidden;
+  border-radius: 18px 18px 0 0; color: #fff; text-align: left; box-shadow: 0 -10px 20px -8px rgba(0, 0, 0, .7); transition: transform .15s ease; }
+.bol-tira:first-child { margin-top: 0; }
+.bol-tira:hover { transform: translateY(-3px); }
+.bol-tira:focus-visible { outline: 2px solid var(--accent-glow); outline-offset: 2px; }
+.bol-tira .plastic { border-radius: 18px; box-shadow: none; }
+.bol-tira .plastic.virtual .v-name, .bol-tira .plastic.virtual .v-top { visibility: hidden; }
+.bol-top { position: absolute; inset: 0 0 auto 0; height: 52px; display: flex; align-items: center; justify-content: space-between; gap: 10px; padding: 0 16px 4px;
+  background: linear-gradient(180deg, rgba(0, 0, 0, .68) 0%, rgba(0, 0, 0, .25) 70%, rgba(0, 0, 0, 0) 100%); text-shadow: 0 1px 3px rgba(0, 0, 0, .6); }
+.bol-top .nm { font-weight: 700; font-size: .95rem; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; min-width: 0; }
+.bol-top b { font-family: var(--font-display); font-size: .95rem; white-space: nowrap; }
+/* el bolsillo (se ve oscuro también en modo claro, como cuero) */
+.bol-bolsa { position: relative; margin-top: -30px; z-index: 1; filter: drop-shadow(0 -8px 14px rgba(0, 0, 0, .45)); }
+.bol-boca { display: block; width: 100%; height: 34px; }
+.bol-boca .f { fill: #0f1a33; }
+.bol-boca .c { fill: none; stroke: rgba(255, 255, 255, .16); stroke-width: 1.2; stroke-dasharray: 4 4; vector-effect: non-scaling-stroke; }
+.bol-cuerpo { background: #0f1a33; border-radius: 0 0 24px 24px; padding: 4px 8px 8px; margin-top: -1px; }
+.bol-cost { border: 1.2px dashed rgba(255, 255, 255, .16); border-top: 0; border-radius: 0 0 18px 18px; padding: 6px 16px 16px; display: grid; justify-items: center; gap: 4px; text-align: center; color: #eaf1ff; }
+.bol-cost .k, .bol-cost .s { font-size: .8rem; color: #a9badb; }
+.bol-cost > b { font-family: var(--font-display); font-size: 1.7rem; }
+.bol-ojo { margin-top: 6px; display: inline-flex; align-items: center; gap: 7px; padding: 8px 15px; border-radius: 999px; background: transparent; border: 1px solid rgba(255, 255, 255, .28);
+  color: #eaf1ff; font: 600 .82rem var(--font-body); cursor: pointer; }
+.bol-ojo svg { width: 17px; height: 17px; fill: none; stroke: currentColor; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }
+:root[data-theme="light"] .bol-bolsa { filter: drop-shadow(0 -8px 14px rgba(20, 30, 60, .35)); }
