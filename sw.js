@@ -1,5 +1,5 @@
 // Service worker: la app abre al instante y sin conexión; los datos siempre se piden en vivo.
-const VERSION = 'mf-v5-2';
+const VERSION = 'mf-v5-3';
 const ARCHIVOS = ['./', 'index.html', 'app.css', 'app.js', 'logos.js', 'manifest.webmanifest', 'icons/icon-192.png', 'icons/icon-512.png'];
 
 self.addEventListener('install', (e) => {

@@ -284,7 +284,8 @@ body { min-height: 100vh; min-height: 100dvh; overscroll-behavior-y: contain; }
 .acct.brand-card > * { position: relative; z-index: 1; }
 .acct.brand-card .name { color: rgba(255, 255, 255, 0.86); }
 .acct.brand-card .sub, .acct.brand-card .util { color: rgba(255, 255, 255, 0.72); }
-.acct .spark { position: absolute; z-index: 0; left: 0; right: 0; bottom: 0; width: 100%; height: 42%; opacity: 0.9; pointer-events: none; }
+.acct.brand-card { padding-bottom: 40px; }
+.acct .spark { position: absolute; z-index: 0; left: 0; right: 0; bottom: 0; width: 100%; height: 38px; opacity: 0.55; pointer-events: none; }
 .acct.brand-card .meter { background: rgba(255, 255, 255, 0.16); }
 .acct.brand-card .meter > i { background: #fff; }
 .acct.brand-card .meter.warn > i { background: var(--warn); } .acct.brand-card .meter.crit > i { background: var(--crit); }

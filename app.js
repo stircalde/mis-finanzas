@@ -102,16 +102,16 @@
     var pts = (serie || []).map(function (p) { return p.s; });
     if (!pts.length) return '';
     if (pts.length === 1) pts = [pts[0], pts[0]];
-    var W = 200, H = alto || 60, min = Math.min.apply(null, pts), max = Math.max.apply(null, pts);
-    var rango = max - min || 1, pad = 6;
+    var W = 200, H = alto || 38, min = Math.min.apply(null, pts), max = Math.max.apply(null, pts);
+    var rango = max - min || 1, pad = 4;
     var x = function (i) { return (i / (pts.length - 1)) * W; };
-    var y = function (v) { return max === min ? H * 0.7 : pad + (H - 2 * pad) * (1 - (v - min) / rango); };
+    var y = function (v) { return max === min ? H * 0.6 : pad + (H - 2 * pad) * (1 - (v - min) / rango); };
     var d = pts.map(function (v, i) { return (i ? 'L' : 'M') + x(i).toFixed(1) + ' ' + y(v).toFixed(1); }).join(' ');
     var id = 'g' + Math.random().toString(36).slice(2, 8);
     return '<svg class="spark" viewBox="0 0 ' + W + ' ' + H + '" preserveAspectRatio="none" aria-hidden="true">' +
-      '<defs><linearGradient id="' + id + '" x1="0" x2="0" y1="0" y2="1"><stop offset="0" stop-color="#fff" stop-opacity=".28"/><stop offset="1" stop-color="#fff" stop-opacity="0"/></linearGradient></defs>' +
+      '<defs><linearGradient id="' + id + '" x1="0" x2="0" y1="0" y2="1"><stop offset="0" stop-color="#fff" stop-opacity=".18"/><stop offset="1" stop-color="#fff" stop-opacity="0"/></linearGradient></defs>' +
       '<path d="' + d + ' L' + W + ' ' + H + ' L0 ' + H + 'Z" fill="url(#' + id + ')"/>' +
-      '<path d="' + d + '" fill="none" stroke="' + (color || '#fff') + '" stroke-opacity=".75" stroke-width="2" vector-effect="non-scaling-stroke" stroke-linejoin="round" stroke-linecap="round"/></svg>';
+      '<path d="' + d + '" fill="none" stroke="' + (color || '#fff') + '" stroke-opacity=".7" stroke-width="1.5" vector-effect="non-scaling-stroke" stroke-linejoin="round" stroke-linecap="round"/></svg>';
   }
 
   /* ---------- datos ---------- */
