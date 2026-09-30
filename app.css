@@ -778,6 +778,10 @@ body.con-hoja .fab-wrap, body.con-reg .fab-wrap, .shell:has(#nav[hidden]) ~ .fab
 .disp-caja .dc-k svg { width: 12px; height: 12px; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; transition: transform .2s ease; }
 .disp-caja.abierta .dc-k svg { transform: rotate(180deg); }
 .disp-caja .dc-v { font-family: var(--font-display); font-size: 1.2rem; font-weight: 600; color: #fff; line-height: 1.2; }
-.disp-caja .dc-d { display: none; margin-top: 4px; padding-top: 6px; border-top: 1px solid rgba(255, 255, 255, .16); gap: 1px; font-size: .74rem; color: rgba(234, 241, 255, .82); }
-.disp-caja.abierta .dc-d { display: grid; }
-.disp-caja .dc-d b { color: #fff; font-weight: 600; }
+.disp-caja .dc-d { display: grid; grid-template-rows: 0fr; opacity: 0; transition: grid-template-rows .42s cubic-bezier(.4, 0, .2, 1), opacity .3s ease; }
+.disp-caja.abierta .dc-d { grid-template-rows: 1fr; opacity: 1; }
+.disp-caja .dc-in { min-height: 0; overflow: hidden; display: grid; gap: 1px; font-size: .74rem; color: rgba(234, 241, 255, .82); }
+.disp-caja .dc-in::before { content: ""; display: block; margin: 5px 0 4px; border-top: 1px solid rgba(255, 255, 255, .16); }
+.disp-caja .dc-k svg { transition: transform .42s cubic-bezier(.4, 0, .2, 1); }
+@media (prefers-reduced-motion: reduce) { .disp-caja .dc-d, .disp-caja .dc-k svg { transition: none; } }
+.disp-caja .dc-in b { color: #fff; font-weight: 600; }

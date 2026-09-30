@@ -308,8 +308,8 @@
       '<button type="button" class="disp-caja ' + (neg ? 'mal' : 'bien') + (dispAbierta ? ' abierta' : '') + '" aria-expanded="' + dispAbierta + '">' +
       '<span class="dc-k">' + (neg ? 'Te falta para pagos de 30 d' : 'Disponible para gastar') + ICON.chevron + '</span>' +
       '<span class="dc-v num">' + (neg ? '−' : '') + pesos(Math.abs(disp.valor)) + '</span>' +
-      '<span class="dc-d"><span>Tienes <b>' + pesos(disp.tienes) + '</b></span><span>Créditos 30 d <b>−' + pesos(disp.creditos) + '</b></span>' +
-      (disp.fijos ? '<span>Fijos 30 d <b>−' + pesos(disp.fijos) + '</b></span>' : '') + '</span></button>' +
+      '<span class="dc-d"><span class="dc-in"><span>Tienes <b>' + pesos(disp.tienes) + '</b></span><span>Créditos 30 d <b>−' + pesos(disp.creditos) + '</b></span>' +
+      (disp.fijos ? '<span>Fijos 30 d <b>−' + pesos(disp.fijos) + '</b></span>' : '') + '</span></span></button>' +
       '</div></div>' +
       '<div><div class="eyebrow" style="margin-bottom:10px">' + cap(nombreMes(d.mes)) + '</div><div class="month-tiles dos">' +
       '<div class="tile"><div class="k">Ingresos</div><div class="v num">' + pesos(d.ingresos) + '</div><div class="d"><span>' + d.tiposIngreso.length + ' fuente' + (d.tiposIngreso.length === 1 ? '' : 's') + '</span></div></div>' +
