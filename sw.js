@@ -1,5 +1,5 @@
 // Service worker: la app abre al instante y sin conexión; los datos siempre se piden en vivo.
-const VERSION = 'mf-v5-35';
+const VERSION = 'mf-v5-36';
 const ARCHIVOS = ['./', 'index.html', 'app.css', 'app.js', 'registro.js', 'admin.js', 'logos.js', 'manifest.webmanifest', 'icons/icon-192.png', 'icons/icon-512.png'];
 
 self.addEventListener('install', (e) => {
@@ -14,7 +14,7 @@ self.addEventListener('fetch', (e) => {
   // Datos de Google Apps Script: siempre en vivo (la app guarda la última copia por su cuenta).
   if (url.hostname.endsWith('script.google.com') || url.hostname.endsWith('googleusercontent.com') && url.pathname.includes('macros')) return;
   // Logos y fuentes: se guardan la primera vez y se reutilizan.
-  if (/play-lh\.googleusercontent\.com|google\.com\/s2\/favicons|fonts\.(googleapis|gstatic)\.com/.test(url.href)) {
+  if (/play-lh\.googleusercontent\.com|google\.com\/s2\/favicons|icons\.duckduckgo\.com|gstatic\.com\/favicon|fonts\.(googleapis|gstatic)\.com/.test(url.href)) {
     e.respondWith(caches.open(VERSION + '-ext').then((c) => c.match(e.request).then((hit) => hit || fetch(e.request).then((r) => { c.put(e.request, r.clone()); return r; }))));
     return;
   }

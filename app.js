@@ -83,6 +83,12 @@
     var w = n.replace(/^TC\s+/i, '').split(/\s+/).filter(Boolean);
     return (w.length > 1 ? w[0][0] + w[1][0] : w[0].slice(0, 2)).toUpperCase();
   }
+  // Imagen de logo con respaldo: si la primera no carga prueba la segunda; si sale diminuta o nada carga, quedan las iniciales.
+  function imgLogo(src, alt) {
+    return '<img alt="" loading="lazy" decoding="async" referrerpolicy="no-referrer" src="' + esc(src) + '"' + (alt ? ' data-alt="' + esc(alt) + '"' : '') +
+      ' onerror="if(this.dataset.alt){this.src=this.dataset.alt;this.removeAttribute(\'data-alt\')}else this.remove()"' +
+      ' onload="if(this.naturalWidth&&this.naturalWidth<32)this.remove()">';
+  }
   function logo(nombre, esFijo, grande) {
     var e = ent(nombre, esFijo) || {};
     var cls = 'logo' + (grande ? ' lg' : '');
@@ -93,7 +99,7 @@
       return '<span class="' + cls + '" style="--c:' + color + ';--t:' + texto + ';font-size:' + (grande ? 24 : 18) + 'px">' + esc(e.emoji) + '</span>';
     }
     if (!src && nombre === 'Mamá') return '<span class="' + cls + '" style="--c:#F2994A;font-size:' + (grande ? 24 : 18) + 'px">👩</span>';
-    var img = src ? '<img alt="" loading="lazy" decoding="async" referrerpolicy="no-referrer" src="' + esc(src) + '" onerror="this.remove()">' : '';
+    var img = src ? imgLogo(src, (window.logoRespaldo && !(window.LOGOS || {})[nombre]) ? window.logoRespaldo(nombre) : '') : '';
     return '<span class="' + cls + (lum(color) < 0.03 ? ' dark' : '') + '" style="--c:' + color + ';--t:' + texto + '">' + esc(iniciales(nombre)) + img + '</span>';
   }
   function etiqueta(nombre) {
@@ -621,7 +627,7 @@
     }
     // Diccionario automático de comercios y entidades (logos.js): logo de su página web, con iniciales de respaldo.
     var dom = window.logoDe ? window.logoDe(m.desc) : '';
-    if (dom) return '<span class="logo" style="--c:#1b2a4a;--t:#eaf1ff;width:40px;height:40px;border-radius:12px">' + esc(iniciales(m.desc)) + '<img alt="" loading="lazy" referrerpolicy="no-referrer" src="' + dom + '" onerror="this.remove()"></span>';
+    if (dom) return '<span class="logo" style="--c:#1b2a4a;--t:#eaf1ff;width:40px;height:40px;border-radius:12px">' + esc(iniciales(m.desc)) + imgLogo(dom, window.logoRespaldo(m.desc)) + '</span>';
     if (m.tipo === 'Transferencia' && esDeuda(m.destino)) return logo(m.destino).replace('class="logo', 'style="width:40px;height:40px;border-radius:12px" class="logo');
     return '';
   }
