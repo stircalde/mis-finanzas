@@ -23,6 +23,7 @@
       .then(function (r) { return r.json(); })
       .then(function (r) { if (r.config) guardarCfg(r.config); return r; });
   }
+  MF.enviar = enviar;   // también lo usa admin.js (gastos fijos y cuentas)
   function pedirCfg() {
     if (MF.DEMO) return Promise.resolve(cfg);
     if (!pidiendo) {

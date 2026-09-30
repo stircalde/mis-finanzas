@@ -823,3 +823,44 @@ body.con-hoja .fab-wrap, body.con-reg .fab-wrap, .shell:has(#nav[hidden]) ~ .fab
 .bol-item.abierta .bol-top { opacity: 0; }
 .bol-item.abierta .bol-tira .plastic.virtual .v-name, .bol-item.abierta .bol-tira .plastic.virtual .v-top { visibility: visible; }
 .bol-item.abierta .bol-tira { box-shadow: 0 16px 30px -12px rgba(0, 0, 0, .8); }
+
+/* ===== v5.33: listas plegables (créditos y gastos fijos) con la animación suave ===== */
+.plegable { display: grid; grid-template-rows: 0fr; opacity: 0; transition: grid-template-rows .45s cubic-bezier(.4, 0, .2, 1), opacity .3s ease; }
+.plegable.abierta { grid-template-rows: 1fr; opacity: 1; }
+.plegable-in { min-height: 0; overflow: hidden; }
+.ver-todo.plegar { display: flex; align-items: center; justify-content: center; gap: 6px; width: 100%; margin-top: 10px; font: inherit; font-weight: 600; font-size: .86rem; cursor: pointer; background: transparent; }
+.ver-todo.plegar svg { width: 14px; height: 14px; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; transition: transform .45s cubic-bezier(.4, 0, .2, 1); }
+.ver-todo.plegar.abierta svg { transform: rotate(180deg); }
+@media (prefers-reduced-motion: reduce) { .plegable, .ver-todo.plegar svg { transition: none; } }
+
+/* ===== v5.33: administrar gastos fijos y cuentas ===== */
+.btn-mini { display: inline-flex; align-items: center; gap: 5px; padding: 6px 11px; border-radius: 999px; border: 1px solid var(--line-strong); background: var(--surface-2); color: var(--ink-2);
+  font: 600 .78rem var(--font-body); cursor: pointer; white-space: nowrap; }
+.btn-mini:hover { border-color: var(--accent); color: var(--ink); }
+.btn-mini svg { width: 14px; height: 14px; fill: none; stroke: currentColor; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }
+.agenda-card .card-h { align-items: center; }
+.due.link { cursor: pointer; }
+.sheet.sin-cascada > * { animation: none !important; }
+.adm-btn { width: 100%; padding: 12px 14px; border-radius: 14px; font: 600 .92rem var(--font-body); text-align: center; cursor: pointer; }
+.adm-btn.verde { background: linear-gradient(170deg, rgba(47, 208, 122, .28), rgba(255, 255, 255, .04) 70%); border: 1px solid rgba(47, 208, 122, .5); color: var(--ink); }
+.adm-btn.rojo { background: transparent; border: 1px solid color-mix(in srgb, var(--crit) 55%, transparent); color: var(--crit); }
+.adm-acciones { display: grid; gap: 10px; }
+.adm-fila { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+.adm-nota { margin: 0; font-size: .8rem; color: var(--muted); }
+.adm-monto { display: grid; gap: 2px; }
+.adm-monto .num { font-family: var(--font-display); font-size: 1.8rem; font-weight: 600; }
+.adm-monto span:last-child { font-size: .84rem; color: var(--ink-2); }
+.adm-sub { margin: 6px 0 0; font-size: .82rem; color: var(--ink-2); text-transform: uppercase; letter-spacing: .06em; }
+.adm-lista { display: grid; gap: 8px; }
+.adm-item { display: grid; grid-template-columns: auto minmax(0, 1fr) auto auto; align-items: center; gap: 10px; padding: 10px 12px; border-radius: 14px; background: var(--surface-2); border: 1px solid var(--line); }
+.adm-item.off { opacity: .7; }
+.adm-item .logo { width: 36px; height: 36px; border-radius: 11px; }
+.adm-info { display: grid; min-width: 0; }
+.adm-info b { font-size: .92rem; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.adm-info span { font-size: .76rem; color: var(--muted); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.adm-v { font-family: var(--font-display); font-size: .9rem; font-weight: 600; }
+.adm-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+.op.swatch { width: 34px; height: 34px; padding: 0; border-radius: 50%; background: var(--sw); border: 2px solid transparent; box-shadow: inset 0 0 0 1px rgba(255, 255, 255, .25); }
+.op.swatch[aria-pressed="true"] { border-color: var(--ink); background: var(--sw); outline: 2px solid var(--accent-glow); outline-offset: 1px; }
+.reg-pie .adm-btn { margin-top: 8px; }
+.adm-form input:disabled { opacity: .6; }

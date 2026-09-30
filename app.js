@@ -62,7 +62,8 @@
     moon: '<svg viewBox="0 0 24 24"><path d="M20 14.5A8 8 0 0 1 9.5 4a8 8 0 1 0 10.5 10.5z"/></svg>',
     close: '<svg viewBox="0 0 24 24"><path d="M6 6l12 12M18 6L6 18"/></svg>',
     left: '<svg viewBox="0 0 24 24"><path d="M15 5l-7 7 7 7"/></svg>',
-    right: '<svg viewBox="0 0 24 24"><path d="M9 5l7 7-7 7"/></svg>'
+    right: '<svg viewBox="0 0 24 24"><path d="M9 5l7 7-7 7"/></svg>',
+    gear: '<svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z"/></svg>'
   };
 
   /* ---------- entidades: logos y colores ---------- */
@@ -279,7 +280,9 @@
       '<div class="controls">' + (conMes ? '<select id="mes" class="select" aria-label="Mes">' + opts + '</select>' : '') +
       '<button class="icon-btn" id="ojo" type="button" aria-label="' + (oculto ? 'Mostrar montos' : 'Ocultar montos') + '" aria-pressed="' + oculto + '">' + (oculto ? ICON.eyeOff : ICON.eye) + '</button>' +
       '<button class="icon-btn" id="tema" type="button" aria-label="' + (temaActual() === 'claro' ? 'Cambiar a modo oscuro' : 'Cambiar a modo claro') + '">' + (temaActual() === 'claro' ? ICON.moon : ICON.sun) + '</button>' +
-      '<button class="icon-btn" id="recargar" type="button" aria-label="Actualizar">' + ICON.refresh + '</button></div></div>');
+      '<button class="icon-btn" id="recargar" type="button" aria-label="Actualizar">' + ICON.refresh + '</button>' +
+      '<button class="icon-btn" id="miscuentas" type="button" aria-label="Mis cuentas y créditos" title="Mis cuentas">' + ICON.gear + '</button></div></div>');
+    n.querySelector('#miscuentas').addEventListener('click', function () { if (window.MFAdmin) MFAdmin.cuentas(); });
     n.querySelector('#tema').addEventListener('click', function () { temaGuardado = temaActual() === 'claro' ? 'oscuro' : 'claro'; guardarLocal('tema', temaGuardado); aplicarTema(); pintar(); });
     var m = n.querySelector('#mes');
     if (m) m.addEventListener('change', function (e) { cargar(e.target.value); });
@@ -397,7 +400,12 @@
     var row = el('<div class="due' + (done ? ' done' : '') + (esFijo ? '' : ' link') + '"' + (esFijo ? '' : ' role="button" tabindex="0"') + '>' +
       logo(p.nombre, esFijo) + '<div style="min-width:0"><div class="n">' + esc(p.nombre) + '</div><div class="s">' + sub + '</div></div>' +
       '<div class="r"><span class="v">' + pesos(p.monto) + '</span>' + chip + '</div></div>');
-    if (!esFijo) {
+    if (esFijo) {
+      row.classList.add('link'); row.setAttribute('role', 'button'); row.setAttribute('tabindex', '0');
+      var abrirF = function () { if (window.MFAdmin) MFAdmin.fijo(p); };
+      row.addEventListener('click', abrirF);
+      row.addEventListener('keydown', function (e) { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); abrirF(); } });
+    } else {
       var abrir = function () { ir('#/credito/' + encodeURIComponent(p.nombre)); };
       row.addEventListener('click', abrir);
       row.addEventListener('keydown', function (e) { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); abrir(); } });
@@ -736,16 +744,52 @@
     app.appendChild(barraSuperior(d, false));
     app.appendChild(creditosCard(d));
     app.appendChild(cuentas(d));
-    var soloCred = Object.assign({}, d, { proximos: d.proximos.filter(function (p) { return p.tipo === 'credito'; }) });
-    var n = proximos(soloCred, false);
-    n.querySelector('h2').textContent = 'Calendario de pagos de tus créditos';
-    n.classList.remove('c-7');
-    app.appendChild(n);
-    var fijos = Object.assign({}, d, { proximos: d.proximos.filter(function (p) { return p.tipo === 'fijo'; }) });
-    var f = proximos(fijos, false);
-    f.querySelector('h2').textContent = 'Gastos fijos y suscripciones';
-    f.classList.remove('c-7');
-    app.appendChild(f);
+    app.appendChild(agendaPlegable(d, d.proximos.filter(function (p) { return p.tipo === 'credito'; }), 'Calendario de pagos de tus créditos', 'agCred', 'pagos'));
+    var fj = agendaPlegable(d, d.proximos.filter(function (p) { return p.tipo === 'fijo'; }), 'Gastos fijos y suscripciones', 'agFijos', 'gastos fijos');
+    var adm = el('<button type="button" class="btn-mini">' + ICON.gear + ' Administrar</button>');
+    adm.addEventListener('click', function () { if (window.MFAdmin) MFAdmin.fijos(); });
+    fj.querySelector('.card-h').appendChild(adm);
+    app.appendChild(fj);
+  }
+
+  // Agenda que muestra solo los 2 más próximos; al tocar "Ver…" se despliega el resto con la animación suave de la app.
+  function agendaPlegable(d, lista, titulo, clave, palabra) {
+    var n = el('<section class="card agenda-card"><div class="card-h"><h2>' + esc(titulo) + '</h2><span class="aside"></span></div><div class="agenda"></div></section>');
+    var porPagar = 0;
+    lista.forEach(function (p) { if (p.estado === 'pendiente' && p.dias <= 30) porPagar += p.monto; });
+    n.querySelector('.aside').innerHTML = 'En 30 días <b>' + pesos(porPagar) + '</b>';
+    var cont = n.querySelector('.agenda');
+    if (!lista.length) { cont.appendChild(el('<div class="empty">No tienes pagos en los próximos 35 días.</div>')); return n; }
+    var pend = lista.filter(function (p) { return p.estado === 'pendiente' || p.estado === 'automatico' || p.estado === 'cancelar'; });
+    var primeros = (pend.length ? pend : lista).slice(0, 2);
+    var resto = lista.filter(function (p) { return primeros.indexOf(p) < 0; });
+    var pintarDias = function (items, dest) {
+      var dia = '';
+      items.forEach(function (p) {
+        if (p.fecha !== dia) {
+          dia = p.fecha;
+          var f = fecha(p.fecha), rel = p.dias === 0 ? 'Hoy' : p.dias === 1 ? 'Mañana' : cap(DIAS[f.getDay()]);
+          dest.appendChild(el('<div class="day">' + rel + ' · ' + fechaCorta(p.fecha) + '</div>'));
+        }
+        dest.appendChild(filaPago(p, d));
+      });
+    };
+    pintarDias(primeros, cont);
+    if (!resto.length) return n;
+    var abierto = !!abiertos[clave];
+    var pleg = el('<div class="plegable' + (abierto ? ' abierta' : '') + '"><div class="plegable-in agenda"></div></div>');
+    pintarDias(resto, pleg.firstChild);
+    cont.appendChild(pleg);
+    var txt = function (a) { return a ? 'Ver menos' : 'Ver los ' + lista.length + ' ' + palabra; };
+    var btn = el('<button type="button" class="ver-todo plegar" aria-expanded="' + abierto + '"><span>' + txt(abierto) + '</span>' + ICON.chevron + '</button>');
+    btn.addEventListener('click', function () {
+      abierto = !abierto; abiertos[clave] = abierto;
+      pleg.classList.toggle('abierta', abierto); btn.classList.toggle('abierta', abierto);
+      btn.setAttribute('aria-expanded', String(abierto)); btn.firstChild.textContent = txt(abierto);
+    });
+    if (abierto) btn.classList.add('abierta');
+    n.appendChild(btn);
+    return n;
   }
 
   /* =================== FAVORES (te deben / les debes) =================== */
@@ -1386,6 +1430,7 @@
   /* ---------- lo que necesita el botón de registrar (registro.js) ---------- */
   window.MF = {
     API: API, DEMO: DEMO, clave: clave, leerLocal: leerLocal, guardarLocal: guardarLocal, esc: esc, el: el, pesos: pesosReal,
+    datos: function () { return datos; }, abrirHoja: abrirHoja, cerrarHoja: function () { cerrarHoja(true); }, logo: logo, ir: ir, fechaCorta: fechaCorta, icon: ICON,
     hoy: function () { return datos && datos.hoy; },
     listo: function () { return !!datos && !nav.hidden; },
     refrescar: function () { if (datos && !DEMO) cargar(mesSel === datos.meses[0] ? '' : mesSel, true); }
