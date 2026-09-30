@@ -237,7 +237,7 @@ button, select { font: inherit; color: inherit; }
 html { -webkit-tap-highlight-color: transparent; }
 body { min-height: 100vh; min-height: 100dvh; overscroll-behavior-y: contain; }
 .shell { min-height: 100vh; }
-.page { padding-bottom: calc(96px + env(safe-area-inset-bottom)); padding-top: calc(16px + env(safe-area-inset-top)); outline: none; }
+.page { width: 100%; padding-bottom: calc(96px + env(safe-area-inset-bottom)); padding-top: calc(16px + env(safe-area-inset-top)); outline: none; }
 
 /* navegación: barra inferior en celular, lateral en PC */
 .nav { position: fixed; z-index: 30; left: 0; right: 0; bottom: 0; display: grid; grid-template-columns: repeat(4, 1fr);
@@ -255,7 +255,7 @@ body { min-height: 100vh; min-height: 100dvh; overscroll-behavior-y: contain; }
   .nav .brand img { border-radius: 9px; }
   .nav a { grid-template-columns: 24px 1fr; justify-items: start; align-items: center; gap: 12px; padding: 11px 12px; font-size: 0.95rem; }
   .nav a.on { background: var(--accent-soft); }
-  .page { padding-bottom: 48px; }
+  .page { padding-bottom: 48px; max-width: 1480px; padding-inline: 36px; }
 }
 
 /* botón del ojo y cabecera */
@@ -270,6 +270,7 @@ body { min-height: 100vh; min-height: 100dvh; overscroll-behavior-y: contain; }
 .oculto .num-h { letter-spacing: 0.08em; }
 
 /* hero: disponible para gastar */
+.hero-left { display: grid; gap: 18px; min-width: 0; }
 .disp { display: grid; gap: 6px; }
 .disp .big.neg { color: #ffd2d7; }
 .disp .expl { font-size: 0.85rem; color: rgba(234, 241, 255, 0.85); display: flex; flex-wrap: wrap; gap: 4px 12px; }
