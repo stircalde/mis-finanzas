@@ -625,7 +625,7 @@
       signo = '+'; cls = 'in';
     } else if (m.tipo === 'Me pagaron') { if (ctx !== m.cuenta) meta.push(etiqueta(m.cuenta)); signo = '+'; cls = 'in'; extra = '<small>devolución</small>'; }
     else if (m.tipo === 'Transferencia') {
-      meta.push(etiqueta(m.cuenta) + '<span>→</span>' + etiqueta(m.destino));
+      meta.push(m.cuenta ? etiqueta(m.cuenta) + '<span>→</span>' + etiqueta(m.destino) : '<span>→</span>' + etiqueta(m.destino));
       if (ctx) { signo = ctx === m.cuenta ? '−' : '+'; cls = ctx === m.destino ? 'in' : ''; }
       else cls = 'mv';
       extra = '<small>' + (esDeuda(m.destino) ? 'pago' : esDeuda(m.cuenta) ? 'avance' : 'entre cuentas') + '</small>';
@@ -667,9 +667,9 @@
       '<div class="filters" role="group" aria-label="Tipo">' + ['todos:Todos', 'Gasto:Gastos', 'Ingreso:Entradas', 'Transferencia:Pagos y transferencias'].map(function (x) {
         var p = x.split(':'); return '<button type="button" data-f="' + p[0] + '" aria-pressed="' + (busq.tipo === p[0]) + '">' + p[1] + '</button>';
       }).join('') + '</div>' +
-      '<div class="fil-row"><select class="select" data-k="cat" aria-label="Categoría">' + opt(cats, busq.cat, 'Todas las categorías') + '</select>' +
-      '<select class="select" data-k="cuenta" aria-label="Cuenta">' + opt(ctas, busq.cuenta, 'Todas las cuentas') + '</select>' +
-      '<select class="select" data-k="mes" aria-label="Mes">' + opt(meses, busq.mes, 'Todos los meses') + '</select></div></div>' +
+      '<div class="fil-row"><select class="select" data-k="cat" aria-label="Categoría">' + opt(cats, busq.cat, 'Categoría: todas') + '</select>' +
+      '<select class="select" data-k="cuenta" aria-label="Cuenta">' + opt(ctas, busq.cuenta, 'Cuenta: todas') + '</select>' +
+      '<select class="select" data-k="mes" aria-label="Mes">' + opt(meses, busq.mes, 'Mes: todos') + '</select></div></div>' +
       '<div class="tx"></div></section>');
     app.appendChild(n);
     var cont = n.querySelector('.tx'), total = n.querySelector('.total-filtro');
