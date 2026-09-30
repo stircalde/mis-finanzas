@@ -883,6 +883,8 @@
     nodo.querySelectorAll(hijos).forEach(function (x, i) { x.style.setProperty('--i', Math.min(i, 14)); });
     void nodo.offsetWidth;
     nodo.classList.add(clase);
+    clearTimeout(nodo._tEnt);
+    nodo._tEnt = setTimeout(function () { nodo.classList.remove(clase); }, 1300);
   }
   function plegar(item, clave, cabeza) {
     var v = !abiertos[clave]; abiertos[clave] = v;
