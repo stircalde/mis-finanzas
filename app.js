@@ -1169,14 +1169,32 @@
       item.querySelector('[data-ver]').tabIndex = abrir ? 0 : -1;
       if (quieto) { item.classList.toggle('abierta', abrir); return; }
       var desde = tira.getBoundingClientRect().height;
+      tira.style.transition = 'none';                 // medir sin disparar transiciones intermedias
       item.classList.toggle('abierta', abrir);
       tira.style.height = '';
       var hasta = tira.getBoundingClientRect().height;
       tira.style.height = desde + 'px';
       void tira.offsetHeight;
+      tira.style.transition = '';
       tira.style.height = hasta + 'px';
       var fin = function (e) { if (e.propertyName !== 'height') return; tira.removeEventListener('transitionend', fin); tira.style.height = ''; };
       tira.addEventListener('transitionend', fin);
+    };
+    // De abajo hacia arriba: el bolsillo se queda quieto en la pantalla y la tarjeta sube de él;
+    // las tarjetas de arriba se corren hacia arriba (compensando el scroll mientras dura la animación).
+    var fijarBolsillo = function () {
+      if (quieto) return;
+      var bolsa = nodo.querySelector('.bol-bolsa'), y0 = bolsa.getBoundingClientRect().top, t0 = performance.now();
+      document.documentElement.style.overflowAnchor = 'none';
+      (function paso(t) {
+        var dy = bolsa.getBoundingClientRect().top - y0;
+        var ab = nodo.querySelector('.bol-item.abierta .bol-tira');
+        if (dy > 0 && ab) dy = Math.min(dy, Math.max(0, ab.getBoundingClientRect().top - 72));   // que la tarjeta no se salga por arriba
+        if (Math.abs(dy) >= 0.5) window.scrollBy(0, dy);
+        y0 = bolsa.getBoundingClientRect().top;
+        if (t - t0 < 560) requestAnimationFrame(paso);
+        else document.documentElement.style.overflowAnchor = '';
+      })(t0);
     };
     nodo.querySelectorAll('.bol-item').forEach(function (item) {
       item.querySelector('.bol-tira').addEventListener('click', function () {
@@ -1184,6 +1202,7 @@
         if (antes && antes !== n) { var otra = nodo.querySelector('.bol-item.abierta'); if (otra) mover(otra, false); }
         bolSel = antes === n ? null : n;
         mover(item, bolSel === n);
+        fijarBolsillo();
       });
       item.querySelector('[data-ver]').addEventListener('click', function () { ir(porNombre[item.dataset.n].ruta); });
     });

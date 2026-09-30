@@ -735,7 +735,8 @@ body.con-hoja .fab-wrap, body.con-reg .fab-wrap, .shell:has(#nav[hidden]) ~ .fab
 :root[data-theme="light"] .bol-det b.rojo { color: var(--crit); }
 /* tiras: la parte de arriba de cada tarjeta real, con sombra hacia arriba (como la pila tipo Wallet) */
 .bol-pila { display: flex; flex-direction: column; padding-top: 16px; }
-.bol-item { position: relative; margin-top: -12px; }
+.bol-item { position: relative; margin-top: -12px; transition: margin-top .45s cubic-bezier(.4, 0, .2, 1); }
+.bol-item.abierta:not(:first-child) { margin-top: 12px; }
 .bol-item:first-child { margin-top: 0; }
 .bol-tira { position: relative; display: block; width: 100%; height: 64px; padding: 0; border: 0; background: none; cursor: pointer; overflow: hidden;
   border-radius: 18px; color: #fff; text-align: left; box-shadow: 0 12px 20px -8px rgba(0, 0, 0, .7);
@@ -816,3 +817,9 @@ body.con-hoja .fab-wrap, body.con-reg .fab-wrap, .shell:has(#nav[hidden]) ~ .fab
 @keyframes hoja-out { to { transform: translateY(100%); } }
 @media (min-width: 760px) { @keyframes hoja-out { to { transform: translateY(30px) scale(.97); opacity: 0; } } }
 @media (prefers-reduced-motion: reduce) { .sheet-bg, .sheet, .sheet > *, .es-plan .cuotas > .cuota { animation: none !important; } }
+
+/* tarjeta abierta: se ve completa (sin la franja con el nombre encima) */
+.bol-top { transition: opacity .3s ease; }
+.bol-item.abierta .bol-top { opacity: 0; }
+.bol-item.abierta .bol-tira .plastic.virtual .v-name, .bol-item.abierta .bol-tira .plastic.virtual .v-top { visibility: visible; }
+.bol-item.abierta .bol-tira { box-shadow: 0 16px 30px -12px rgba(0, 0, 0, .8); }
