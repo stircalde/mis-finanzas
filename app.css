@@ -723,7 +723,11 @@ body.con-hoja .fab-wrap, body.con-reg .fab-wrap, .shell:has(#nav[hidden]) ~ .fab
 .wallet-card .card-h { align-items: center; }
 .wallet-tot { margin: -6px 0 10px; }
 .bolsillo { max-width: 440px; margin: 0 auto; display: flex; flex-direction: column; }
-.bol-sel { display: grid; gap: 4px; margin-bottom: 14px; animation: sube .25s ease-out; }
+.bol-sel { display: grid; grid-template-rows: 0fr; opacity: 0; margin-bottom: 0; transition: grid-template-rows .42s cubic-bezier(.4, 0, .2, 1), opacity .3s ease, margin-bottom .42s cubic-bezier(.4, 0, .2, 1); }
+.bol-sel.abierta { grid-template-rows: 1fr; opacity: 1; margin-bottom: 10px; }
+.bol-sel-in { min-height: 0; overflow: hidden; display: grid; gap: 4px; }
+.bol-sel-in > .plastic { margin: 2px 2px 0; }
+.bol-sel-in > .bol-det { padding-bottom: 6px; }
 .bol-sel .plastic { cursor: pointer; box-shadow: 0 22px 40px -18px rgba(0, 0, 0, .85); }
 .bol-det { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: flex-end; gap: 10px 12px; padding: 10px 4px 0; }
 .bol-det > div { display: grid; gap: 1px; min-width: 0; }
@@ -738,7 +742,10 @@ body.con-hoja .fab-wrap, body.con-reg .fab-wrap, .shell:has(#nav[hidden]) ~ .fab
 /* tiras: la parte de arriba de cada tarjeta real, con sombra hacia arriba (como la pila tipo Wallet) */
 .bol-pila { display: flex; flex-direction: column; padding-top: 16px; }
 .bol-tira { position: relative; display: block; width: 100%; height: 64px; margin-top: -12px; padding: 0; border: 0; background: none; cursor: pointer; overflow: hidden;
-  border-radius: 18px 18px 0 0; color: #fff; text-align: left; box-shadow: 0 -10px 20px -8px rgba(0, 0, 0, .7); transition: transform .15s ease; }
+  border-radius: 18px 18px 0 0; color: #fff; text-align: left; box-shadow: 0 -10px 20px -8px rgba(0, 0, 0, .7);
+  transition: transform .15s ease, height .42s cubic-bezier(.4, 0, .2, 1), margin-top .42s cubic-bezier(.4, 0, .2, 1), opacity .3s ease; }
+.bol-tira.fuera { height: 0; margin-top: 0; opacity: 0; pointer-events: none; }
+@media (prefers-reduced-motion: reduce) { .bol-sel, .bol-tira { transition: none; } }
 .bol-tira:first-child { margin-top: 0; }
 .bol-tira:hover { transform: translateY(-3px); }
 .bol-tira:focus-visible { outline: 2px solid var(--accent-glow); outline-offset: 2px; }

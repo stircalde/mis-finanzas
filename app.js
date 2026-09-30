@@ -1138,15 +1138,17 @@
     return n;
   }
   function bolsillo(d, items) {
-    var sel = items.find(function (it) { return it.nombre === bolSel; }) || null;
-    var h = '<div class="bolsillo">';
-    if (sel) {
-      h += '<div class="bol-sel">' + plastico(sel.nombre) + '<div class="bol-det"><div><span class="k">' + (sel.deuda ? 'Debes' : 'Saldo') + '</span>' +
+    var porNombre = {};
+    items.forEach(function (it) { porNombre[it.nombre] = it; });
+    var contenidoSel = function (sel) {
+      return plastico(sel.nombre) + '<div class="bol-det"><div><span class="k">' + (sel.deuda ? 'Debes' : 'Saldo') + '</span>' +
         '<b class="num' + (sel.deuda ? ' rojo' : '') + '">' + pesos(sel.x.saldo) + '</b>' + (sel.info ? '<span class="s">' + esc(sel.info) + '</span>' : '') + '</div>' +
-        '<button type="button" class="bol-ver" data-ver>Ver detalle ' + ICON.right + '</button></div></div>';
-    }
-    h += '<div class="bol-pila">' + items.filter(function (it) { return it !== sel; }).map(function (it) {
-      return '<button type="button" class="bol-tira" data-n="' + esc(it.nombre) + '" aria-label="Sacar ' + esc(it.nombre) + ' del bolsillo">' + plastico(it.nombre) +
+        '<button type="button" class="bol-ver" data-ver>Ver detalle ' + ICON.right + '</button></div>';
+    };
+    var inicial = porNombre[bolSel] || null;
+    var h = '<div class="bolsillo"><div class="bol-sel' + (inicial ? ' abierta' : '') + '"><div class="bol-sel-in">' + (inicial ? contenidoSel(inicial) : '') + '</div></div>';
+    h += '<div class="bol-pila">' + items.map(function (it) {
+      return '<button type="button" class="bol-tira' + (it === inicial ? ' fuera' : '') + '" data-n="' + esc(it.nombre) + '" aria-label="Sacar ' + esc(it.nombre) + ' del bolsillo"' + (it === inicial ? ' tabindex="-1"' : '') + '>' + plastico(it.nombre) +
         '<span class="bol-top"><span class="nm">' + esc(it.nombre.replace(/^Bolsillo Daviplata /, 'Bolsillo · ')) + '</span><b class="num">' + pesos(it.x.saldo) + '</b></span></button>';
     }).join('') + '</div>';
     h += '<div class="bol-bolsa"><svg class="bol-boca" viewBox="0 0 358 34" preserveAspectRatio="none" aria-hidden="true"><path class="f" d="M0 34 V26 Q0 4 22 4 H112 C140 4 150 30 179 30 C208 30 218 4 246 4 H336 Q358 4 358 26 V34 Z"/>' +
@@ -1154,14 +1156,29 @@
       '<div class="bol-cuerpo"><div class="bol-cost"><span class="k">Tienes en tus cuentas</span><b class="num">' + pesos(d.totalPlata) + '</b>' +
       '<span class="s">Debes en créditos <b class="rojo">' + pesos(d.totalDeudas) + '</b></span>' +
       '<button type="button" class="bol-ojo" data-ojo>' + (oculto ? ICON.eye + ' Mostrar saldos' : ICON.eyeOff + ' Ocultar saldos') + '</button></div></div></div></div>';
-    var nodo = el(h);
-    nodo.querySelectorAll('.bol-tira').forEach(function (b) { b.addEventListener('click', function () { bolSel = b.dataset.n; pintarSuave(); }); });
-    var selN = nodo.querySelector('.bol-sel .plastic');
-    if (selN) selN.addEventListener('click', function () { bolSel = null; pintarSuave(); });
-    var ver = nodo.querySelector('[data-ver]'); if (ver) ver.addEventListener('click', function () { ir(sel.ruta); });
+    var nodo = el(h), caja = nodo.querySelector('.bol-sel'), dentro = nodo.querySelector('.bol-sel-in'), limpiar = null;
+    // Sacar o guardar una tarjeta con la misma animación suave de la casilla del disponible (sin repintar la página).
+    var enlazarSel = function () {
+      var pl = dentro.querySelector('.plastic'); if (pl) pl.addEventListener('click', function () { elegir(null); });
+      var ver = dentro.querySelector('[data-ver]'); if (ver) ver.addEventListener('click', function () { ir(porNombre[bolSel].ruta); });
+    };
+    var elegir = function (nombre) {
+      clearTimeout(limpiar);
+      bolSel = nombre;
+      nodo.querySelectorAll('.bol-tira').forEach(function (b) {
+        var fuera = b.dataset.n === nombre;
+        b.classList.toggle('fuera', fuera);
+        if (fuera) b.setAttribute('tabindex', '-1'); else b.removeAttribute('tabindex');
+      });
+      if (nombre) { dentro.innerHTML = contenidoSel(porNombre[nombre]); enlazarSel(); caja.classList.add('abierta'); }
+      else { caja.classList.remove('abierta'); limpiar = setTimeout(function () { if (!bolSel) dentro.innerHTML = ''; }, 450); }
+    };
+    enlazarSel();
+    nodo.querySelectorAll('.bol-tira').forEach(function (b) { b.addEventListener('click', function () { elegir(b.dataset.n); }); });
     nodo.querySelector('[data-ojo]').addEventListener('click', function () { oculto = !oculto; guardarLocal('ocultar', oculto ? '1' : '0'); pintarSuave(); });
     return nodo;
   }
+
 
   /* =================== CALENDARIO =================== */
   var calMes = null, calModo = 'pagos', calSel = null;
