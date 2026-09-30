@@ -508,7 +508,7 @@
       h.addEventListener('pointermove', function (ev) {
         var f = filas[+h.dataset.i];
         bands.innerHTML = '<rect class="band-hover" x="' + h.getAttribute('x') + '" y="' + T + '" width="' + banda + '" height="' + (H - T - B) + '" rx="6"/>';
-        var rows = opts.series.map(function (x, k) { return '<div class="r"><span><i style="background:' + x.color + '"></i>' + esc(x.nombre) + '</span><b>' + pesos(f.valores[k]) + '</b></div>'; }).join('');
+        var rows = opts.series.map(function (x, k) { return opts.soloConValor && !f.valores[k] ? '' : '<div class="r"><span><i style="background:' + x.color + '"></i>' + esc(x.nombre) + '</span><b>' + pesos(f.valores[k]) + '</b></div>'; }).join('');
         mostrarTip(ev, '<div class="t">' + esc(f.titulo || f.etiqueta) + '</div>' + rows + (opts.pie ? opts.pie(f) : ''));
       });
       h.addEventListener('pointerleave', function () { bands.innerHTML = ''; ocultarTip(); });
@@ -524,16 +524,24 @@
     return n;
   }
   function semanal(d) {
-    var n = el('<section class="card c-6"><div class="card-h"><h2>Gasto semanal</h2><span class="aside">Contado y financiado · 8 semanas</span></div></section>');
+    var n = el('<section class="card c-6"><div class="card-h"><h2>Gasto semanal</h2><span class="aside">De contado y por crédito · 8 semanas</span></div></section>');
     var angosto = anchoGrafico() < 480;
-    n.appendChild(graficoBarras({ titulo: 'Gasto por semana', apilado: true, ancho: anchoGrafico(),
-      series: [{ nombre: 'De contado', color: 'var(--s3)' }, { nombre: 'Con tarjeta o crédito', color: 'var(--s2)' }],
+    // Un tramo por cada crédito, con el color de su marca (en el orden de "Tus créditos").
+    var usados = {};
+    d.semanas.forEach(function (s) { Object.keys(s.porCredito || {}).forEach(function (k) { usados[k] = true; }); });
+    var nombres = d.creditos.map(function (c) { return c.nombre; }).filter(function (k) { return usados[k]; });
+    Object.keys(usados).forEach(function (k) { if (nombres.indexOf(k) < 0) nombres.push(k); });
+    var series = [{ nombre: 'De contado', color: 'var(--s3)' }].concat(nombres.map(function (k) { return { nombre: k, color: colorMarca(k) }; }));
+    if (!d.semanas.some(function (s) { return s.porCredito; })) series.push({ nombre: 'Con tarjeta o crédito', color: 'var(--s2)' });
+    n.appendChild(graficoBarras({ titulo: 'Gasto por semana', apilado: true, ancho: anchoGrafico(), series: series,
       filas: d.semanas.map(function (s) {
         var ini = fecha(s.inicio), fin = new Date(ini.getFullYear(), ini.getMonth(), ini.getDate() + 6);
+        var vals = s.porCredito ? [s.contado].concat(nombres.map(function (k) { return s.porCredito[k] || 0; })) : [s.contado, s.financiado];
         return { etiqueta: angosto ? ini.getDate() + '/' + (ini.getMonth() + 1) : ini.getDate() + ' ' + MES_C[ini.getMonth()],
-          titulo: 'Semana del ' + ini.getDate() + ' ' + MES_C[ini.getMonth()] + ' al ' + fin.getDate() + ' ' + MES_C[fin.getMonth()], valores: [s.contado, s.financiado] };
+          titulo: 'Semana del ' + ini.getDate() + ' ' + MES_C[ini.getMonth()] + ' al ' + fin.getDate() + ' ' + MES_C[fin.getMonth()], valores: vals };
       }),
-      pie: function (f) { return '<div class="r" style="margin-top:4px;color:var(--ink-2)"><span>Total</span><b>' + pesos(f.valores[0] + f.valores[1]) + '</b></div>'; } }));
+      soloConValor: true,
+      pie: function (f) { return '<div class="r" style="margin-top:4px;color:var(--ink-2)"><span>Total</span><b>' + pesos(f.valores.reduce(function (a, b) { return a + b; }, 0)) + '</b></div>'; } }));
     return n;
   }
 
@@ -682,16 +690,43 @@
   }
 
   /* =================== ME DEBEN =================== */
+  function detalleDeudor(p) {
+    function concepto(c, pagado) {
+      var linea;
+      if (c.cuotas > 1) {
+        linea = c.cuotas + ' cuotas mensuales de ' + pesos(c.valorCuota) + ' · lleva ' + c.cuotasPagadas + ' de ' + c.cuotas;
+        if (!pagado && c.proxima) linea += '<br>Próxima: <b>' + pesos(c.proxima.monto) + '</b> el ' + fechaCorta(c.proxima.fecha) + (c.ultima ? ' · última el ' + fechaCorta(c.ultima) : '');
+      } else linea = pagado ? 'Pagado' : 'De una sola vez' + (c.pendiente < c.total ? ' · te abonó ' + pesos(c.total - c.pendiente) : '');
+      return '<div class="deb-c' + (pagado ? ' done' : '') + '"><div class="deb-t"><span>' + esc(c.desc) + '</span><b class="num">' + pesos(pagado ? c.total : c.pendiente) + '</b></div>' +
+        '<div class="deb-s">' + (c.fecha ? fechaCorta(c.fecha) + ' · ' : '') + (c.cuenta ? etiqueta(c.cuenta) + ' · ' : '') + 'le tocó ' + pesos(c.total) + '</div>' +
+        '<div class="deb-s">' + linea + '</div></div>';
+    }
+    var h = '<div class="deb">' + (p.conceptos || []).map(function (c) { return concepto(c, false); }).join('');
+    if (p.vencido > 0) h += '<div class="deb-nota">A hoy ya debería haberte pagado <b>' + pesos(p.vencido) + '</b>.</div>';
+    if (p.abonos && p.abonos.length) h += '<div class="deb-sub">Pagos que te ha hecho</div>' + p.abonos.map(function (a) {
+      return '<div class="deb-t deb-ab"><span>' + fechaCorta(a.fecha) + ' · ' + esc(a.desc || 'Abono') + '</span><b class="num">+' + pesos(a.monto) + '</b></div>'; }).join('');
+    if (p.pagados && p.pagados.length) h += '<div class="deb-sub">Ya saldado</div>' + p.pagados.map(function (c) { return concepto(c, true); }).join('');
+    return h + '</div>';
+  }
   function vistaMeDeben() {
     var d = datos;
     app.appendChild(barraSuperior(d, false));
-    var html = d.meDeben.map(function (p) {
-      return '<div class="owed-row"><div><div class="p">' + esc(p.persona) + '</div><div class="s">Le cubriste ' + pesos(p.prestado) +
-        (p.pagado ? ' · te pagó ' + pesos(p.pagado) : '') + '</div></div><div class="v">' + pesos(p.saldo) + '</div></div>';
+    var html = d.meDeben.map(function (p, i) {
+      var abierto = abiertos['deb:' + p.persona];
+      return '<div class="owed-item' + (abierto ? ' open' : '') + '"><div class="owed-row" role="button" tabindex="0" aria-expanded="' + !!abierto + '" data-i="' + i + '"><div><div class="p">' + esc(p.persona) +
+        ' <span class="chev">' + (abierto ? '▾' : '▸') + '</span></div><div class="s">Le cubriste ' + pesos(p.prestado) +
+        (p.pagado ? ' · te pagó ' + pesos(p.pagado) : '') + (p.vencido > 0 ? ' · <b class="venc">vencido ' + pesos(p.vencido) + '</b>' : '') + '</div></div><div class="v">' + pesos(p.saldo) + '</div></div>' +
+        (abierto ? detalleDeudor(p) : '') + '</div>';
     }).join('');
-    app.appendChild(el('<section class="card"><div class="card-h"><h2>Me deben</h2><span class="aside">Total <b>' + pesos(d.totalMeDeben) + '</b></span></div>' +
+    var sec = el('<section class="card"><div class="card-h"><h2>Me deben</h2><span class="aside">Total <b>' + pesos(d.totalMeDeben) + '</b></span></div>' +
       '<div class="owed">' + (html || '<div class="empty">Nadie te debe plata en este momento.</div>') + '</div>' +
-      '<p class="hint">Cuando alguien te pague, regístralo en el botón del celular: Ingreso → 🤝 Me pagaron.</p></section>'));
+      '<p class="hint">Toca un nombre para ver por qué te debe. Cuando alguien te pague, regístralo en el botón del celular: Ingreso → 🤝 Me pagaron.</p></section>');
+    sec.querySelectorAll('.owed-row[data-i]').forEach(function (r) {
+      function tocar() { var k = 'deb:' + d.meDeben[+r.dataset.i].persona; abiertos[k] = !abiertos[k]; pintar(); }
+      r.addEventListener('click', tocar);
+      r.addEventListener('keydown', function (e) { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); tocar(); } });
+    });
+    app.appendChild(sec);
     var mama = d.creditos.find(function (c) { return c.persona; });
     if (mama && mama.saldo > 0) {
       var r = el('<section class="card"><div class="card-h"><h2>Le debes a tu mamá</h2><span class="aside">Total <b>' + pesos(mama.saldo) + '</b></span></div>' +
@@ -815,7 +850,8 @@
       prox +
       '<div class="stat"><div class="k">Compras en ' + mesN + '</div><div class="v num">' + pesos(comprasMes) + '</div></div>' +
       '<div class="stat"><div class="k">Pagos en ' + mesN + '</div><div class="v num" style="color:var(--good)">' + pesos(pagosMes) + '</div></div>' +
-      (c.persona ? '' : '<div class="stat"><div class="k">Intereses y cargos</div><div class="v num">' + pesos(c.intereses) + '</div><div class="d">intereses, seguros y comisiones</div></div>')));
+      (c.persona ? '' : '<div class="stat"><div class="k">Intereses y cargos</div><div class="v num">' + pesos(c.intereses) + '</div><div class="d">' +
+        (c.interesesEst > 0 ? 'incluye ' + pesos(c.interesesEst) + ' estimados de compras a cuotas' + (c.corteEst ? ' al corte del ' + fechaCorta(c.corteEst) : ' a la próxima cuota') : 'intereses, seguros y comisiones') + '</div></div>')));
 
     // Calendario: comprimido
     var vis = calendarioVisible(c, d.hoy);

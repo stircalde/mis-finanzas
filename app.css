@@ -319,3 +319,21 @@ body { min-height: 100vh; min-height: 100dvh; overscroll-behavior-y: contain; }
 .login .btn.primary { background: var(--accent); border-color: var(--accent); color: #fff; font-weight: 600; padding: 12px; }
 .err { color: var(--crit); font-size: 0.86rem; }
 .mama-row { border-color: rgba(242, 153, 74, 0.35); }
+
+/* v5.7 — tarjetas repartidas en PC y detalle de "Me deben" */
+@media (min-width: 900px) { .tiles { grid-template-columns: repeat(auto-fit, minmax(210px, 1fr)); gap: 14px; } }
+.owed-item.open .owed-row { border-bottom-left-radius: 0; border-bottom-right-radius: 0; }
+.owed-row[role="button"] { cursor: pointer; }
+.owed-row .chev { color: var(--muted); font-size: .8em; margin-left: 4px; }
+.owed-row .venc { color: var(--warn); font-weight: 600; }
+.deb { display: grid; gap: 8px; padding: 12px; border: 1px solid var(--line); border-top: 0; border-radius: 0 0 var(--r-sm) var(--r-sm); background: var(--surface); }
+.deb-c { padding: 10px 12px; border-radius: var(--r-sm); background: var(--surface-2); display: grid; gap: 3px; }
+.deb-c.done { opacity: .6; }
+.deb-t { display: flex; justify-content: space-between; gap: 10px; font-weight: 600; }
+.deb-s { font-size: .8rem; color: var(--muted); line-height: 1.45; }
+.deb-s b { color: var(--ink); }
+.deb-s .ent { font-size: .72rem; }
+.deb-sub { font-size: .72rem; text-transform: uppercase; letter-spacing: .06em; color: var(--muted); margin-top: 6px; }
+.deb-ab { font-weight: 500; font-size: .88rem; padding: 2px 4px; }
+.deb-ab b { color: var(--good); }
+.deb-nota { font-size: .82rem; color: var(--warn); padding: 2px 4px; }
