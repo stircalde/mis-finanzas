@@ -138,9 +138,13 @@
           if (/restringido/i.test(r.error || '')) { guardarLocal('clave', null); memoriaClave = null; return pedirClave('La clave no es correcta.'); }
           throw new Error(r.error || 'Error desconocido');
         }
+        var nuevo = JSON.stringify(r.datos), habia = !!datos, igual = habia && nuevo === JSON.stringify(datos);
         datos = r.datos; mesSel = datos.mes; sync = 'ok';
-        guardarLocal(k, JSON.stringify(datos));
-        pintar();
+        guardarLocal(k, nuevo);
+        // Si ya estabas viendo la app: sin cambios no se repinta nada; con cambios se repinta sin animación ni saltos.
+        if (igual) marcarSync();
+        else if (habia) pintarSuave();
+        else pintar();
       })
       .catch(function (e) {
         sync = 'off';
@@ -214,8 +218,20 @@
   function ocultarTip() { tip.hidden = true; }
   window.addEventListener('scroll', ocultarTip, { passive: true });
 
+  // Repinta en silencio (datos nuevos o cambio de tamaño): sin animación de entrada, en el mismo punto de la pantalla
+  // y sin cerrar lo que tengas abierto (si hay un detalle abierto, espera a que lo cierres).
+  var repintarAlCerrar = false;
+  function pintarSuave() {
+    if (hojaAbierta) { repintarAlCerrar = true; marcarSync(); return; }
+    var y = window.scrollY, w = document.querySelector('.wallet'), wx = w ? w.scrollLeft : 0;
+    pintar();
+    for (var i = 0; i < app.children.length; i++) app.children[i].style.animation = 'none';
+    window.scrollTo(0, y);
+    var w2 = document.querySelector('.wallet'); if (w2) w2.scrollLeft = wx;
+  }
   function pintar() {
     if (!datos) return;
+    repintarAlCerrar = false;
     ocultarTip();
     document.body.classList.toggle('oculto', oculto);
     var r = ruta();
@@ -505,7 +521,7 @@
   var ultimoAncho = window.innerWidth;
   window.addEventListener('resize', function () {
     if (!datos || Math.abs(window.innerWidth - ultimoAncho) < 40) return;
-    ultimoAncho = window.innerWidth; clearTimeout(window.__rz); window.__rz = setTimeout(pintar, 200);
+    ultimoAncho = window.innerWidth; clearTimeout(window.__rz); window.__rz = setTimeout(pintarSuave, 200);
   });
   function graficoBarras(opts) {
     var W = Math.round(Math.max(300, Math.min(640, opts.ancho || 640))), H = W < 480 ? 210 : 240, L = 54, R = 6, T = 10, B = 28;
@@ -1025,7 +1041,11 @@
     return s;
   }
   var hojaAbierta = null;
-  function cerrarHoja() { if (hojaAbierta) { hojaAbierta.remove(); hojaAbierta = null; document.body.classList.remove('con-hoja'); } }
+  function cerrarHoja() {
+    if (!hojaAbierta) return;
+    hojaAbierta.remove(); hojaAbierta = null; document.body.classList.remove('con-hoja');
+    if (repintarAlCerrar) setTimeout(pintarSuave, 0);
+  }
   function abrirPlan(p) {
     cerrarHoja();
     var pct = pctPlan(p);
@@ -1282,8 +1302,12 @@
   if (!DEMO && 'serviceWorker' in navigator && location.protocol === 'https:') {
     navigator.serviceWorker.register('sw.js').then(function (reg) { reg.update(); }).catch(function () { /* sin modo sin conexión */ });
     // Cuando llega una versión nueva de la app, se recarga sola una vez.
-    var hadCtrl = !!navigator.serviceWorker.controller, recargada = false;
-    navigator.serviceWorker.addEventListener('controllerchange', function () { if (hadCtrl && !recargada) { recargada = true; location.reload(); } });
+    // Cuando llega una versión nueva, se aplica sola, pero nunca mientras la estás usando:
+    // se recarga cuando sales de la app (o cambias de pestaña) y al volver ya está la nueva.
+    var hadCtrl = !!navigator.serviceWorker.controller, recargada = false, versionNueva = false;
+    var recargar = function () { if (!recargada) { recargada = true; location.reload(); } };
+    navigator.serviceWorker.addEventListener('controllerchange', function () { if (!hadCtrl) return; if (document.hidden) recargar(); else versionNueva = true; });
+    document.addEventListener('visibilitychange', function () { if (document.hidden && versionNueva) recargar(); });
   }
   if (!DEMO && !clave()) pedirClave();
   else cargar('');
