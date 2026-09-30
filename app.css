@@ -680,13 +680,13 @@ body.con-hoja .fab-wrap, body.con-reg .fab-wrap, .shell:has(#nav[hidden]) ~ .fab
 .campo { display: grid; gap: 6px; min-width: 0; }
 .campo > label { font-size: .8rem; font-weight: 600; color: var(--ink-2); }
 .campo .nota, .nota.solo { margin: 0; font-size: .76rem; color: var(--muted); }
-.in { width: 100%; min-width: 0; background: var(--surface-2); border: 1px solid var(--line-strong); color: var(--ink); border-radius: 12px; padding: 12px 13px; font: inherit; font-size: 1rem; }
-.in:focus { outline: none; border-color: var(--accent); box-shadow: 0 0 0 3px var(--accent-soft); }
-select.in { appearance: none; -webkit-appearance: none; padding-right: 38px; cursor: pointer; text-overflow: ellipsis;
+.reg-form .in { width: 100%; min-width: 0; background: var(--surface-2); border: 1px solid var(--line-strong); color: var(--ink); border-radius: 12px; padding: 12px 13px; font: inherit; font-size: 1rem; }
+.reg-form .in:focus { outline: none; border-color: var(--accent); box-shadow: 0 0 0 3px var(--accent-soft); }
+.reg-form select.in { appearance: none; -webkit-appearance: none; padding-right: 38px; cursor: pointer; text-overflow: ellipsis;
   background-image: linear-gradient(45deg, transparent 50%, var(--ink-2) 50%), linear-gradient(135deg, var(--ink-2) 50%, transparent 50%);
   background-position: calc(100% - 18px) 52%, calc(100% - 13px) 52%; background-size: 5px 5px; background-repeat: no-repeat; }
-select.in option, select.in optgroup { background: var(--surface); color: var(--ink); }
-input[type="date"].in { color-scheme: inherit; min-height: 48px; }
+.reg-form select.in option, .reg-form select.in optgroup { background: var(--surface); color: var(--ink); }
+.reg-form input[type="date"].in { color-scheme: inherit; min-height: 48px; }
 .money { position: relative; }
 .money span { position: absolute; left: 13px; top: 50%; transform: translateY(-50%); color: var(--muted); font-weight: 600; pointer-events: none; }
 .money .in { padding-left: 28px; font-variant-numeric: tabular-nums; }
