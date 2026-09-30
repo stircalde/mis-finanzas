@@ -573,3 +573,19 @@ body { min-height: 100vh; min-height: 100dvh; overscroll-behavior-y: contain; }
   .cal-glass .cal-d .marks i { width: 6px; height: 6px; }
   .cal-glass .cal-d .gv { margin-top: auto; }
 }
+/* celular: un punto por tipo, en fila abajo del día (sin tapar el número) */
+@media (max-width: 759px) {
+  .cal-glass .cal-d { padding: 5px 5px 6px; gap: 1px; }
+  .cal-glass .cal-d .marks { position: static; max-width: none; margin-top: auto; justify-content: flex-start; flex-wrap: nowrap; gap: 3px; }
+  .cal-glass .cal-d .gv { margin-top: auto; font-size: .58rem; line-height: 1.1; }
+  .cal-glass .cal-d .gv + .marks { margin-top: 2px; }
+}
+.gv .gv-s { display: none; }
+@media (max-width: 759px) { .gv .gv-l { display: none; } .gv .gv-s { display: inline; } .cal-glass .cal-d .gv { white-space: nowrap; font-size: .62rem; } }
+/* celular: en vez de puntos, una barrita de colores al borde inferior del día (un tramo por tipo) */
+@media (max-width: 759px) {
+  .cal-glass .cal-d { padding-bottom: 9px; }
+  .cal-glass .cal-d .marks { position: absolute; top: auto; left: 6px; right: 6px; bottom: 4px; max-width: none; margin: 0; display: flex; flex-wrap: nowrap; gap: 2px; height: 3px; }
+  .cal-glass .cal-d .marks i { flex: 1; width: auto; height: 3px; border-radius: 2px; box-shadow: none; }
+  .cal-glass .cal-d .marks i.pendiente { background: var(--crit); opacity: .75; box-shadow: none; }
+}

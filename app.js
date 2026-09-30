@@ -1095,6 +1095,7 @@
     if (m.tipo === 'Transferencia' && esDeuda(m.destino)) return 'pago';
     return 'mov';
   }
+  function unicos(l) { return l.filter(function (x, i) { return l.indexOf(x) === i; }); }
   function abrirHoja(html, onReady) {
     cerrarHoja();
     var hoja = el('<div class="sheet-bg" role="dialog" aria-modal="true"><div class="sheet glass-sheet">' + html + '</div></div>');
@@ -1126,7 +1127,7 @@
         if (es.length) {
           cls += ' con ' + (es.some(function (e) { return e.estado === 'vencido'; }) ? 't-vencido' : es.some(function (e) { return e.estado === 'pendiente'; }) ? 't-pendiente'
             : es.some(function (e) { return e.estado === 'pagado'; }) ? 't-pagado' : 't-ingreso');
-          inner = '<div class="marks">' + es.slice(0, 4).map(function (e) { return '<i class="' + e.estado + '"></i>'; }).join('') + '</div>' +
+          inner = '<div class="marks">' + unicos(es.map(function (e) { return e.estado; })).map(function (k) { return '<i class="' + k + '"></i>'; }).join('') + '</div>' +
             '<div class="labels">' + es.slice(0, 3).map(function (e) { return '<span class="' + e.estado + '">' + esc(e.nombre.replace(/^TC /, '')) + '</span>'; }).join('') + (es.length > 3 ? '<span class="mas">+' + (es.length - 3) + ' más</span>' : '') + '</div>';
         }
       } else {
@@ -1135,8 +1136,8 @@
           var a = gd[f] && maxG ? 0.08 + 0.32 * Math.sqrt(gd[f] / maxG) : 0;
           st = ' style="--heat:' + a.toFixed(2) + '"';
           cls += ' con det';
-          inner = (gd[f] ? '<div class="gv num">' + corto(gd[f]) + '</div>' : '') +
-            '<div class="marks">' + ms.slice(0, 4).map(function (m) { return '<i class="' + colorMov(m) + '"></i>'; }).join('') + '</div>' +
+          inner = (gd[f] ? '<div class="gv num"><span class="gv-l">' + corto(gd[f]) + '</span><span class="gv-s">' + (gd[f] >= 1e6 ? (gd[f] / 1e6).toFixed(1).replace('.', ',') + 'M' : Math.round(gd[f] / 1000) + 'k') + '</span></div>' : '') +
+            '<div class="marks">' + unicos(ms.map(colorMov)).map(function (k) { return '<i class="' + k + '"></i>'; }).join('') + '</div>' +
             '<div class="labels">' + ms.slice(0, 2).map(function (m) { return '<span class="' + colorMov(m) + '">' + esc(m.desc) + '</span>'; }).join('') + (ms.length > 2 ? '<span class="mas">+' + (ms.length - 2) + ' más</span>' : '') + '</div>';
         }
       }
