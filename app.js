@@ -297,22 +297,29 @@
     var disp = d.disponible || { valor: d.totalPlata, tienes: d.totalPlata, creditos: 0, fijos: 0 };
     var neg = disp.valor < 0;
     // Inicio simple: tu balance (lo que tienes en tus cuentas) y los ingresos y gastos del mes.
-    return el('<section class="hero hero-simple" aria-label="Resumen">' +
+    var nodo = el('<section class="hero hero-simple" aria-label="Resumen">' +
       '<svg class="ribbon" viewBox="0 0 800 300" preserveAspectRatio="none" aria-hidden="true"><defs><linearGradient id="rb" x1="0" x2="1"><stop offset="0" stop-color="#63d4ff" stop-opacity="0"/><stop offset=".55" stop-color="#9fe6ff" stop-opacity=".9"/><stop offset="1" stop-color="#ffffff" stop-opacity=".2"/></linearGradient><filter id="bl"><feGaussianBlur stdDeviation="6"/></filter></defs>' +
       '<path d="M-20 250 C 180 120, 340 330, 520 150 S 760 40, 840 90" stroke="url(#rb)" stroke-width="46" fill="none" filter="url(#bl)" opacity=".45"/>' +
       '<path d="M-20 240 C 180 110, 340 320, 520 140 S 760 30, 840 80" stroke="url(#rb)" stroke-width="1.5" fill="none"/></svg>' +
       '<div class="hero-left"><div class="disp bal-caja"><div class="eyebrow">Tu balance</div>' +
       '<div class="big num">' + pesos(d.totalPlata) + '</div>' +
       // Disponible para gastar: lo que tienes menos lo que pagas en los próximos 30 días (verde si alcanza, rojo si no).
-      '<div class="disp-caja ' + (neg ? 'mal' : 'bien') + '"><div class="dc-k">' + (neg ? 'Te falta para tus pagos de 30 días' : 'Disponible para gastar') + '</div>' +
-      '<div class="dc-v num">' + (neg ? '−' : '') + pesos(Math.abs(disp.valor)) + '</div>' +
-      '<div class="dc-d"><span>Créditos 30 d <b>−' + pesos(disp.creditos) + '</b></span>' + (disp.fijos ? '<span>Fijos 30 d <b>−' + pesos(disp.fijos) + '</b></span>' : '') + '</div></div>' +
+      // Pequeña y mínima: solo el número; al tocarla muestra de dónde sale (créditos y fijos de 30 días).
+      '<button type="button" class="disp-caja ' + (neg ? 'mal' : 'bien') + (dispAbierta ? ' abierta' : '') + '" aria-expanded="' + dispAbierta + '">' +
+      '<span class="dc-k">' + (neg ? 'Te falta para pagos de 30 d' : 'Disponible para gastar') + ICON.chevron + '</span>' +
+      '<span class="dc-v num">' + (neg ? '−' : '') + pesos(Math.abs(disp.valor)) + '</span>' +
+      '<span class="dc-d"><span>Tienes <b>' + pesos(disp.tienes) + '</b></span><span>Créditos 30 d <b>−' + pesos(disp.creditos) + '</b></span>' +
+      (disp.fijos ? '<span>Fijos 30 d <b>−' + pesos(disp.fijos) + '</b></span>' : '') + '</span></button>' +
       '</div></div>' +
       '<div><div class="eyebrow" style="margin-bottom:10px">' + cap(nombreMes(d.mes)) + '</div><div class="month-tiles dos">' +
       '<div class="tile"><div class="k">Ingresos</div><div class="v num">' + pesos(d.ingresos) + '</div><div class="d"><span>' + d.tiposIngreso.length + ' fuente' + (d.tiposIngreso.length === 1 ? '' : 's') + '</span></div></div>' +
       '<div class="tile"><div class="k">Gastos</div><div class="v num">' + pesos(d.gastos) + '</div><div class="d">' + deltaHtml + '</div></div>' +
       '</div></div></section>');
+    var caja = nodo.querySelector('.disp-caja');
+    caja.addEventListener('click', function () { dispAbierta = !dispAbierta; caja.classList.toggle('abierta', dispAbierta); caja.setAttribute('aria-expanded', String(dispAbierta)); });
+    return nodo;
   }
+  var dispAbierta = false;
 
   function tarjetaMarca(nombre, saldo, extra, onClick, serie) {
     var c = colorMarca(nombre);
