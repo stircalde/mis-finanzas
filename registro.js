@@ -375,7 +375,9 @@
   }
   function cerrar(desdeAtras) {
     if (!hoja) return;
-    hoja.remove(); hoja = null; cuerpo = null;
+    var h = hoja; hoja = null; cuerpo = null;
+    if (!desdeAtras && !window.matchMedia('(prefers-reduced-motion: reduce)').matches) { h.classList.add('cerrando'); h.style.pointerEvents = 'none'; setTimeout(function () { h.remove(); }, 320); }
+    else h.remove();
     document.body.classList.remove('con-reg');
     if (!desdeAtras && history.state && history.state.reg) { try { history.back(); } catch (e) { /* nada */ } }
   }

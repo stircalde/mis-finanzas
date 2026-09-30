@@ -792,3 +792,25 @@ body.con-hoja .fab-wrap, body.con-reg .fab-wrap, .shell:has(#nav[hidden]) ~ .fab
 .disp-caja .dc-k svg { transition: transform .42s cubic-bezier(.4, 0, .2, 1); }
 @media (prefers-reduced-motion: reduce) { .disp-caja .dc-d, .disp-caja .dc-k svg { transition: none; } }
 .disp-caja .dc-in b { color: #fff; font-weight: 600; }
+
+/* ===== v5.30: hojas de detalle que suben desde abajo, con el contenido apareciendo en cascada ===== */
+.sheet-bg { animation: fondo-in .32s ease both; }
+.sheet { animation: hoja-in .5s cubic-bezier(.2, .8, .2, 1) both; }
+@keyframes fondo-in { from { background-color: rgba(3, 8, 20, 0); backdrop-filter: blur(0); -webkit-backdrop-filter: blur(0); } }
+@keyframes hoja-in { from { transform: translateY(100%); } }
+.sheet > * { animation: pieza-in .45s cubic-bezier(.2, .8, .2, 1) both; }
+.sheet > :nth-child(1) { animation-delay: .08s; } .sheet > :nth-child(2) { animation-delay: .13s; } .sheet > :nth-child(3) { animation-delay: .18s; }
+.sheet > :nth-child(4) { animation-delay: .23s; } .sheet > :nth-child(5) { animation-delay: .28s; } .sheet > :nth-child(n+6) { animation-delay: .32s; }
+@keyframes pieza-in { from { opacity: 0; transform: translateY(14px); } }
+/* las cuotas del plan también entran una tras otra */
+.es-plan .cuotas > .cuota:nth-child(1) { animation: pieza-in .45s .22s cubic-bezier(.2, .8, .2, 1) both; }
+.es-plan .cuotas > .cuota:nth-child(2) { animation: pieza-in .45s .28s cubic-bezier(.2, .8, .2, 1) both; }
+.es-plan .cuotas > .cuota:nth-child(3) { animation: pieza-in .45s .34s cubic-bezier(.2, .8, .2, 1) both; }
+.es-plan .cuotas > .cuota:nth-child(n+4) { animation: pieza-in .45s .38s cubic-bezier(.2, .8, .2, 1) both; }
+@media (min-width: 760px) { @keyframes hoja-in { from { transform: translateY(40px) scale(.96); opacity: 0; } } }
+.sheet-bg.cerrando { animation: fondo-out .3s ease both; }
+.sheet-bg.cerrando .sheet { animation: hoja-out .3s cubic-bezier(.4, 0, 1, 1) both; }
+@keyframes fondo-out { to { background-color: rgba(3, 8, 20, 0); backdrop-filter: blur(0); -webkit-backdrop-filter: blur(0); } }
+@keyframes hoja-out { to { transform: translateY(100%); } }
+@media (min-width: 760px) { @keyframes hoja-out { to { transform: translateY(30px) scale(.97); opacity: 0; } } }
+@media (prefers-reduced-motion: reduce) { .sheet-bg, .sheet, .sheet > *, .es-plan .cuotas > .cuota { animation: none !important; } }

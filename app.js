@@ -1044,10 +1044,15 @@
     return s;
   }
   var hojaAbierta = null;
-  function cerrarHoja() {
+  // Cierra el detalle. Con "animar" (cuando lo cierras tú) baja suavemente; al cambiar de pantalla se quita al instante.
+  function cerrarHoja(animar) {
     if (!hojaAbierta) return;
-    hojaAbierta.remove(); hojaAbierta = null; document.body.classList.remove('con-hoja');
-    if (repintarAlCerrar) setTimeout(pintarSuave, 0);
+    var h = hojaAbierta; hojaAbierta = null; document.body.classList.remove('con-hoja');
+    if (animar === true && !window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+      h.classList.add('cerrando'); h.style.pointerEvents = 'none';
+      setTimeout(function () { h.remove(); }, 320);
+    } else h.remove();
+    if (repintarAlCerrar) setTimeout(pintarSuave, animar === true ? 330 : 0);
   }
   function abrirPlan(p) {
     cerrarHoja();
@@ -1067,14 +1072,14 @@
       (p.estimado ? 'Fechas estimadas con el ciclo de la tarjeta. ' : '') + 'Las cuotas se marcan pagadas a medida que registras pagos al crédito.</p>' +
       '<button type="button" class="btn" data-ir>Ver ' + esc(p.cuenta) + '</button></div></div>');
     hoja.addEventListener('click', function (e) {
-      if (e.target === hoja || e.target.closest('[data-cerrar]')) cerrarHoja();
+      if (e.target === hoja || e.target.closest('[data-cerrar]')) cerrarHoja(true);
       else if (e.target.closest('[data-ir]')) { var dest = '#/credito/' + encodeURIComponent(p.cuenta); cerrarHoja(); if (location.hash !== dest) ir(dest); }
     });
     document.body.appendChild(hoja); document.body.classList.add('con-hoja'); hojaAbierta = hoja;
     var b = hoja.querySelector('[data-cerrar]'); if (b) b.focus();
   }
   document.addEventListener('keydown', function (e) {
-    if (e.key === 'Escape') cerrarHoja();
+    if (e.key === 'Escape') cerrarHoja(true);
     var r = e.target.closest && e.target.closest('.tx-row[data-plan]');
     if (r && (e.key === 'Enter' || e.key === ' ')) { e.preventDefault(); if (PLANES[r.dataset.plan]) abrirPlan(PLANES[r.dataset.plan]); }
   });
@@ -1229,7 +1234,7 @@
   function abrirHoja(html, onReady) {
     cerrarHoja();
     var hoja = el('<div class="sheet-bg" role="dialog" aria-modal="true"><div class="sheet glass-sheet">' + html + '</div></div>');
-    hoja.addEventListener('click', function (e) { if (e.target === hoja || e.target.closest('[data-cerrar]')) cerrarHoja(); });
+    hoja.addEventListener('click', function (e) { if (e.target === hoja || e.target.closest('[data-cerrar]')) cerrarHoja(true); });
     document.body.appendChild(hoja); document.body.classList.add('con-hoja'); hojaAbierta = hoja;
     if (onReady) onReady(hoja);
   }
