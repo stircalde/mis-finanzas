@@ -1,0 +1,36 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<title>Mis finanzas</title>
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#050912">
+<meta name="description" content="Tus cuentas, créditos, pagos y gastos en un solo lugar.">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" href="icons/icon-192.png">
+<link rel="apple-touch-icon" href="icons/icon-180.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Sora:wght@400;500;600;700&family=Figtree:wght@400;500;600;700&display=swap">
+<link rel="stylesheet" href="app.css">
+</head>
+<body>
+<div class="shell">
+  <nav class="nav" id="nav" aria-label="Secciones">
+    <div class="brand"><img src="icons/icon-192.png" alt="" width="32" height="32"><span>Mis finanzas</span></div>
+    <a href="#/inicio" data-v="inicio"><svg viewBox="0 0 24 24"><path d="M3 10.5 12 3l9 7.5V20a1 1 0 0 1-1 1h-5v-6H9v6H4a1 1 0 0 1-1-1z"/></svg><span>Inicio</span></a>
+    <a href="#/creditos" data-v="creditos"><svg viewBox="0 0 24 24"><rect x="2.5" y="5" width="19" height="14" rx="2.5"/><path d="M2.5 10h19M6 15h4"/></svg><span>Créditos</span></a>
+    <a href="#/movimientos" data-v="movimientos"><svg viewBox="0 0 24 24"><path d="M4 6h16M4 12h16M4 18h10"/></svg><span>Movimientos</span></a>
+    <a href="#/medeben" data-v="medeben"><svg viewBox="0 0 24 24"><circle cx="9" cy="8" r="3.5"/><path d="M2.5 20c0-3.6 2.9-6 6.5-6s6.5 2.4 6.5 6"/><circle cx="17.5" cy="9" r="2.5"/><path d="M16 14.2c3.2-.3 5.5 1.8 5.5 5"/></svg><span>Me deben</span></a>
+  </nav>
+  <main class="page" id="app" tabindex="-1">
+    <div class="state"><div class="spinner"></div>Cargando tus finanzas…</div>
+  </main>
+</div>
+<div class="tip" id="tip" hidden></div>
+<script src="logos.js"></script>
+<script src="app.js"></script>
+</body>
+</html>
