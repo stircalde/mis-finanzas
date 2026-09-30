@@ -642,6 +642,7 @@
     if (esDeuda(m.cuenta)) return 'Avances';
     return 'Movimientos entre cuentas';
   }
+  var EMOJI_GRUPO = { 'Retiros en efectivo': '🏧', 'Movimientos entre cuentas': '🔁', 'Pagos de créditos': '💳', 'Avances': '💸', 'Ajustes de saldo': '⚖️', 'Préstamos con personas': '🤝', 'Me pagaron': '🤝' };
   function esDeuda(n) { var e = ent(n); return !!(e && e.tipo === 'Deuda') || n === 'Mamá'; }
   function filaMovimiento(m, ctx) {
     var meta = [], signo = '', cls = '', extra = '';
@@ -675,7 +676,9 @@
       else if (m.tipo === 'Transferencia' && m.cuenta === ctx) { signo = '+'; cls = ''; }
       else if (m.tipo === 'Ingreso') { signo = '−'; cls = 'in'; }
     }
+    if (m.tipo !== 'Gasto' && m.tipo !== 'Ingreso') meta.splice(m.hist ? 2 : 1, 0, '<span class="cat-mov">' + esc(grupoMov(m)) + '</span>');
     var ico = icoComercio(m);
+    if (!ico && EMOJI_GRUPO[grupoMov(m)] && (m.tipo === 'Transferencia' || m.tipo === 'Ajuste')) m = Object.assign({}, m, { emoji: EMOJI_GRUPO[grupoMov(m)] });
     var plan = m.id && PLANES['m:' + m.id];
     return '<div class="tx-row' + (plan ? ' tx-plan' : '') + '"' + (plan ? ' data-plan="' + esc(plan.id) + '" role="button" tabindex="0"' : '') + '>' + (ico ? '<div aria-hidden="true">' + ico + '</div>' : '<div class="ico" aria-hidden="true">' + esc(m.emoji) + '</div>') + '<div style="min-width:0"><div class="d">' + esc(m.desc) + '</div>' +
       '<div class="m">' + meta.join('<span>·</span>') + '</div>' + (plan ? miniPlan(plan) : '') + '</div><div class="a ' + cls + '">' + signo + pesos(Math.abs(m.monto)).replace('−', '') + extra + '</div></div>';
@@ -701,18 +704,27 @@
         return '<option value="' + esc(k) + '"' + (k === sel ? ' selected' : '') + '>' + esc(k.length === 7 && /^\d{4}-/.test(k) ? cap(nombreMes(k)) : k) + '</option>';
       }).join('');
     };
+    // Categorías de gastos e ingresos primero; luego los movimientos sin categoría (entre cuentas, retiros, pagos…).
+    var optCat = function (obj, sel) {
+      var o = function (k) { return '<option value="' + esc(k) + '"' + (k === sel ? ' selected' : '') + '>' + (EMOJI_GRUPO[k] ? EMOJI_GRUPO[k] + ' ' : '') + esc(k) + '</option>'; };
+      var ks = Object.keys(obj).sort(), otros = ks.filter(function (k) { return EMOJI_GRUPO[k]; }), cat = ks.filter(function (k) { return !EMOJI_GRUPO[k]; });
+      return '<option value="">Categoría: todas</option><optgroup label="Gastos e ingresos">' + cat.map(o).join('') + '</optgroup>' +
+        (otros.length ? '<optgroup label="Movimientos de plata">' + otros.map(o).join('') + '</optgroup>' : '');
+    };
+    ['Movimientos entre cuentas', 'Retiros en efectivo'].forEach(function (k) { cats[k] = 1; });
     var n = el('<section class="card"><div class="card-h"><h2>Movimientos</h2><span class="aside total-filtro"></span></div>' +
       '<div class="buscador"><label class="search">' + ICON.search + '<input type="search" placeholder="Buscar: Ara, Temu, gasolina…" value="' + esc(busq.q) + '" aria-label="Buscar movimientos"></label>' +
       '<div class="filters" role="group" aria-label="Tipo">' + ['todos:Todos', 'Gasto:Gastos', 'Ingreso:Entradas', 'Transferencia:Pagos y transferencias'].map(function (x) {
         var p = x.split(':'); return '<button type="button" data-f="' + p[0] + '" aria-pressed="' + (busq.tipo === p[0]) + '">' + p[1] + '</button>';
       }).join('') + '</div>' +
-      '<div class="fil-row"><select class="select" data-k="cat" aria-label="Categoría">' + opt(cats, busq.cat, 'Categoría: todas') + '</select>' +
+      '<div class="fil-row"><select class="select" data-k="cat" aria-label="Categoría">' + optCat(cats, busq.cat) + '</select>' +
       '<select class="select" data-k="cuenta" aria-label="Cuenta">' + opt(ctas, busq.cuenta, 'Cuenta: todas') + '</select>' +
       '<select class="select" data-k="mes" aria-label="Mes">' + opt(meses, busq.mes, 'Mes: todos') + '</select></div></div>' +
       '<div class="tx"></div></section>');
     app.appendChild(n);
     var cont = n.querySelector('.tx'), total = n.querySelector('.total-filtro');
-    function filtrar() {
+    function filtrar(animar) {
+      if (animar) { animarAltura(cont, function () { filtrar(); }); entrada(cont, 'cambia', ':scope > *'); return; }
       var q = norm(busq.q);
       var items = d.movimientos.filter(function (m) {
         if (busq.tipo === 'Gasto' && m.tipo !== 'Gasto') return false;
@@ -740,10 +752,10 @@
       b.addEventListener('click', function () {
         busq.tipo = b.dataset.f;
         n.querySelectorAll('.filters button').forEach(function (x) { x.setAttribute('aria-pressed', String(x === b)); });
-        filtrar();
+        filtrar(true);
       });
     });
-    n.querySelectorAll('select').forEach(function (s) { s.addEventListener('change', function () { busq[s.dataset.k] = s.value; filtrar(); }); });
+    n.querySelectorAll('select').forEach(function (s) { s.addEventListener('change', function () { busq[s.dataset.k] = s.value; filtrar(true); }); });
     filtrar();
   }
 
@@ -827,17 +839,19 @@
       } else linea = pagado ? 'Pagado' : 'De una sola vez' + (c.pendiente < c.total ? ' · te abonó ' + pesos(c.total - c.pendiente) : '');
       var pct = c.total > 0 ? Math.round((c.total - c.pendiente) / c.total * 100) : 100;
       var h = '<div class="deb-c' + (pagado ? ' done' : '') + (abre ? ' abre' : '') + (abierto ? ' open' : '') + '"' + (abre ? ' data-debc="' + esc(k) + '" role="button" tabindex="0" aria-expanded="' + !!abierto + '"' : '') + '>' +
-        '<div class="deb-t"><span>' + esc(c.desc) + (abre ? ' <span class="chev">' + (abierto ? '▾' : '▸') + '</span>' : '') + '</span><b class="num">' + pesos(pagado ? c.total : c.pendiente) + '</b></div>' +
+        '<div class="deb-t"><span>' + esc(c.desc) + (abre ? ' <span class="chev">' + ICON.chevron + '</span>' : '') + '</span><b class="num">' + pesos(pagado ? c.total : c.pendiente) + '</b></div>' +
         '<div class="deb-s">' + (c.fecha ? fechaCorta(c.fecha) + ' · ' : '') + (c.cuenta ? etiqueta(c.cuenta) + ' · ' : '') + 'le tocó ' + pesos(c.total) + '</div>' +
         (c.cuotas > 1 && !pagado ? '<div class="plan-bar sm"><i style="width:' + pct + '%"></i></div>' : '') +
         '<div class="deb-s">' + linea + '</div>';
-      if (abierto) {
+      if (abre) {
+        h += '<div class="plegable' + (abierto ? ' abierta' : '') + '"><div class="plegable-in">';
         h += segmentos(c.detalle.map(function (u) { return { estado: u.pagado >= u.monto ? 'pagada' : u.fecha && u.fecha < datos.hoy ? 'vencida' : 'pendiente' }; }));
         h += '<div class="cuotas">' + c.detalle.map(function (u, j) {
           var est = u.pagado >= u.monto ? 'pagada' : u.fecha && u.fecha < datos.hoy ? 'vencida' : 'pendiente';
           return filaCuotaPlan({ n: j + 1, fecha: u.fecha, monto: u.monto, pagado: u.pagado, estado: est });
         }).join('') + '</div>';
         if (c.plan && PLANES[c.plan]) h += '<button type="button" class="btn link" data-plan="' + esc(c.plan) + '">Ver la compra completa en ' + esc(PLANES[c.plan].cuenta) + '</button>';
+        h += '</div></div>';
       }
       return h + '</div>';
     }
@@ -848,16 +862,44 @@
     if (p.pagados && p.pagados.length) h += '<div class="deb-sub">Ya saldado</div>' + p.pagados.map(function (c, i) { return concepto(c, true, 'p' + i); }).join('');
     return h + '</div>';
   }
+  // Abre o cierra una sección con la animación suave (sin repintar la página).
+  /** Cambia el contenido de un bloque y anima su alto (del alto viejo al nuevo) en vez de saltar. */
+  function animarAltura(nodo, cambio, desde) {
+    var h0 = desde != null ? desde : nodo.getBoundingClientRect().height;
+    nodo.style.transition = 'none'; nodo.style.height = ''; nodo.style.overflow = '';
+    cambio();
+    var h1 = nodo.getBoundingClientRect().height;
+    if (Math.abs(h1 - h0) < 2 || matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+    nodo.style.height = h0 + 'px'; nodo.style.overflow = 'hidden';
+    void nodo.offsetHeight;
+    nodo.style.transition = 'height .42s cubic-bezier(.4, 0, .2, 1)';
+    nodo.style.height = h1 + 'px';
+    clearTimeout(nodo._tAlto);
+    nodo._tAlto = setTimeout(function () { nodo.style.height = ''; nodo.style.overflow = ''; nodo.style.transition = ''; }, 460);
+  }
+  /** Reinicia la animación de entrada escalonada de los hijos (clase + --i). */
+  function entrada(nodo, clase, hijos) {
+    nodo.classList.remove(clase);
+    nodo.querySelectorAll(hijos).forEach(function (x, i) { x.style.setProperty('--i', Math.min(i, 14)); });
+    void nodo.offsetWidth;
+    nodo.classList.add(clase);
+  }
+  function plegar(item, clave, cabeza) {
+    var v = !abiertos[clave]; abiertos[clave] = v;
+    item.classList.toggle('open', v);
+    var p = item.querySelector(':scope > .plegable'); if (p) p.classList.toggle('abierta', v);
+    if (cabeza) cabeza.setAttribute('aria-expanded', String(v));
+  }
   function vistaMeDeben() {
     var d = datos;
     app.appendChild(barraSuperior(d, false));
     var html = d.meDeben.map(function (p, i) {
       var abierto = abiertos['deb:' + p.persona];
       return '<div class="owed-item' + (abierto ? ' open' : '') + '"><div class="owed-row" role="button" tabindex="0" aria-expanded="' + !!abierto + '" data-i="' + i + '"><div><div class="p">' + esc(p.persona) +
-        ' <span class="chev">' + (abierto ? '▾' : '▸') + '</span></div><div class="s">Le cubriste ' + pesos(p.prestado) +
+        ' <span class="chev">' + ICON.chevron + '</span></div><div class="s">Le cubriste ' + pesos(p.prestado) +
         (p.pagado ? ' · te pagó ' + pesos(p.pagado) : '') + (p.vencido > 0 ? ' · <b class="venc">vencido ' + pesos(p.vencido) + '</b>' : '') +
         (tambienLeDebo(d, p.persona) ? ' · <b class="lede">tú le debes ' + pesos(tambienLeDebo(d, p.persona)) + '</b>' : '') + '</div></div><div class="v">' + pesos(p.saldo) + '</div></div>' +
-        (abierto ? detalleDeudor(p) : '') + '</div>';
+        '<div class="plegable' + (abierto ? ' abierta' : '') + '"><div class="plegable-in">' + detalleDeudor(p) + '</div></div></div>';
     }).join('');
     var lesDebo = listaLesDebo(d);
     var totLes = lesDebo.reduce(function (s, x) { return s + x.saldo; }, 0), neto = d.totalMeDeben - totLes;
@@ -869,12 +911,12 @@
       '<div class="owed">' + (html || '<div class="empty">Nadie te debe plata en este momento.</div>') + '</div>' +
       '<p class="hint">Toca un nombre para ver por qué te debe. Cuando alguien te pague, regístralo en el botón del celular: Ingreso → 🤝 Me pagaron.</p></section>');
     sec.querySelectorAll('.owed-row[data-i]').forEach(function (r) {
-      function tocar() { var k = 'deb:' + d.meDeben[+r.dataset.i].persona; abiertos[k] = !abiertos[k]; pintar(); }
+      function tocar() { var k = 'deb:' + d.meDeben[+r.dataset.i].persona; plegar(r.parentNode, k, r); }
       r.addEventListener('click', tocar);
       r.addEventListener('keydown', function (e) { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); tocar(); } });
     });
     sec.querySelectorAll('[data-debc]').forEach(function (r) {
-      function tocar(e) { if (e.target.closest('[data-plan]')) return; abiertos[r.dataset.debc] = !abiertos[r.dataset.debc]; var y = window.scrollY; pintar(); window.scrollTo(0, y); }
+      function tocar(e) { var pl = e.target.closest('.plegable'); if (e.target.closest('[data-plan]') || (pl && r.contains(pl))) return; e.stopPropagation(); plegar(r, r.dataset.debc, r); }
       r.addEventListener('click', tocar);
       r.addEventListener('keydown', function (e) { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); tocar(e); } });
     });
@@ -889,23 +931,23 @@
       if (x.devuelto) sub.push('le devolviste ' + pesos(x.devuelto));
       if (x.teDebe) sub.push('<b class="venc2">te debe ' + pesos(x.teDebe) + '</b>');
       var det = '';
-      if (abierto) {
+      {
         var filas = [];
         x.prestamos.forEach(function (m) { filas.push('<div class="deb-t deb-ab"><span>' + fechaCorta(m.fecha) + ' · ' + esc(m.desc) + ' → ' + esc(m.cuenta) + '</span><b class="num">' + pesos(m.monto) + '</b></div>'); });
         var h2 = '<div class="deb">' + (filas.length ? '<div class="deb-sub">Lo que te prestó</div>' + filas.join('') : '');
         if (x.devoluciones.length) h2 += '<div class="deb-sub">Lo que le has devuelto</div>' + x.devoluciones.map(function (m) { return '<div class="deb-t deb-ab"><span>' + fechaCorta(m.fecha) + ' · desde ' + esc(m.cuenta) + '</span><b class="num">−' + pesos(m.monto) + '</b></div>'; }).join('');
         if (x.aFavor) h2 += '<div class="deb-nota">Te pagó ' + pesos(x.aFavor) + ' de más; quedó como saldo a su favor.</div>';
         if (x.credito) h2 += '<button type="button" class="btn link" data-mama>Ver los préstamos de mamá para tus créditos</button>';
-        det = h2 + '</div>';
+        det = '<div class="plegable' + (abierto ? ' abierta' : '') + '"><div class="plegable-in">' + h2 + '</div></div></div>';
       }
       return '<div class="owed-item' + (abierto ? ' open' : '') + '"><div class="owed-row les" role="button" tabindex="0" data-l="' + i + '"><div><div class="p">' + (x.mama ? '👩 ' : '') + esc(x.persona) +
-        ' <span class="chev">' + (abierto ? '▾' : '▸') + '</span></div><div class="s">' + sub.join(' · ') + '</div></div><div class="v">' + pesos(x.saldo) + '</div></div>' + det + '</div>';
+        ' <span class="chev">' + ICON.chevron + '</span></div><div class="s">' + sub.join(' · ') + '</div></div><div class="v">' + pesos(x.saldo) + '</div></div>' + det + '</div>';
     }).join('');
     var sl = el('<section class="card"><div class="card-h"><h2>Les debes</h2><span class="aside">Total <b>' + pesos(totLes) + '</b></span></div>' +
       '<div class="owed">' + (htmlL || '<div class="empty">No le debes plata a nadie. 🙌</div>') + '</div>' +
       '<p class="hint">Si alguien te presta: botón del celular → Ingreso → 🙋 Alguien me prestó plata. Para devolverle: 💳 Pagar → 🙋 Devolverle a…</p></section>');
     sl.querySelectorAll('.owed-row[data-l]').forEach(function (r) {
-      r.addEventListener('click', function () { var k = 'les:' + lesDebo[+r.dataset.l].persona; abiertos[k] = !abiertos[k]; var y = window.scrollY; pintar(); window.scrollTo(0, y); });
+      r.addEventListener('click', function () { plegar(r.parentNode, 'les:' + lesDebo[+r.dataset.l].persona, r); });
     });
     sl.querySelectorAll('[data-mama]').forEach(function (b) { b.addEventListener('click', function (e) { e.stopPropagation(); ir('#/credito/Mam%C3%A1'); }); });
     app.appendChild(sl);
@@ -1399,13 +1441,20 @@
       var es = porDia[f] || [];
       cont.querySelectorAll('.ev').forEach(function (b) { b.addEventListener('click', function () { cerrarHoja(); ir(es[+b.dataset.i].link); }); });
     }
+    var diaBox = null;
+    // En PC el panel del día se ajusta de alto con suavidad y su contenido entra de derecha a izquierda.
+    function pintarDia(animar) {
+      if (!ancho || !calSel) return;
+      var nuevo = !diaBox;
+      if (nuevo) { diaBox = el('<section class="card glass-card dia-card"></section>'); lado.insertBefore(diaBox, lado.firstChild); }
+      var llenar = function () { diaBox.innerHTML = contenidoDia(calSel); conectar(diaBox, calSel); };
+      if (!animar) { llenar(); return; }
+      animarAltura(diaBox, llenar, nuevo ? 0 : null);
+      entrada(diaBox, 'entra', '.sheet-h, .cal-evs > *, .tx > *, .dia-tot, .empty, .hint');
+    }
     function pintarLado() {
-      lado.innerHTML = '';
-      if (ancho && calSel) {
-        var box = el('<section class="card glass-card dia-card">' + contenidoDia(calSel) + '</section>');
-        conectar(box, calSel);
-        lado.appendChild(box);
-      }
+      lado.innerHTML = ''; diaBox = null;
+      pintarDia(false);
       var prox = ev.filter(function (e) { return e.fecha >= d.hoy && e.estado === 'pendiente'; }).sort(function (a, b) { return a.fecha < b.fecha ? -1 : 1; }).slice(0, 8);
       var venc = ev.filter(function (e) { return e.estado === 'vencido'; });
       var box2 = el('<section class="card glass-card"><div class="card-h"><h2>Lo que viene</h2>' + (venc.length ? '<span class="chip crit">' + venc.length + ' vencido' + (venc.length === 1 ? '' : 's') + '</span>' : '') + '</div><div class="cal-evs sm">' +
@@ -1422,10 +1471,12 @@
       b.addEventListener('click', function () {
         var f = b.dataset.f, es = porDia[f] || [];
         if (ancho && calModo === 'pagos' && calSel === f && es.length === 1) { ir(es[0].link); return; }
+        var mismo = calSel === f;
         calSel = f;
         sec.querySelectorAll('.cal-d.sel').forEach(function (x) { x.classList.remove('sel'); });
         b.classList.add('sel');
-        if (ancho) pintarLado();
+        if (b.classList.contains('con')) { b.classList.remove('pulso'); void b.offsetWidth; b.classList.add('pulso'); }
+        if (ancho) { if (!mismo) pintarDia(true); }
         else abrirHoja(contenidoDia(f), function (h) { conectar(h, f); });
       });
     });

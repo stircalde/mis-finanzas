@@ -324,7 +324,7 @@ body { min-height: 100vh; min-height: 100dvh; overscroll-behavior-y: contain; }
 @media (min-width: 900px) { .tiles { grid-template-columns: repeat(auto-fit, minmax(210px, 1fr)); gap: 14px; } }
 .owed-item.open .owed-row { border-bottom-left-radius: 0; border-bottom-right-radius: 0; }
 .owed-row[role="button"] { cursor: pointer; }
-.owed-row .chev { color: var(--muted); font-size: .8em; margin-left: 4px; }
+.owed-row .chev { color: var(--muted); margin-left: 4px; display: inline-grid; place-items: center; }
 .owed-row .venc { color: var(--warn); font-weight: 600; }
 .deb { display: grid; gap: 8px; padding: 12px; border: 1px solid var(--line); border-top: 0; border-radius: 0 0 var(--r-sm) var(--r-sm); background: var(--surface); }
 .deb-c { padding: 10px 12px; border-radius: var(--r-sm); background: var(--surface-2); display: grid; gap: 3px; }
@@ -416,7 +416,7 @@ body { min-height: 100vh; min-height: 100dvh; overscroll-behavior-y: contain; }
 .btn.link { background: none; border: 0; color: var(--accent-glow); padding: 6px 0; font-weight: 600; cursor: pointer; text-align: left; }
 .deb-c.abre { cursor: pointer; }
 .deb-c.open { outline: 1px solid var(--line-strong); }
-.deb-c .chev { color: var(--muted); font-size: .8em; }
+.deb-c .chev { color: var(--muted); display: inline-grid; place-items: center; }
 .deb-c .segs { margin-top: 6px; }
 .deb-c .cuotas { margin-top: 6px; }
 
@@ -863,3 +863,19 @@ body.con-hoja .fab-wrap, body.con-reg .fab-wrap, .shell:has(#nav[hidden]) ~ .fab
 .op.swatch[aria-pressed="true"] { border-color: var(--ink); background: var(--sw); outline: 2px solid var(--accent-glow); outline-offset: 1px; }
 .reg-pie .adm-btn { margin-top: 8px; }
 .adm-form input:disabled { opacity: .6; }
+
+/* ============ v5.37: favores, movimientos y calendario con animación ============ */
+.owed-row .chev svg, .deb-c .chev svg { width: 14px; height: 14px; fill: none; stroke: currentColor; stroke-width: 2.2; stroke-linecap: round; stroke-linejoin: round;
+  transform: rotate(-90deg); transition: transform .45s cubic-bezier(.4, 0, .2, 1); }
+.owed-item.open > .owed-row .chev svg, .deb-c.open .chev svg { transform: none; }
+@keyframes txEntra { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: none; } }
+@keyframes ladoEntra { from { opacity: 0; transform: translateX(34px); } to { opacity: 1; transform: none; } }
+@keyframes pulsoDia { 0% { transform: scale(1); } 40% { transform: scale(.93); } 100% { transform: scale(1); } }
+.tx.cambia > * { animation: txEntra .42s cubic-bezier(.2, .7, .2, 1) both; animation-delay: calc(var(--i, 0) * 28ms); }
+.dia-card.entra .sheet-h, .dia-card.entra .cal-evs > *, .dia-card.entra .tx > *, .dia-card.entra .dia-tot, .dia-card.entra .empty, .dia-card.entra .hint {
+  animation: ladoEntra .5s cubic-bezier(.2, .7, .2, 1) both; animation-delay: calc(var(--i, 0) * 45ms); }
+.cal-d.pulso { animation: pulsoDia .32s ease-out; }
+.tx-row .m .cat-mov { color: var(--ink-2); }
+@media (prefers-reduced-motion: reduce) {
+  .tx.cambia > *, .dia-card.entra *, .cal-d.pulso { animation: none !important; }
+}

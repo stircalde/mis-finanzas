@@ -50,7 +50,9 @@ window.LOGOS = (function () {
     { p: /\bsmart ?fit\b/, img: L.smartfit, txt: 'SF' },
     { p: /\bmovistar\b/, img: L.movistar, txt: 'MO' },
     { p: /\bhevy\b/, img: L.hevy, txt: 'HV' },
-    { p: /\bmovies/, img: L.movies, txt: 'MV' }
+    { p: /\bmovies/, img: L.movies, txt: 'MV' },
+    { p: /\b(saraluz|sara luz|l ?& ?h|lyh)\b/, img: 'logos/lyh.png', txt: 'LH' },
+    { p: /\bcalzatodo\b/, img: 'logos/calzatodo.png', txt: 'CA' }
   ];
   return {
     'Nequi': L.nequi,
