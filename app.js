@@ -1223,7 +1223,10 @@
 
   /* ---------- arranque ---------- */
   if (!DEMO && 'serviceWorker' in navigator && location.protocol === 'https:') {
-    navigator.serviceWorker.register('sw.js').catch(function () { /* sin modo sin conexión */ });
+    navigator.serviceWorker.register('sw.js').then(function (reg) { reg.update(); }).catch(function () { /* sin modo sin conexión */ });
+    // Cuando llega una versión nueva de la app, se recarga sola una vez.
+    var hadCtrl = !!navigator.serviceWorker.controller, recargada = false;
+    navigator.serviceWorker.addEventListener('controllerchange', function () { if (hadCtrl && !recargada) { recargada = true; location.reload(); } });
   }
   if (!DEMO && !clave()) pedirClave();
   else cargar('');

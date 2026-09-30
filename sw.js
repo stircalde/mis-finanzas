@@ -1,9 +1,9 @@
 // Service worker: la app abre al instante y sin conexión; los datos siempre se piden en vivo.
-const VERSION = 'mf-v5-15';
+const VERSION = 'mf-v5-16';
 const ARCHIVOS = ['./', 'index.html', 'app.css', 'app.js', 'logos.js', 'manifest.webmanifest', 'icons/icon-192.png', 'icons/icon-512.png'];
 
 self.addEventListener('install', (e) => {
-  e.waitUntil(caches.open(VERSION).then((c) => c.addAll(ARCHIVOS)).then(() => self.skipWaiting()));
+  e.waitUntil(caches.open(VERSION).then((c) => c.addAll(ARCHIVOS.map((u) => new Request(u, { cache: 'reload' })))).then(() => self.skipWaiting()));
 });
 self.addEventListener('activate', (e) => {
   e.waitUntil(caches.keys().then((ks) => Promise.all(ks.filter((k) => k !== VERSION).map((k) => caches.delete(k)))).then(() => self.clients.claim()));
@@ -20,7 +20,7 @@ self.addEventListener('fetch', (e) => {
   }
   // Archivos de la app: red primero (para recibir mejoras), caché si no hay conexión.
   if (url.origin === self.location.origin) {
-    e.respondWith(fetch(e.request).then((r) => { const copia = r.clone(); caches.open(VERSION).then((c) => c.put(e.request, copia)); return r; })
+    e.respondWith(fetch(e.request, { cache: 'no-cache' }).then((r) => { const copia = r.clone(); caches.open(VERSION).then((c) => c.put(e.request, copia)); return r; })
       .catch(() => caches.match(e.request).then((hit) => hit || caches.match('index.html'))));
   }
 });
