@@ -761,3 +761,8 @@ body.con-hoja .fab-wrap, body.con-reg .fab-wrap, .shell:has(#nav[hidden]) ~ .fab
   color: #eaf1ff; font: 600 .82rem var(--font-body); cursor: pointer; }
 .bol-ojo svg { width: 17px; height: 17px; fill: none; stroke: currentColor; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }
 :root[data-theme="light"] .bol-bolsa { filter: drop-shadow(0 -8px 14px rgba(20, 30, 60, .35)); }
+
+/* ===== v5.25: inicio simple (balance + ingresos y gastos del mes) ===== */
+@media (min-width: 560px) { .month-tiles.dos { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+@media (min-width: 900px) { .hero.hero-simple { grid-template-columns: 1fr 1fr; align-items: center; } }
+:root[data-theme="light"] .hero .big, :root[data-theme="light"] .hero .tile .v { color: #fff; }
