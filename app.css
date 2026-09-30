@@ -607,3 +607,11 @@ body { min-height: 100vh; min-height: 100dvh; overscroll-behavior-y: contain; }
 /* barra inferior en celulares angostos: etiquetas en una sola línea */
 .nav a span { white-space: nowrap; }
 @media (max-width: 390px) { .nav a { font-size: 0.62rem; letter-spacing: -0.01em; } }
+/* Favores */
+.favores-top { display: grid; gap: 14px; }
+.favores-top h2 { font-size: 1.1rem; margin-top: 2px; }
+.fav-stats { display: grid; gap: 10px; grid-template-columns: repeat(3, minmax(0, 1fr)); }
+.fav-stats .stat .v { font-size: clamp(.95rem, 4vw, 1.2rem); }
+.owed-row .lede { color: var(--warn); font-weight: 600; }
+.owed-row .venc2 { color: var(--good); font-weight: 600; }
+.owed-row.les .v { color: var(--crit); }

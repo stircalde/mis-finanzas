@@ -293,7 +293,7 @@
       '<div class="hero-split">' +
       '<div class="pill-stat"><div class="k">Patrimonio</div><div class="v num">' + pesos(d.patrimonio) + '</div></div>' +
       '<div class="pill-stat"><div class="k">Te deben</div><div class="v num">' + pesos(d.totalMeDeben) + '</div></div>' +
-      '<div class="pill-stat"><div class="k">Debes</div><div class="v num">' + pesos(d.totalDeudas) + '</div></div></div></div>' +
+      '<div class="pill-stat"><div class="k">Debes</div><div class="v num">' + pesos(d.totalDeudas + (d.totalLesDebo || 0)) + '</div></div></div></div>' +
       '<div><div class="eyebrow" style="margin-bottom:10px">' + cap(nombreMes(d.mes)) + '</div><div class="month-tiles">' +
       '<div class="tile"><div class="k">Ingresos</div><div class="v num">' + pesos(d.ingresos) + '</div><div class="d"><span>' + d.tiposIngreso.length + ' fuente' + (d.tiposIngreso.length === 1 ? '' : 's') + '</span></div></div>' +
       '<div class="tile"><div class="k">Gastos</div><div class="v num">' + pesos(d.gastos) + '</div><div class="d">' + deltaHtml + '</div></div>' +
@@ -599,6 +599,7 @@
   function grupoMov(m) {
     if (m.tipo === 'Gasto' || m.tipo === 'Ingreso') return m.cat || 'Otros';
     if (m.tipo === 'Me pagaron') return 'Me pagaron';
+    if (m.tipo === 'Me prestaron' || m.tipo === 'Le pagué') return 'Préstamos con personas';
     if (m.tipo === 'Ajuste') return 'Ajustes de saldo';
     if (esDeuda(m.destino)) return 'Pagos de créditos';
     if (m.destino === 'Efectivo') return 'Retiros en efectivo';
@@ -624,6 +625,8 @@
       if (ctx !== m.cuenta && m.cuenta !== 'Mamá (regalo)') meta.push(esDeuda(m.cuenta) ? '<span>pagó</span>' + etiqueta(m.cuenta) : etiqueta(m.cuenta));
       signo = '+'; cls = 'in';
     } else if (m.tipo === 'Me pagaron') { if (ctx !== m.cuenta) meta.push(etiqueta(m.cuenta)); signo = '+'; cls = 'in'; extra = '<small>devolución</small>'; }
+    else if (m.tipo === 'Me prestaron') { if (ctx !== m.cuenta) meta.push(etiqueta(m.cuenta)); signo = '+'; cls = 'mv'; extra = '<small>préstamo · le debes</small>'; }
+    else if (m.tipo === 'Le pagué') { if (ctx !== m.cuenta) meta.push(etiqueta(m.cuenta)); signo = '−'; cls = 'mv'; extra = '<small>le devolviste</small>'; }
     else if (m.tipo === 'Transferencia') {
       meta.push(m.cuenta ? etiqueta(m.cuenta) + '<span>→</span>' + etiqueta(m.destino) : '<span>→</span>' + etiqueta(m.destino));
       if (ctx) { signo = ctx === m.cuenta ? '−' : '+'; cls = ctx === m.destino ? 'in' : ''; }
@@ -677,8 +680,8 @@
       var q = norm(busq.q);
       var items = d.movimientos.filter(function (m) {
         if (busq.tipo === 'Gasto' && m.tipo !== 'Gasto') return false;
-        if (busq.tipo === 'Ingreso' && !(m.tipo === 'Ingreso' || m.tipo === 'Me pagaron')) return false;
-        if (busq.tipo === 'Transferencia' && !(m.tipo === 'Transferencia' || m.tipo === 'Ajuste')) return false;
+        if (busq.tipo === 'Ingreso' && !(m.tipo === 'Ingreso' || m.tipo === 'Me pagaron' || m.tipo === 'Me prestaron')) return false;
+        if (busq.tipo === 'Transferencia' && !(m.tipo === 'Transferencia' || m.tipo === 'Ajuste' || m.tipo === 'Le pagué')) return false;
         if (busq.cat && grupoMov(m) !== busq.cat) return false;
         if (busq.cuenta && m.cuenta !== busq.cuenta && m.destino !== busq.cuenta) return false;
         if (busq.mes && m.fecha.slice(0, 7) !== busq.mes) return false;
@@ -726,7 +729,23 @@
     app.appendChild(f);
   }
 
-  /* =================== ME DEBEN =================== */
+  /* =================== FAVORES (te deben / les debes) =================== */
+  function mismaPersona(a, b) { return norm(a) === norm(b); }
+  function listaLesDebo(d) {
+    var out = (d.lesDebo || []).map(function (x) {
+      return { persona: x.persona, saldo: x.saldo, aFavor: x.aFavor || 0, teDebe: x.teDebe || 0, prestamos: x.prestamos || [], devoluciones: x.devoluciones || [],
+        prestado: (x.prestamos || []).reduce(function (s, m) { return s + m.monto; }, 0), devuelto: (x.devoluciones || []).reduce(function (s, m) { return s + m.monto; }, 0), credito: 0 };
+    });
+    var mama = d.creditos.find(function (c) { return c.persona; });
+    if (mama && mama.saldo > 0) {
+      var x = out.find(function (y) { return mismaPersona(y.persona, 'Mamá'); });
+      if (!x) { x = { persona: 'Mamá', saldo: 0, aFavor: 0, teDebe: 0, prestamos: [], devoluciones: [], prestado: 0, devuelto: 0, credito: 0 }; out.push(x); }
+      x.mama = true; x.persona = 'Mamá'; x.credito = mama.saldo; x.saldo += mama.saldo;
+    }
+    out.forEach(function (x) { var t = (d.meDeben || []).find(function (p) { return mismaPersona(p.persona, x.persona); }); x.teDebe = t ? t.saldo : 0; });
+    return out.sort(function (a, b) { return b.saldo - a.saldo; });
+  }
+  function tambienLeDebo(d, persona) { var x = listaLesDebo(d).find(function (y) { return mismaPersona(y.persona, persona); }); return x ? x.saldo : 0; }
   function detalleDeudor(p) {
     function concepto(c, pagado, i) {
       var linea, abre = !pagado && c.detalle && c.detalle.length > 1, k = 'debc:' + p.persona + ':' + i, abierto = abre && abiertos[k];
@@ -764,10 +783,17 @@
       var abierto = abiertos['deb:' + p.persona];
       return '<div class="owed-item' + (abierto ? ' open' : '') + '"><div class="owed-row" role="button" tabindex="0" aria-expanded="' + !!abierto + '" data-i="' + i + '"><div><div class="p">' + esc(p.persona) +
         ' <span class="chev">' + (abierto ? '▾' : '▸') + '</span></div><div class="s">Le cubriste ' + pesos(p.prestado) +
-        (p.pagado ? ' · te pagó ' + pesos(p.pagado) : '') + (p.vencido > 0 ? ' · <b class="venc">vencido ' + pesos(p.vencido) + '</b>' : '') + '</div></div><div class="v">' + pesos(p.saldo) + '</div></div>' +
+        (p.pagado ? ' · te pagó ' + pesos(p.pagado) : '') + (p.vencido > 0 ? ' · <b class="venc">vencido ' + pesos(p.vencido) + '</b>' : '') +
+        (tambienLeDebo(d, p.persona) ? ' · <b class="lede">tú le debes ' + pesos(tambienLeDebo(d, p.persona)) + '</b>' : '') + '</div></div><div class="v">' + pesos(p.saldo) + '</div></div>' +
         (abierto ? detalleDeudor(p) : '') + '</div>';
     }).join('');
-    var sec = el('<section class="card"><div class="card-h"><h2>Me deben</h2><span class="aside">Total <b>' + pesos(d.totalMeDeben) + '</b></span></div>' +
+    var lesDebo = listaLesDebo(d);
+    var totLes = lesDebo.reduce(function (s, x) { return s + x.saldo; }, 0), neto = d.totalMeDeben - totLes;
+    app.appendChild(el('<section class="card favores-top"><div><div class="eyebrow">Favores</div><h2>Plata entre tú y otras personas</h2></div>' +
+      '<div class="fav-stats"><div class="stat"><div class="k">Te deben</div><div class="v num" style="color:var(--good)">' + pesos(d.totalMeDeben) + '</div></div>' +
+      '<div class="stat"><div class="k">Les debes</div><div class="v num" style="color:var(--crit)">' + pesos(totLes) + '</div></div>' +
+      '<div class="stat"><div class="k">Balance</div><div class="v num">' + (neto >= 0 ? '+' : '−') + pesos(Math.abs(neto)).replace('−', '') + '</div><div class="d">' + (neto >= 0 ? 'a tu favor' : 'en contra') + '</div></div></div></section>'));
+    var sec = el('<section class="card"><div class="card-h"><h2>Te deben</h2><span class="aside">Total <b>' + pesos(d.totalMeDeben) + '</b></span></div>' +
       '<div class="owed">' + (html || '<div class="empty">Nadie te debe plata en este momento.</div>') + '</div>' +
       '<p class="hint">Toca un nombre para ver por qué te debe. Cuando alguien te pague, regístralo en el botón del celular: Ingreso → 🤝 Me pagaron.</p></section>');
     sec.querySelectorAll('.owed-row[data-i]').forEach(function (r) {
@@ -781,17 +807,39 @@
       r.addEventListener('keydown', function (e) { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); tocar(e); } });
     });
     app.appendChild(sec);
-    var mama = d.creditos.find(function (c) { return c.persona; });
-    if (mama && mama.saldo > 0) {
-      var r = el('<section class="card"><div class="card-h"><h2>Le debes a tu mamá</h2><span class="aside">Total <b>' + pesos(mama.saldo) + '</b></span></div>' +
-        '<div class="owed"><div class="owed-row mama-row" role="button" tabindex="0"><div><div class="p">👩 Mamá</div><div class="s">Préstamos para tus pagos · sin intereses</div></div><div class="v">' + pesos(mama.saldo) + '</div></div></div>' +
-        '<p class="hint">Para devolverle: botón del celular → 💳 Pagar un crédito → Devolverle a mamá.</p></section>');
-      r.querySelector('.owed-row').addEventListener('click', function () { ir('#/credito/Mam%C3%A1'); });
-      app.appendChild(r);
-    }
-    // Quién pagó sus gastos compartidos
-    var comp = d.movimientos.filter(function (m) { return m.tipo === 'Me pagaron'; }).slice(0, 10);
-    if (comp.length) app.appendChild(el('<section class="card"><div class="card-h"><h2>Últimos pagos que te hicieron</h2></div><div class="tx">' + comp.map(function (m) { return filaMovimiento(m); }).join('') + '</div></section>'));
+    // Les debes: préstamos que te hicieron, pagos de más a su favor y los préstamos de mamá para tus créditos.
+    var htmlL = lesDebo.map(function (x, i) {
+      var abierto = abiertos['les:' + x.persona];
+      var sub = [];
+      if (x.credito) sub.push('préstamos para tus pagos ' + pesos(x.credito));
+      if (x.prestado) sub.push('te prestó ' + pesos(x.prestado));
+      if (x.aFavor) sub.push('saldo a su favor ' + pesos(x.aFavor));
+      if (x.devuelto) sub.push('le devolviste ' + pesos(x.devuelto));
+      if (x.teDebe) sub.push('<b class="venc2">te debe ' + pesos(x.teDebe) + '</b>');
+      var det = '';
+      if (abierto) {
+        var filas = [];
+        x.prestamos.forEach(function (m) { filas.push('<div class="deb-t deb-ab"><span>' + fechaCorta(m.fecha) + ' · ' + esc(m.desc) + ' → ' + esc(m.cuenta) + '</span><b class="num">' + pesos(m.monto) + '</b></div>'); });
+        var h2 = '<div class="deb">' + (filas.length ? '<div class="deb-sub">Lo que te prestó</div>' + filas.join('') : '');
+        if (x.devoluciones.length) h2 += '<div class="deb-sub">Lo que le has devuelto</div>' + x.devoluciones.map(function (m) { return '<div class="deb-t deb-ab"><span>' + fechaCorta(m.fecha) + ' · desde ' + esc(m.cuenta) + '</span><b class="num">−' + pesos(m.monto) + '</b></div>'; }).join('');
+        if (x.aFavor) h2 += '<div class="deb-nota">Te pagó ' + pesos(x.aFavor) + ' de más; quedó como saldo a su favor.</div>';
+        if (x.credito) h2 += '<button type="button" class="btn link" data-mama>Ver los préstamos de mamá para tus créditos</button>';
+        det = h2 + '</div>';
+      }
+      return '<div class="owed-item' + (abierto ? ' open' : '') + '"><div class="owed-row les" role="button" tabindex="0" data-l="' + i + '"><div><div class="p">' + (x.mama ? '👩 ' : '') + esc(x.persona) +
+        ' <span class="chev">' + (abierto ? '▾' : '▸') + '</span></div><div class="s">' + sub.join(' · ') + '</div></div><div class="v">' + pesos(x.saldo) + '</div></div>' + det + '</div>';
+    }).join('');
+    var sl = el('<section class="card"><div class="card-h"><h2>Les debes</h2><span class="aside">Total <b>' + pesos(totLes) + '</b></span></div>' +
+      '<div class="owed">' + (htmlL || '<div class="empty">No le debes plata a nadie. 🙌</div>') + '</div>' +
+      '<p class="hint">Si alguien te presta: botón del celular → Ingreso → 🙋 Alguien me prestó plata. Para devolverle: 💳 Pagar → 🙋 Devolverle a…</p></section>');
+    sl.querySelectorAll('.owed-row[data-l]').forEach(function (r) {
+      r.addEventListener('click', function () { var k = 'les:' + lesDebo[+r.dataset.l].persona; abiertos[k] = !abiertos[k]; var y = window.scrollY; pintar(); window.scrollTo(0, y); });
+    });
+    sl.querySelectorAll('[data-mama]').forEach(function (b) { b.addEventListener('click', function (e) { e.stopPropagation(); ir('#/credito/Mam%C3%A1'); }); });
+    app.appendChild(sl);
+    // Últimos movimientos con personas
+    var comp = d.movimientos.filter(function (m) { return m.tipo === 'Me pagaron' || m.tipo === 'Me prestaron' || m.tipo === 'Le pagué'; }).slice(0, 10);
+    if (comp.length) app.appendChild(el('<section class="card"><div class="card-h"><h2>Últimos movimientos con personas</h2></div><div class="tx">' + comp.map(function (m) { return filaMovimiento(m); }).join('') + '</div></section>'));
   }
 
   /* =================== PÁGINA DE CUENTA =================== */
@@ -815,7 +863,8 @@
       if (m.fecha.slice(0, 7) !== d.mes || m.hist) return;
       nMes++;
       if (m.tipo === 'Gasto') sale += m.monto;
-      else if (m.tipo === 'Ingreso' || m.tipo === 'Me pagaron') entra += m.monto;
+      else if (m.tipo === 'Ingreso' || m.tipo === 'Me pagaron' || m.tipo === 'Me prestaron') entra += m.monto;
+      else if (m.tipo === 'Le pagué') sale += m.monto;
       else if (m.tipo === 'Transferencia') { if (m.destino === nombre) entra += m.monto; else sale += m.monto; }
       else if (m.tipo === 'Ajuste') { if (m.monto > 0) entra += m.monto; else sale -= m.monto; }
     });
@@ -1145,7 +1194,7 @@
     }
     var ley = calModo === 'pagos'
       ? '<span><i class="pendiente"></i>Por pagar</span><span><i class="vencido"></i>Vencido</span><span><i class="pagado"></i>Pagado</span><span><i class="ingreso"></i>Ingreso</span>'
-      : '<span><i class="gasto"></i>Gasto</span><span><i class="credito"></i>Con crédito</span><span><i class="ingreso"></i>Ingreso</span><span><i class="pago"></i>Pago de crédito</span><span><i class="mov"></i>Entre tus cuentas / retiros</span>' +
+      : '<span><i class="gasto"></i>Gasto</span><span><i class="credito"></i>Con crédito</span><span><i class="ingreso"></i>Ingreso</span><span><i class="pago"></i>Pago de crédito</span><span><i class="mov"></i>Entre cuentas, retiros y préstamos</span>' +
         '<span class="tot">' + nMov + ' movimiento' + (nMov === 1 ? '' : 's') + ' · gastaste <b>' + pesos(totMes) + '</b></span>';
     var sec = el('<section class="card cal-glass"><div class="glow g1"></div><div class="glow g2"></div>' +
       '<div class="cal-top"><div class="cal-nav"><button type="button" class="icon-btn glass-btn" data-m="-1" aria-label="Mes anterior">' + ICON.left + '</button>' +
