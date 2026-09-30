@@ -567,3 +567,9 @@ body { min-height: 100vh; min-height: 100dvh; overscroll-behavior-y: contain; }
 :root[data-theme="light"] .cal-glass .cal-d.hoy.det, :root[data-theme="light"] .cal-glass .cal-d.hoy.con { background: linear-gradient(170deg, #6f93ff, #4f6ff0); color: #fff; }
 :root[data-theme="light"] .cal-glass .cal-d.hoy .gv { color: #eaf0ff; }
 .cal-glass .cal-d .labels { overflow: hidden; }
+/* puntos de colores siempre visibles en el celular: arriba a la derecha de cada día */
+@media (max-width: 759px) {
+  .cal-glass .cal-d .marks { position: absolute; top: 6px; right: 5px; margin: 0; flex-wrap: wrap; justify-content: flex-end; max-width: 22px; gap: 2px; }
+  .cal-glass .cal-d .marks i { width: 6px; height: 6px; }
+  .cal-glass .cal-d .gv { margin-top: auto; }
+}

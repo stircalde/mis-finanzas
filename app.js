@@ -191,6 +191,7 @@
     var nuevo = location.hash || '#/inicio';
     var desdeDetalle = /^#\/(cuenta|credito)\//.test(rutaActual) && !/^#\/(cuenta|credito)\//.test(nuevo);
     abiertosPor[rutaActual] = abiertos;
+    var w = document.querySelector('.wallet'); if (w) posiciones[rutaActual + '|wallet'] = w.scrollLeft;
     var volver = desdeDetalle && posiciones[nuevo] != null;
     rutaActual = nuevo;
     abiertos = volver ? (abiertosPor[nuevo] || {}) : {};
@@ -198,6 +199,9 @@
     pintar();
     window.scrollTo(0, y);
     posiciones[nuevo] = y;
+    // La billetera vuelve a mostrar la tarjeta que estabas viendo.
+    var w2 = document.querySelector('.wallet');
+    if (w2 && volver && posiciones[nuevo + '|wallet']) w2.scrollLeft = posiciones[nuevo + '|wallet'];
   });
   document.addEventListener('click', function (e) { if (!e.target.closest('.hit, .seg')) ocultarTip(); });
 
