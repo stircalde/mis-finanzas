@@ -1270,6 +1270,14 @@
     sec.querySelectorAll('[data-modo]').forEach(function (b) { b.addEventListener('click', function () { calModo = b.dataset.modo; pintar(); }); });
   }
 
+  /* ---------- lo que necesita el botón de registrar (registro.js) ---------- */
+  window.MF = {
+    API: API, DEMO: DEMO, clave: clave, leerLocal: leerLocal, guardarLocal: guardarLocal, esc: esc, el: el, pesos: pesosReal,
+    hoy: function () { return datos && datos.hoy; },
+    listo: function () { return !!datos && !nav.hidden; },
+    refrescar: function () { if (datos && !DEMO) cargar(mesSel === datos.meses[0] ? '' : mesSel, true); }
+  };
+
   /* ---------- arranque ---------- */
   if (!DEMO && 'serviceWorker' in navigator && location.protocol === 'https:') {
     navigator.serviceWorker.register('sw.js').then(function (reg) { reg.update(); }).catch(function () { /* sin modo sin conexión */ });
