@@ -1195,8 +1195,7 @@
     // Cada tarjeta se abre en su mismo lugar de la pila: las de arriba siguen encima y las de abajo se corren.
     var h = '<div class="bolsillo"><div class="bol-pila">' + items.map(function (it, i) {
       var ab = it.nombre === bolSel;
-      // Capas: cada tarjeta queda por debajo de las que están más arriba en la pila.
-      return '<div class="bol-item' + (ab ? ' abierta' : '') + '" data-n="' + esc(it.nombre) + '" style="z-index:' + (items.length - i) + '">' +
+      return '<div class="bol-item' + (ab ? ' abierta' : '') + '" data-n="' + esc(it.nombre) + '">' +
         '<button type="button" class="bol-tira" aria-expanded="' + ab + '" aria-label="' + esc(it.nombre) + '">' + plastico(it.nombre) +
         '<span class="bol-top"><span class="nm">' + esc(it.nombre.replace(/^Bolsillo Daviplata /, 'Bolsillo · ')) + '</span><b class="num">' + pesos(it.x.saldo) + '</b></span></button>' +
         '<div class="bol-exp"><div class="bol-exp-in"><div class="bol-det"><div><span class="k">' + (it.deuda ? 'Debes' : 'Saldo') + '</span>' +

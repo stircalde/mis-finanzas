@@ -739,10 +739,9 @@ body.con-hoja .fab-wrap, body.con-reg .fab-wrap, .shell:has(#nav[hidden]) ~ .fab
 .bol-item.abierta:not(:first-child) { margin-top: 12px; }
 .bol-item:first-child { margin-top: 0; }
 .bol-tira { position: relative; display: block; width: 100%; height: 64px; padding: 0; border: 0; background: none; cursor: pointer; overflow: hidden;
-  border-radius: 18px; color: #fff; text-align: left; box-shadow: 0 12px 20px -8px rgba(0, 0, 0, .7);
+  border-radius: 18px 18px 0 0; color: #fff; text-align: left; box-shadow: 0 -10px 20px -8px rgba(0, 0, 0, .7);
   transition: transform .15s ease, height .45s cubic-bezier(.4, 0, .2, 1), border-radius .45s ease; }
-.bol-item.abierta .bol-tira { height: auto; }
-.bol-item + .bol-item .bol-top { padding-top: 12px; height: 64px; }
+.bol-item.abierta .bol-tira { height: auto; border-radius: 18px; }
 /* el detalle aparece debajo de la tarjeta abierta; la siguiente tarjeta de la pila baja */
 .bol-exp { display: grid; grid-template-rows: 0fr; opacity: 0; transition: grid-template-rows .45s cubic-bezier(.4, 0, .2, 1), opacity .3s ease; }
 .bol-item.abierta .bol-exp { grid-template-rows: 1fr; opacity: 1; }
@@ -822,7 +821,7 @@ body.con-hoja .fab-wrap, body.con-reg .fab-wrap, .shell:has(#nav[hidden]) ~ .fab
 .bol-top { transition: opacity .3s ease; }
 .bol-item.abierta .bol-top { opacity: 0; }
 .bol-item.abierta .bol-tira .plastic.virtual .v-name, .bol-item.abierta .bol-tira .plastic.virtual .v-top { visibility: visible; }
-.bol-item.abierta .bol-tira { box-shadow: 0 16px 30px -12px rgba(0, 0, 0, .8); }
+.bol-item.abierta .bol-tira { box-shadow: 0 -10px 20px -8px rgba(0, 0, 0, .7), 0 16px 30px -12px rgba(0, 0, 0, .8); }
 
 /* ===== v5.33: listas plegables (créditos y gastos fijos) con la animación suave ===== */
 .plegable { display: grid; grid-template-rows: 0fr; opacity: 0; transition: grid-template-rows .45s cubic-bezier(.4, 0, .2, 1), opacity .3s ease; }
