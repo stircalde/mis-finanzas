@@ -815,7 +815,7 @@
       prox +
       '<div class="stat"><div class="k">Compras en ' + mesN + '</div><div class="v num">' + pesos(comprasMes) + '</div></div>' +
       '<div class="stat"><div class="k">Pagos en ' + mesN + '</div><div class="v num" style="color:var(--good)">' + pesos(pagosMes) + '</div></div>' +
-      (c.persona ? '' : '<div class="stat"><div class="k">Intereses y cargos</div><div class="v num">' + pesos(c.intereses) + '</div><div class="d">de tus compras registradas</div></div>')));
+      (c.persona ? '' : '<div class="stat"><div class="k">Intereses y cargos</div><div class="v num">' + pesos(c.intereses) + '</div><div class="d">intereses, seguros y comisiones</div></div>')));
 
     // Calendario: comprimido
     var vis = calendarioVisible(c, d.hoy);
