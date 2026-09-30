@@ -294,13 +294,20 @@
     var mesPrev = MESES[(+d.mes.split('-')[1] + 10) % 12];
     var deltaHtml = delta === null ? '<span>Sin datos del mes anterior</span>'
       : (delta <= 0 ? ICON.down : ICON.up) + '<span>' + Math.abs(delta) + ' % ' + (delta <= 0 ? 'menos' : 'más') + ' que en ' + mesPrev + '</span>';
+    var disp = d.disponible || { valor: d.totalPlata, tienes: d.totalPlata, creditos: 0, fijos: 0 };
+    var neg = disp.valor < 0;
     // Inicio simple: tu balance (lo que tienes en tus cuentas) y los ingresos y gastos del mes.
     return el('<section class="hero hero-simple" aria-label="Resumen">' +
       '<svg class="ribbon" viewBox="0 0 800 300" preserveAspectRatio="none" aria-hidden="true"><defs><linearGradient id="rb" x1="0" x2="1"><stop offset="0" stop-color="#63d4ff" stop-opacity="0"/><stop offset=".55" stop-color="#9fe6ff" stop-opacity=".9"/><stop offset="1" stop-color="#ffffff" stop-opacity=".2"/></linearGradient><filter id="bl"><feGaussianBlur stdDeviation="6"/></filter></defs>' +
       '<path d="M-20 250 C 180 120, 340 330, 520 150 S 760 40, 840 90" stroke="url(#rb)" stroke-width="46" fill="none" filter="url(#bl)" opacity=".45"/>' +
       '<path d="M-20 240 C 180 110, 340 320, 520 140 S 760 30, 840 80" stroke="url(#rb)" stroke-width="1.5" fill="none"/></svg>' +
-      '<div class="hero-left"><div class="disp"><div class="eyebrow">Tu balance</div>' +
-      '<div class="big num">' + pesos(d.totalPlata) + '</div></div></div>' +
+      '<div class="hero-left"><div class="disp bal-caja"><div class="eyebrow">Tu balance</div>' +
+      '<div class="big num">' + pesos(d.totalPlata) + '</div>' +
+      // Disponible para gastar: lo que tienes menos lo que pagas en los próximos 30 días (verde si alcanza, rojo si no).
+      '<div class="disp-caja ' + (neg ? 'mal' : 'bien') + '"><div class="dc-k">' + (neg ? 'Te falta para tus pagos de 30 días' : 'Disponible para gastar') + '</div>' +
+      '<div class="dc-v num">' + (neg ? '−' : '') + pesos(Math.abs(disp.valor)) + '</div>' +
+      '<div class="dc-d"><span>Créditos 30 d <b>−' + pesos(disp.creditos) + '</b></span>' + (disp.fijos ? '<span>Fijos 30 d <b>−' + pesos(disp.fijos) + '</b></span>' : '') + '</div></div>' +
+      '</div></div>' +
       '<div><div class="eyebrow" style="margin-bottom:10px">' + cap(nombreMes(d.mes)) + '</div><div class="month-tiles dos">' +
       '<div class="tile"><div class="k">Ingresos</div><div class="v num">' + pesos(d.ingresos) + '</div><div class="d"><span>' + d.tiposIngreso.length + ' fuente' + (d.tiposIngreso.length === 1 ? '' : 's') + '</span></div></div>' +
       '<div class="tile"><div class="k">Gastos</div><div class="v num">' + pesos(d.gastos) + '</div><div class="d">' + deltaHtml + '</div></div>' +
