@@ -86,7 +86,7 @@
   function logo(nombre, esFijo, grande) {
     var e = ent(nombre, esFijo) || {};
     var cls = 'logo' + (grande ? ' lg' : '');
-    var src = (window.LOGOS || {})[nombre] || (e.sitio && /^https?:\/\//i.test(e.sitio) ? e.sitio : '');
+    var src = (window.LOGOS || {})[nombre] || (e.sitio && /^https?:\/\//i.test(e.sitio) ? e.sitio : '') || (window.logoDe ? window.logoDe(nombre) : '');
     var color = e.color || (nombre === 'Mamá' ? '#F2994A' : '#1b2a4a');
     var texto = e.colorTexto || '#FFFFFF';
     if (!src && e.emoji && !e.sitio) {
@@ -619,6 +619,9 @@
         return '<span class="logo" style="--c:' + r.c + ';--t:' + r.t + ';width:40px;height:40px;border-radius:12px">' + r.txt + '</span>';
       }
     }
+    // Diccionario automático de comercios y entidades (logos.js): logo de su página web, con iniciales de respaldo.
+    var dom = window.logoDe ? window.logoDe(m.desc) : '';
+    if (dom) return '<span class="logo" style="--c:#1b2a4a;--t:#eaf1ff;width:40px;height:40px;border-radius:12px">' + esc(iniciales(m.desc)) + '<img alt="" loading="lazy" referrerpolicy="no-referrer" src="' + dom + '" onerror="this.remove()"></span>';
     if (m.tipo === 'Transferencia' && esDeuda(m.destino)) return logo(m.destino).replace('class="logo', 'style="width:40px;height:40px;border-radius:12px" class="logo');
     return '';
   }
