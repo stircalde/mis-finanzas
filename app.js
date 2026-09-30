@@ -1145,44 +1145,52 @@
   function bolsillo(d, items) {
     var porNombre = {};
     items.forEach(function (it) { porNombre[it.nombre] = it; });
-    var contenidoSel = function (sel) {
-      return plastico(sel.nombre) + '<div class="bol-det"><div><span class="k">' + (sel.deuda ? 'Debes' : 'Saldo') + '</span>' +
-        '<b class="num' + (sel.deuda ? ' rojo' : '') + '">' + pesos(sel.x.saldo) + '</b>' + (sel.info ? '<span class="s">' + esc(sel.info) + '</span>' : '') + '</div>' +
-        '<button type="button" class="bol-ver" data-ver>Ver detalle ' + ICON.right + '</button></div>';
-    };
-    var inicial = porNombre[bolSel] || null;
-    var h = '<div class="bolsillo"><div class="bol-sel' + (inicial ? ' abierta' : '') + '"><div class="bol-sel-in">' + (inicial ? contenidoSel(inicial) : '') + '</div></div>';
-    h += '<div class="bol-pila">' + items.map(function (it) {
-      return '<button type="button" class="bol-tira' + (it === inicial ? ' fuera' : '') + '" data-n="' + esc(it.nombre) + '" aria-label="Sacar ' + esc(it.nombre) + ' del bolsillo"' + (it === inicial ? ' tabindex="-1"' : '') + '>' + plastico(it.nombre) +
-        '<span class="bol-top"><span class="nm">' + esc(it.nombre.replace(/^Bolsillo Daviplata /, 'Bolsillo · ')) + '</span><b class="num">' + pesos(it.x.saldo) + '</b></span></button>';
+    // Cada tarjeta se abre en su mismo lugar de la pila: las de arriba siguen encima y las de abajo se corren.
+    var h = '<div class="bolsillo"><div class="bol-pila">' + items.map(function (it, i) {
+      var ab = it.nombre === bolSel;
+      // Capas: cada tarjeta queda por debajo de las que están más arriba en la pila.
+      return '<div class="bol-item' + (ab ? ' abierta' : '') + '" data-n="' + esc(it.nombre) + '" style="z-index:' + (items.length - i) + '">' +
+        '<button type="button" class="bol-tira" aria-expanded="' + ab + '" aria-label="' + esc(it.nombre) + '">' + plastico(it.nombre) +
+        '<span class="bol-top"><span class="nm">' + esc(it.nombre.replace(/^Bolsillo Daviplata /, 'Bolsillo · ')) + '</span><b class="num">' + pesos(it.x.saldo) + '</b></span></button>' +
+        '<div class="bol-exp"><div class="bol-exp-in"><div class="bol-det"><div><span class="k">' + (it.deuda ? 'Debes' : 'Saldo') + '</span>' +
+        '<b class="num' + (it.deuda ? ' rojo' : '') + '">' + pesos(it.x.saldo) + '</b>' + (it.info ? '<span class="s">' + esc(it.info) + '</span>' : '') + '</div>' +
+        '<button type="button" class="bol-ver" data-ver' + (ab ? '' : ' tabindex="-1"') + '>Ver detalle ' + ICON.right + '</button></div></div></div></div>';
     }).join('') + '</div>';
     h += '<div class="bol-bolsa"><svg class="bol-boca" viewBox="0 0 358 34" preserveAspectRatio="none" aria-hidden="true"><path class="f" d="M0 34 V26 Q0 4 22 4 H112 C140 4 150 30 179 30 C208 30 218 4 246 4 H336 Q358 4 358 26 V34 Z"/>' +
       '<path class="c" d="M8 34 V27 Q8 11 24 11 H112 C142 11 150 36 179 36 C208 36 216 11 246 11 H334 Q350 11 350 27 V34"/></svg>' +
       '<div class="bol-cuerpo"><div class="bol-cost"><span class="k">Tienes en tus cuentas</span><b class="num">' + pesos(d.totalPlata) + '</b>' +
       '<span class="s">Debes en créditos <b class="rojo">' + pesos(d.totalDeudas) + '</b></span>' +
       '<button type="button" class="bol-ojo" data-ojo>' + (oculto ? ICON.eye + ' Mostrar saldos' : ICON.eyeOff + ' Ocultar saldos') + '</button></div></div></div></div>';
-    var nodo = el(h), caja = nodo.querySelector('.bol-sel'), dentro = nodo.querySelector('.bol-sel-in'), limpiar = null;
-    // Sacar o guardar una tarjeta con la misma animación suave de la casilla del disponible (sin repintar la página).
-    var enlazarSel = function () {
-      var pl = dentro.querySelector('.plastic'); if (pl) pl.addEventListener('click', function () { elegir(null); });
-      var ver = dentro.querySelector('[data-ver]'); if (ver) ver.addEventListener('click', function () { ir(porNombre[bolSel].ruta); });
+    var nodo = el(h), quieto = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    // La franja crece de 64 px a la altura real de la tarjeta (y vuelve), con la misma curva suave del resto de la app.
+    var mover = function (item, abrir) {
+      var tira = item.querySelector('.bol-tira');
+      tira.setAttribute('aria-expanded', String(abrir));
+      item.querySelector('[data-ver]').tabIndex = abrir ? 0 : -1;
+      if (quieto) { item.classList.toggle('abierta', abrir); return; }
+      var desde = tira.getBoundingClientRect().height;
+      item.classList.toggle('abierta', abrir);
+      tira.style.height = '';
+      var hasta = tira.getBoundingClientRect().height;
+      tira.style.height = desde + 'px';
+      void tira.offsetHeight;
+      tira.style.height = hasta + 'px';
+      var fin = function (e) { if (e.propertyName !== 'height') return; tira.removeEventListener('transitionend', fin); tira.style.height = ''; };
+      tira.addEventListener('transitionend', fin);
     };
-    var elegir = function (nombre) {
-      clearTimeout(limpiar);
-      bolSel = nombre;
-      nodo.querySelectorAll('.bol-tira').forEach(function (b) {
-        var fuera = b.dataset.n === nombre;
-        b.classList.toggle('fuera', fuera);
-        if (fuera) b.setAttribute('tabindex', '-1'); else b.removeAttribute('tabindex');
+    nodo.querySelectorAll('.bol-item').forEach(function (item) {
+      item.querySelector('.bol-tira').addEventListener('click', function () {
+        var n = item.dataset.n, antes = bolSel;
+        if (antes && antes !== n) { var otra = nodo.querySelector('.bol-item.abierta'); if (otra) mover(otra, false); }
+        bolSel = antes === n ? null : n;
+        mover(item, bolSel === n);
       });
-      if (nombre) { dentro.innerHTML = contenidoSel(porNombre[nombre]); enlazarSel(); caja.classList.add('abierta'); }
-      else { caja.classList.remove('abierta'); limpiar = setTimeout(function () { if (!bolSel) dentro.innerHTML = ''; }, 450); }
-    };
-    enlazarSel();
-    nodo.querySelectorAll('.bol-tira').forEach(function (b) { b.addEventListener('click', function () { elegir(b.dataset.n); }); });
+      item.querySelector('[data-ver]').addEventListener('click', function () { ir(porNombre[item.dataset.n].ruta); });
+    });
     nodo.querySelector('[data-ojo]').addEventListener('click', function () { oculto = !oculto; guardarLocal('ocultar', oculto ? '1' : '0'); pintarSuave(); });
     return nodo;
   }
+
 
 
   /* =================== CALENDARIO =================== */

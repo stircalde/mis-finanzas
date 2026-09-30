@@ -723,12 +723,6 @@ body.con-hoja .fab-wrap, body.con-reg .fab-wrap, .shell:has(#nav[hidden]) ~ .fab
 .wallet-card .card-h { align-items: center; }
 .wallet-tot { margin: -6px 0 10px; }
 .bolsillo { max-width: 440px; margin: 0 auto; display: flex; flex-direction: column; }
-.bol-sel { display: grid; grid-template-rows: 0fr; opacity: 0; margin-bottom: 0; transition: grid-template-rows .42s cubic-bezier(.4, 0, .2, 1), opacity .3s ease, margin-bottom .42s cubic-bezier(.4, 0, .2, 1); }
-.bol-sel.abierta { grid-template-rows: 1fr; opacity: 1; margin-bottom: 10px; }
-.bol-sel-in { min-height: 0; overflow: hidden; display: grid; gap: 4px; }
-.bol-sel-in > .plastic { margin: 2px 2px 0; }
-.bol-sel-in > .bol-det { padding-bottom: 6px; }
-.bol-sel .plastic { cursor: pointer; box-shadow: 0 22px 40px -18px rgba(0, 0, 0, .85); }
 .bol-det { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: flex-end; gap: 10px 12px; padding: 10px 4px 0; }
 .bol-det > div { display: grid; gap: 1px; min-width: 0; }
 .bol-det .k { font-size: .78rem; color: var(--ink-2); }
@@ -741,12 +735,20 @@ body.con-hoja .fab-wrap, body.con-reg .fab-wrap, .shell:has(#nav[hidden]) ~ .fab
 :root[data-theme="light"] .bol-det b.rojo { color: var(--crit); }
 /* tiras: la parte de arriba de cada tarjeta real, con sombra hacia arriba (como la pila tipo Wallet) */
 .bol-pila { display: flex; flex-direction: column; padding-top: 16px; }
-.bol-tira { position: relative; display: block; width: 100%; height: 64px; margin-top: -12px; padding: 0; border: 0; background: none; cursor: pointer; overflow: hidden;
-  border-radius: 18px 18px 0 0; color: #fff; text-align: left; box-shadow: 0 -10px 20px -8px rgba(0, 0, 0, .7);
-  transition: transform .15s ease, height .42s cubic-bezier(.4, 0, .2, 1), margin-top .42s cubic-bezier(.4, 0, .2, 1), opacity .3s ease; }
-.bol-tira.fuera { height: 0; margin-top: 0; opacity: 0; pointer-events: none; }
-@media (prefers-reduced-motion: reduce) { .bol-sel, .bol-tira { transition: none; } }
-.bol-tira:first-child { margin-top: 0; }
+.bol-item { position: relative; margin-top: -12px; }
+.bol-item:first-child { margin-top: 0; }
+.bol-tira { position: relative; display: block; width: 100%; height: 64px; padding: 0; border: 0; background: none; cursor: pointer; overflow: hidden;
+  border-radius: 18px; color: #fff; text-align: left; box-shadow: 0 12px 20px -8px rgba(0, 0, 0, .7);
+  transition: transform .15s ease, height .45s cubic-bezier(.4, 0, .2, 1), border-radius .45s ease; }
+.bol-item.abierta .bol-tira { height: auto; }
+.bol-item + .bol-item .bol-top { padding-top: 12px; height: 64px; }
+/* el detalle aparece debajo de la tarjeta abierta; la siguiente tarjeta de la pila baja */
+.bol-exp { display: grid; grid-template-rows: 0fr; opacity: 0; transition: grid-template-rows .45s cubic-bezier(.4, 0, .2, 1), opacity .3s ease; }
+.bol-item.abierta .bol-exp { grid-template-rows: 1fr; opacity: 1; }
+.bol-exp-in { min-height: 0; overflow: hidden; }
+.bol-exp-in > .bol-det { padding: 8px 4px 24px; }
+.bol-item:last-child .bol-exp-in > .bol-det { padding-bottom: 40px; }
+@media (prefers-reduced-motion: reduce) { .bol-tira, .bol-exp { transition: none; } }
 .bol-tira:hover { transform: translateY(-3px); }
 .bol-tira:focus-visible { outline: 2px solid var(--accent-glow); outline-offset: 2px; }
 .bol-tira .plastic { border-radius: 18px; box-shadow: none; }
@@ -756,7 +758,7 @@ body.con-hoja .fab-wrap, body.con-reg .fab-wrap, .shell:has(#nav[hidden]) ~ .fab
 .bol-top .nm { font-weight: 700; font-size: .95rem; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; min-width: 0; }
 .bol-top b { font-family: var(--font-display); font-size: .95rem; white-space: nowrap; }
 /* el bolsillo (se ve oscuro también en modo claro, como cuero) */
-.bol-bolsa { position: relative; margin-top: -30px; z-index: 1; filter: drop-shadow(0 -8px 14px rgba(0, 0, 0, .45)); }
+.bol-bolsa { position: relative; margin-top: -30px; z-index: 50; filter: drop-shadow(0 -8px 14px rgba(0, 0, 0, .45)); }
 .bol-boca { display: block; width: 100%; height: 34px; }
 .bol-boca .f { fill: #0f1a33; }
 .bol-boca .c { fill: none; stroke: rgba(255, 255, 255, .16); stroke-width: 1.2; stroke-dasharray: 4 4; vector-effect: non-scaling-stroke; }
