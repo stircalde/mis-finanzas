@@ -1145,7 +1145,7 @@
     }
     var ley = calModo === 'pagos'
       ? '<span><i class="pendiente"></i>Por pagar</span><span><i class="vencido"></i>Vencido</span><span><i class="pagado"></i>Pagado</span><span><i class="ingreso"></i>Ingreso</span>'
-      : '<span><i class="gasto"></i>Gasto</span><span><i class="credito"></i>Con crédito</span><span><i class="ingreso"></i>Ingreso</span><span><i class="pago"></i>Pago de crédito</span>' +
+      : '<span><i class="gasto"></i>Gasto</span><span><i class="credito"></i>Con crédito</span><span><i class="ingreso"></i>Ingreso</span><span><i class="pago"></i>Pago de crédito</span><span><i class="mov"></i>Entre tus cuentas / retiros</span>' +
         '<span class="tot">' + nMov + ' movimiento' + (nMov === 1 ? '' : 's') + ' · gastaste <b>' + pesos(totMes) + '</b></span>';
     var sec = el('<section class="card cal-glass"><div class="glow g1"></div><div class="glow g2"></div>' +
       '<div class="cal-top"><div class="cal-nav"><button type="button" class="icon-btn glass-btn" data-m="-1" aria-label="Mes anterior">' + ICON.left + '</button>' +
