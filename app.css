@@ -1112,7 +1112,10 @@ html, body { overscroll-behavior-y: contain; }
 :root[data-estilo="mate"] .cal-glass, :root[data-estilo="mate"] .glass-card { background: var(--surface); box-shadow: none; }
 :root[data-estilo="mate"] .glass-sheet { background: var(--surface); }
 :root[data-estilo="mate"] .cal-glass .glow { display: none; }
-:root[data-estilo="mate"] .cal-glass .cal-d { box-shadow: none; }
+:root[data-estilo="mate"] .cal-glass .cal-d { box-shadow: inset 0 0 0 1px var(--line-strong); }
+:root[data-estilo="mate"] .cal-glass .cal-d.vacio { box-shadow: none; }
+/* En claro + Mate, las casillas blancas sobre fondo blanco no se distinguían: fondo levemente gris y borde visible. */
+:root[data-estilo="mate"][data-theme="light"] .cal-glass { background: var(--surface-2); }
 :root[data-estilo="mate"] .glass-btn, :root[data-estilo="mate"] .seg-glass { background: var(--surface-2); border-color: var(--line-strong); backdrop-filter: none; -webkit-backdrop-filter: none; }
 :root[data-estilo="mate"] .seg-glass button[aria-pressed="true"] { background: var(--accent); color: var(--on-accent); box-shadow: none; }
 :root[data-estilo="mate"] .fab, :root[data-estilo="mate"] .nav-reg-c, :root[data-estilo="mate"] .reg-pie .guardar,
