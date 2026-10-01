@@ -974,7 +974,6 @@ html[data-dir="izq"]::view-transition-new(pagina) { animation-name: vtEntraIzq; 
 @keyframes vtEntra { from { opacity: 0; transform: translateX(36px); } }
 @keyframes vtSaleIzq { to { opacity: 0; transform: translateX(36px); } }
 @keyframes vtEntraIzq { from { opacity: 0; transform: translateX(-36px); } }
-.page.sin-entrada > * { animation: none !important; }
 
 /* ============ v5.47: billetera arrastrable con el mouse ============ */
 @media (hover: hover) and (pointer: fine) { .wallet { cursor: grab; } .wallet .wcard { cursor: grab; } }

@@ -213,22 +213,29 @@
     var ORDEN = ['inicio', 'creditos', 'calendario', 'movimientos', 'medeben'];
     var vista = function (h) { var v = (h.slice(2).split('/')[0] || 'inicio'); return v === 'cuenta' || v === 'credito' ? 9 : Math.max(0, ORDEN.indexOf(v)); };
     var a = vista(anterior), b = vista(nuevo);
+    var conTransicion = a !== b && document.startViewTransition && !matchMedia('(prefers-reduced-motion: reduce)').matches && !hojaAbierta;
     var cambiar = function () {
       pintar();
+      // Con transición, el deslizamiento lo hace el navegador: los bloques no repiten su animación de entrada
+      // (estilo en línea, que no se "suelta" después y por eso no vuelve a parpadear).
+      if (conTransicion) for (var i = 0; i < app.children.length; i++) app.children[i].style.animation = 'none';
       window.scrollTo(0, y);
       posiciones[nuevo] = y;
       // La billetera vuelve a mostrar la tarjeta que estabas viendo.
       var w2 = document.querySelector('.wallet');
       if (w2 && volver && posiciones[nuevo + '|wallet']) w2.scrollLeft = posiciones[nuevo + '|wallet'];
+      if (!conTransicion) return;
+      // Espera (máx. 120 ms) a que los logos visibles estén listos, para que no aparezcan después de la animación.
+      var imgs = [].slice.call(app.querySelectorAll('img')).filter(function (im) { var r = im.getBoundingClientRect(); return r.top < innerHeight && r.bottom > 0; });
+      return Promise.race([Promise.all(imgs.map(function (im) { return im.decode ? im.decode().catch(function () {}) : null; })), new Promise(function (ok) { setTimeout(ok, 120); })]);
     };
     // Con View Transitions la pantalla vieja se queda visible hasta que la nueva está lista (sin parpadeo) y se deslizan juntas.
-    if (a !== b && document.startViewTransition && !matchMedia('(prefers-reduced-motion: reduce)').matches && !hojaAbierta) {
+    if (conTransicion) {
       document.documentElement.dataset.dir = b > a ? 'der' : 'izq';
-      app.classList.add('sin-entrada');
       var vt = document.startViewTransition(cambiar);
       vt.finished.then(fin, fin);
     } else cambiar();
-    function fin() { app.classList.remove('sin-entrada'); delete document.documentElement.dataset.dir; }
+    function fin() { delete document.documentElement.dataset.dir; }
   });
   document.addEventListener('click', function (e) { if (!e.target.closest('.hit, .seg')) ocultarTip(); });
 
