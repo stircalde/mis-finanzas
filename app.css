@@ -987,3 +987,51 @@ html[data-dir="izq"]::view-transition-new(pagina) { animation-name: vtEntraIzq; 
 /* con el formulario abierto, el aviso aparece arriba para no tapar los botones */
 body.con-reg .reg-cola { bottom: auto; top: calc(12px + env(safe-area-inset-top)); transform: translate(-50%, -16px); }
 body.con-reg .reg-cola.ver { transform: translate(-50%, 0); }
+
+/* ============ v5.50: barra con botón central "Registrar", sección Más y deslizar para actualizar ============ */
+.nav .solo-pc { display: none; }
+.nav-reg { display: grid; place-items: center; border: 0; background: none; padding: 0; position: relative; cursor: pointer; -webkit-tap-highlight-color: transparent; touch-action: manipulation; user-select: none; -webkit-user-select: none; }
+.nav-reg-c { width: 58px; height: 58px; margin-top: -30px; border-radius: 50%; display: grid; place-items: center; color: #fff;
+  background: radial-gradient(circle at 35% 30%, #6fb6ff, #2f6bff 55%, #2448d8);
+  box-shadow: 0 0 0 5px var(--bg), 0 10px 26px -6px rgba(47, 107, 255, .75), inset 0 1px 0 rgba(255, 255, 255, .35);
+  transition: transform .18s cubic-bezier(.2, .8, .2, 1), box-shadow .2s ease; }
+.nav-reg-c svg { width: 28px; height: 28px; fill: none; stroke: currentColor; stroke-width: 2.4; stroke-linecap: round; }
+.nav-reg:active .nav-reg-c { transform: scale(.92); }
+.nav-reg:focus-visible .nav-reg-c { outline: 2px solid var(--accent-glow); outline-offset: 4px; }
+@media (max-width: 899px) { .fab-wrap { display: none !important; } }
+@media (min-width: 900px) {
+  .nav .solo-pc { display: grid; }
+  .nav-reg { display: none; }
+}
+/* abanico al mantener presionado */
+.reg-abanico { position: fixed; z-index: 45; left: 50%; bottom: calc(96px + env(safe-area-inset-bottom)); transform: translateX(-50%); display: flex; gap: 12px; pointer-events: none; }
+.reg-abanico.ver { pointer-events: auto; }
+.reg-abanico button { display: grid; justify-items: center; gap: 4px; border: 1px solid var(--line-strong); background: rgba(14, 22, 42, .97); color: var(--ink); border-radius: 18px;
+  padding: 10px 14px; font: inherit; font-size: .78rem; font-weight: 600; cursor: pointer; box-shadow: 0 14px 30px -14px rgba(0, 0, 0, .8);
+  opacity: 0; transform: translateY(18px) scale(.9); transition: opacity .2s ease, transform .28s cubic-bezier(.2, .9, .3, 1.3); transition-delay: calc(var(--i) * 40ms); }
+.reg-abanico button span { font-size: 1.35rem; }
+.reg-abanico.ver button { opacity: 1; transform: none; }
+:root[data-theme="light"] .reg-abanico button { background: #fff; }
+/* Más */
+.mas { display: grid; gap: 18px; }
+.mas-lista { display: grid; }
+.mas-fila { display: grid; grid-template-columns: 40px minmax(0, 1fr) auto; align-items: center; gap: 12px; width: 100%; padding: 12px 4px; border: 0; border-top: 1px solid var(--line);
+  background: none; color: var(--ink); font: inherit; text-align: left; cursor: pointer; border-radius: 12px; }
+.mas-fila:first-child { border-top: 0; }
+.mas-fila:hover { background: var(--accent-soft); }
+.mas-fila > svg { width: 18px; height: 18px; fill: none; stroke: var(--muted); stroke-width: 2; }
+.mas-ico { width: 40px; height: 40px; border-radius: 12px; background: var(--surface-2); display: grid; place-items: center; font-size: 1.2rem; }
+.mas-tx { display: grid; gap: 2px; min-width: 0; }
+.mas-tx small { color: var(--muted); font-size: .8rem; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.mas-sw { width: 44px; height: 26px; border-radius: 99px; background: var(--line-strong); position: relative; transition: background .2s; }
+.mas-sw i { position: absolute; top: 3px; left: 3px; width: 20px; height: 20px; border-radius: 50%; background: #fff; transition: transform .2s cubic-bezier(.2, .8, .2, 1); }
+.mas-sw.on { background: var(--accent); }
+.mas-sw.on i { transform: translateX(18px); }
+.mas-pie { text-align: center; }
+/* deslizar para actualizar */
+html, body { overscroll-behavior-y: contain; }
+.ptr { position: fixed; z-index: 70; top: calc(10px + env(safe-area-inset-top)); left: 50%; width: 40px; height: 40px; border-radius: 50%; display: grid; place-items: center;
+  background: var(--surface); border: 1px solid var(--line-strong); box-shadow: 0 10px 24px -10px rgba(0, 0, 0, .7); opacity: 0; transform: translate(-50%, -50px); pointer-events: none; }
+.ptr svg { width: 20px; height: 20px; fill: none; stroke: var(--muted); stroke-width: 2.2; stroke-linecap: round; stroke-linejoin: round; }
+.ptr.listo svg { stroke: var(--accent-glow); }
+.ptr.girando svg { stroke: var(--accent-glow); animation: spin .8s linear infinite; }

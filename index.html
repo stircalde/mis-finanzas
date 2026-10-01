@@ -22,10 +22,12 @@
   <nav class="nav" id="nav" aria-label="Secciones">
     <div class="brand"><img src="icons/icon-192.png" alt="" width="32" height="32"><span>Mis finanzas</span></div>
     <a href="#/inicio" data-v="inicio"><svg viewBox="0 0 24 24"><path d="M3 10.5 12 3l9 7.5V20a1 1 0 0 1-1 1h-5v-6H9v6H4a1 1 0 0 1-1-1z"/></svg><span>Inicio</span></a>
+    <a href="#/movimientos" data-v="movimientos"><svg viewBox="0 0 24 24"><path d="M7 4 3.5 7.5 7 11M3.5 7.5H15M17 13l3.5 3.5L17 20M20.5 16.5H9"/></svg><span>Movimientos</span></a>
+    <button class="nav-reg" id="navReg" type="button" aria-label="Registrar (mantén presionado para elegir)"><span class="nav-reg-c"><svg viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg></span></button>
     <a href="#/creditos" data-v="creditos"><svg viewBox="0 0 24 24"><rect x="2.5" y="5" width="19" height="14" rx="2.5"/><path d="M2.5 10h19M6 15h4"/></svg><span>Créditos</span></a>
-    <a href="#/calendario" data-v="calendario"><svg viewBox="0 0 24 24"><rect x="3" y="4.5" width="18" height="16.5" rx="3"/><path d="M3 9.5h18M8 2.5v4M16 2.5v4M7.5 13.5h2M11 13.5h2M14.5 13.5h2M7.5 17h2M11 17h2"/></svg><span>Calendario</span></a>
-    <a href="#/movimientos" data-v="movimientos"><svg viewBox="0 0 24 24"><path d="M4 6h16M4 12h16M4 18h10"/></svg><span>Movimientos</span></a>
-    <a href="#/medeben" data-v="medeben"><svg viewBox="0 0 24 24"><circle cx="9" cy="8" r="3.5"/><path d="M2.5 20c0-3.6 2.9-6 6.5-6s6.5 2.4 6.5 6"/><circle cx="17.5" cy="9" r="2.5"/><path d="M16 14.2c3.2-.3 5.5 1.8 5.5 5"/></svg><span>Favores</span></a>
+    <a href="#/calendario" data-v="calendario" class="solo-pc"><svg viewBox="0 0 24 24"><rect x="3" y="4.5" width="18" height="16.5" rx="3"/><path d="M3 9.5h18M8 2.5v4M16 2.5v4M7.5 13.5h2M11 13.5h2M14.5 13.5h2M7.5 17h2M11 17h2"/></svg><span>Calendario</span></a>
+    <a href="#/medeben" data-v="medeben" class="solo-pc"><svg viewBox="0 0 24 24"><circle cx="9" cy="8" r="3.5"/><path d="M2.5 20c0-3.6 2.9-6 6.5-6s6.5 2.4 6.5 6"/><circle cx="17.5" cy="9" r="2.5"/><path d="M16 14.2c3.2-.3 5.5 1.8 5.5 5"/></svg><span>Favores</span></a>
+    <a href="#/mas" data-v="mas"><svg viewBox="0 0 24 24"><path d="M4 7h16M4 12h16M4 17h10"/><circle cx="19" cy="17" r="1.2"/></svg><span>Más</span></a>
   </nav>
   <main class="page" id="app" tabindex="-1">
     <div class="state"><div class="spinner"></div>Cargando tus finanzas…</div>

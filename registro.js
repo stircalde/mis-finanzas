@@ -594,6 +594,26 @@
     setTimeout(function () { moviendo = false; }, 0);
   });
   fab.addEventListener('click', function () { if (!moviendo) { tip.hidden = true; abrir(); } });
+  // Botón central de la barra (celular): toque = Registrar; mantener presionado = elegir Gasto, Ingreso o Pagar.
+  function abrirTipo(t) { if (t && TIPOS[t] && t !== tipo) { tipo = t; reiniciar(); } abrir(); }
+  MF.abrirRegistro = abrirTipo;
+  var navReg = document.getElementById('navReg');
+  if (navReg) {
+    var abanico = el('<div class="reg-abanico" hidden>' + [['gasto', '💸', 'Gasto'], ['ingreso', '💰', 'Ingreso'], ['pagar', '💳', 'Pagar']].map(function (x, i) {
+      return '<button type="button" data-t="' + x[0] + '" style="--i:' + i + '"><span>' + x[1] + '</span>' + x[2] + '</button>'; }).join('') + '</div>');
+    document.body.appendChild(abanico);
+    var tLargo = null, largo = false;
+    var cerrarAbanico = function () { abanico.classList.remove('ver'); setTimeout(function () { if (!abanico.classList.contains('ver')) abanico.hidden = true; }, 220); };
+    navReg.addEventListener('pointerdown', function () {
+      largo = false; clearTimeout(tLargo);
+      tLargo = setTimeout(function () { largo = true; abanico.hidden = false; void abanico.offsetWidth; abanico.classList.add('ver'); if (navigator.vibrate) navigator.vibrate(12); }, 420);
+    });
+    ['pointerup', 'pointerleave', 'pointercancel'].forEach(function (ev) { navReg.addEventListener(ev, function () { clearTimeout(tLargo); }); });
+    navReg.addEventListener('contextmenu', function (e) { e.preventDefault(); });
+    navReg.addEventListener('click', function () { if (largo) return; if (!abanico.hidden) { cerrarAbanico(); return; } abrirTipo(); });
+    abanico.addEventListener('click', function (e) { var b = e.target.closest('[data-t]'); cerrarAbanico(); if (b) abrirTipo(b.dataset.t); });
+    document.addEventListener('click', function (e) { if (!abanico.hidden && !abanico.contains(e.target) && !navReg.contains(e.target)) cerrarAbanico(); });
+  }
   arrastre(tab, function (dx, enCurso) { if (!enCurso && dx < -20) setOculto(false, true); });
   tab.addEventListener('click', function () { setOculto(false, true); });
 

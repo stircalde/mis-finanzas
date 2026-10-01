@@ -210,7 +210,7 @@
     abiertos = volver ? (abiertosPor[nuevo] || {}) : {};
     var y = volver ? posiciones[nuevo] : 0;
     // Transición entre pestañas: la pantalla nueva entra deslizándose desde el lado hacia donde vas.
-    var ORDEN = ['inicio', 'creditos', 'calendario', 'movimientos', 'medeben'];
+    var ORDEN = ['inicio', 'movimientos', 'creditos', 'mas', 'calendario', 'medeben'];
     var vista = function (h) { var v = (h.slice(2).split('/')[0] || 'inicio'); return v === 'cuenta' || v === 'credito' ? 9 : Math.max(0, ORDEN.indexOf(v)); };
     var a = vista(anterior), b = vista(nuevo);
     var conTransicion = a !== b && document.startViewTransition && !matchMedia('(prefers-reduced-motion: reduce)').matches && !hojaAbierta;
@@ -299,7 +299,8 @@
     indexarPlanes();
     cerrarHoja();
     var vistaNav = r.v === 'cuenta' ? 'inicio' : r.v === 'credito' ? 'creditos' : r.v;
-    nav.querySelectorAll('a').forEach(function (a) { a.classList.toggle('on', a.dataset.v === vistaNav); });
+    var enMas = window.innerWidth < 900 && (vistaNav === 'calendario' || vistaNav === 'medeben');
+    nav.querySelectorAll('a').forEach(function (a) { a.classList.toggle('on', a.dataset.v === vistaNav || (enMas && a.dataset.v === 'mas')); });
     app.innerHTML = '';
     if (DEMO) app.appendChild(el('<div class="demo-banner">Vista previa con tus saldos y créditos reales y algunos movimientos de prueba. Los logos se ven en la app instalada.</div>'));
     if (r.v === 'cuenta') return paginaCuenta(r.nombre);
@@ -308,6 +309,7 @@
     if (r.v === 'movimientos') return vistaMovimientos();
     if (r.v === 'medeben') return vistaMeDeben();
     if (r.v === 'calendario') return vistaCalendario();
+    if (r.v === 'mas') return vistaMas();
     return inicio();
   }
 
@@ -339,15 +341,10 @@
       '<p>' + cap(DIAS[fecha(d.hoy).getDay()]) + ' ' + fechaCorta(d.hoy) + ' · <span class="sync ' + sync + '"><i class="dot"></i><span></span></span></p></div>' +
       '<div class="controls">' + (conMes ? '<select id="mes" class="select" aria-label="Mes">' + opts + '</select>' : '') +
       '<button class="icon-btn" id="ojo" type="button" aria-label="' + (oculto ? 'Mostrar montos' : 'Ocultar montos') + '" aria-pressed="' + oculto + '">' + (oculto ? ICON.eyeOff : ICON.eye) + '</button>' +
-      '<button class="icon-btn" id="tema" type="button" aria-label="' + (temaActual() === 'claro' ? 'Cambiar a modo oscuro' : 'Cambiar a modo claro') + '">' + (temaActual() === 'claro' ? ICON.moon : ICON.sun) + '</button>' +
-      '<button class="icon-btn" id="recargar" type="button" aria-label="Actualizar">' + ICON.refresh + '</button>' +
-      '<button class="icon-btn" id="miscuentas" type="button" aria-label="Mis cuentas y créditos" title="Mis cuentas">' + ICON.gear + '</button></div></div>');
-    n.querySelector('#miscuentas').addEventListener('click', function () { if (window.MFAdmin) MFAdmin.cuentas(); });
-    n.querySelector('#tema').addEventListener('click', function () { temaGuardado = temaActual() === 'claro' ? 'oscuro' : 'claro'; guardarLocal('tema', temaGuardado); aplicarTema(); repintar(); });
+      '</div></div>');
     var m = n.querySelector('#mes');
     if (m) m.addEventListener('change', function (e) { cargar(e.target.value); });
     n.querySelector('#ojo').addEventListener('click', function () { oculto = !oculto; guardarLocal('ocultar', oculto ? '1' : '0'); repintar(); });
-    n.querySelector('#recargar').addEventListener('click', function () { cargar(mesSel === datos.meses[0] ? '' : mesSel); });
     setTimeout(marcarSync, 0);
     return n;
   }
@@ -825,6 +822,39 @@
     });
     n.querySelectorAll('select').forEach(function (s) { s.addEventListener('change', function () { busq[s.dataset.k] = s.value; filtrar(true); }); });
     filtrar();
+  }
+
+  /* =================== MÁS: otras secciones y configuración =================== */
+  function vistaMas() {
+    var d = datos;
+    app.appendChild(barraSuperior(d, false));
+    var totalLes = (d.lesDebo || []).reduce(function (s, x) { return s + (x.saldo || 0); }, 0);
+    var fila = function (k, ico, t, sub, extra) {
+      return '<button type="button" class="mas-fila" data-k="' + k + '"><span class="mas-ico">' + ico + '</span><span class="mas-tx"><b>' + t + '</b>' +
+        (sub ? '<small>' + sub + '</small>' : '') + '</span>' + (extra || ICON.right) + '</button>';
+    };
+    var claro = temaActual() === 'claro';
+    var n = el('<div class="mas">' +
+      '<section class="card"><div class="card-h"><h2>Secciones</h2></div><div class="mas-lista">' +
+      fila('calendario', '📅', 'Calendario', 'Pagos y movimientos día a día') +
+      fila('medeben', '🤝', 'Favores', 'Te deben ' + pesos(d.totalMeDeben || 0) + ' · Les debes ' + pesos(totalLes)) +
+      '</div></section>' +
+      '<section class="card"><div class="card-h"><h2>Configuración</h2></div><div class="mas-lista">' +
+      fila('cuentas', '💳', 'Mis cuentas y tarjetas', 'Agregar, editar, imagen de la tarjeta, archivar') +
+      fila('fijos', '📌', 'Gastos fijos y suscripciones', 'Agregar, pagar, cancelar') +
+      fila('tema', claro ? '🌙' : '☀️', 'Tema', claro ? 'Claro' : 'Oscuro', '<span class="mas-sw' + (claro ? '' : ' on') + '" aria-hidden="true"><i></i></span>') +
+      '</div></section>' +
+      '<p class="hint mas-pie">Próximamente aquí: metas de ahorro e inversiones.</p></div>');
+    n.querySelectorAll('.mas-fila').forEach(function (b) {
+      b.addEventListener('click', function () {
+        var k = b.dataset.k;
+        if (k === 'calendario' || k === 'medeben') ir('#/' + k);
+        else if (k === 'cuentas' && window.MFAdmin) MFAdmin.cuentas();
+        else if (k === 'fijos' && window.MFAdmin) MFAdmin.fijos();
+        else if (k === 'tema') { temaGuardado = temaActual() === 'claro' ? 'oscuro' : 'claro'; guardarLocal('tema', temaGuardado); aplicarTema(); repintar(); }
+      });
+    });
+    app.appendChild(n);
   }
 
   /* =================== CRÉDITOS =================== */
@@ -1661,6 +1691,39 @@
     listo: function () { return !!datos && !nav.hidden; },
     refrescar: function () { if (datos && !DEMO) cargar(mesSel === datos.meses[0] ? '' : mesSel, true); }
   };
+
+  /* ---------- deslizar hacia abajo para actualizar (también en la app instalada) ---------- */
+  (function () {
+    var ind = el('<div class="ptr" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M20 12a8 8 0 1 1-2.3-5.6M20 4v5h-5"/></svg></div>');
+    document.body.appendChild(ind);
+    var y0 = null, dy = 0, activo = false, cargando = false, UMBRAL = 72;
+    var poner = function (v, anim) {
+      ind.style.transition = anim ? 'transform .25s ease, opacity .25s ease' : 'none';
+      ind.style.transform = 'translate(-50%,' + (v - 50) + 'px) rotate(' + (v * 3) + 'deg)';
+      ind.style.opacity = String(Math.min(1, v / UMBRAL));
+      ind.classList.toggle('listo', v >= UMBRAL);
+    };
+    document.addEventListener('touchstart', function (e) {
+      if (cargando || hojaAbierta || document.body.classList.contains('con-reg') || window.scrollY > 0 || e.touches.length !== 1) { y0 = null; return; }
+      y0 = e.touches[0].clientY; dy = 0; activo = false;
+    }, { passive: true });
+    document.addEventListener('touchmove', function (e) {
+      if (y0 == null) return;
+      var d = e.touches[0].clientY - y0;
+      if (d <= 0 || window.scrollY > 0) { if (activo) poner(0, true); activo = false; return; }
+      activo = true; dy = Math.min(120, d * 0.5); poner(dy);
+    }, { passive: true });
+    document.addEventListener('touchend', function () {
+      if (y0 == null) return;
+      y0 = null;
+      if (!activo) return;
+      if (dy >= UMBRAL && datos && !DEMO) {
+        cargando = true; ind.classList.add('girando'); poner(UMBRAL, true);
+        var fin = function () { cargando = false; ind.classList.remove('girando'); poner(0, true); };
+        Promise.resolve(cargar(mesSel === datos.meses[0] ? '' : mesSel)).then(fin, fin);
+      } else poner(0, true);
+    });
+  })();
 
   /* ---------- arranque ---------- */
   if (!DEMO && 'serviceWorker' in navigator && location.protocol === 'https:') {
