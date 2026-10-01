@@ -226,7 +226,7 @@
     var cat = window.CATALOGO_TARJETAS || [];
     if (!cat.length) return '';
     var bancos = []; cat.forEach(function (x) { if (bancos.indexOf(x.b) < 0) bancos.push(x.b); });
-    var h = '<div class="img-act"><div class="mini">' + (st.imagen ? '<img src="' + esc(st.imagen) + '" alt="" referrerpolicy="no-referrer">' : 'Sin imagen') + '</div>' +
+    var h = '<div class="img-act"><div class="mini">' + (st.imagen ? MF.fotoTarjeta(st.imagen, '') : 'Sin imagen') + '</div>' +
       '<button type="button" class="btn-mini" data-op="pabierto" data-v="' + (st.pabierto ? '' : '1') + '">' + (st.pabierto ? 'Cerrar catálogo' : (st.imagen ? 'Cambiar imagen' : 'Elegir imagen')) + '</button>' +
       (st.imagen ? '<button type="button" class="btn-mini" data-op="imagen" data-v="">Quitar</button>' : '') + '</div>';
     if (st.pabierto) {
@@ -234,7 +234,7 @@
       h += '<div class="img-pick">' + fSelect(st, 'pbanco', 'Banco', bancos.map(function (b) { return [b, b]; }));
       var lista = cat.filter(function (x) { return x.b === st.pbanco; });
       h += '<div class="img-grid">' + lista.map(function (x) {
-        return '<button type="button" data-op="imagen" data-v="' + esc(x.u) + '" aria-pressed="' + (st.imagen === x.u) + '"><img src="' + esc(x.u) + '" alt="" loading="lazy" referrerpolicy="no-referrer" onerror="this.style.opacity=.15"><span>' + esc(x.n) + (x.k === 'D' ? ' · débito' : '') + '</span></button>';
+        return '<button type="button" data-op="imagen" data-v="' + esc(x.u) + '" aria-pressed="' + (st.imagen === x.u) + '"><span class="mini-ft">' + MF.fotoTarjeta(x.u, '') + '</span><span>' + esc(x.n) + (x.k === 'D' ? ' · débito' : '') + '</span></button>';
       }).join('') + '</div></div>';
     }
     return campo('Imagen de la tarjeta (opcional)', h, 'Se ve solo en este dispositivo. Si la imagen no carga, se muestra la tarjeta dibujada de siempre.');

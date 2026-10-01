@@ -1255,6 +1255,25 @@
     'Nequi': { img: 'cards/nequi.webp', nombre: 'Tarjeta Nequi Visa débito' },
     'Daviplata': { img: 'cards/daviplata.webp', nombre: 'MasterDebit Daviplata' }
   };
+  /* Foto de tarjeta del catálogo, recortada al borde de la tarjeta y llenando todo el plástico.
+     Las tarjetas verticales se giran para que todas se vean horizontales, como las demás. */
+  var PROP_TARJETA = 1.586;
+  function capaFoto(c, a, R) {
+    // c = recorte [x, y, ancho, alto] (fracciones de la imagen), a = ancho/alto de la imagen, R = ancho/alto del marco.
+    var ca = c[2] * a / c[3], wd, left, top;
+    if (ca > R) { wd = a / (R * c[3]); left = (-c[0] * wd + (1 - c[2] * wd) / 2) * 100; top = -c[1] / c[3] * 100; }
+    else { wd = 1 / c[2]; var hd = wd / a * R; left = -c[0] / c[2] * 100; top = (-c[1] * hd + (1 - c[3] * hd) / 2) * 100; }
+    return 'width:' + (wd * 100).toFixed(3) + '%;left:' + left.toFixed(3) + '%;top:' + top.toFixed(3) + '%';
+  }
+  function fotoTarjeta(u, alt) {
+    var x = (window.CATALOGO_TARJETAS || []).filter(function (y) { return y.u === u; })[0];
+    var img = function (st) { return '<img src="' + esc(u) + '" alt="' + esc(alt || '') + '" loading="lazy" decoding="async" referrerpolicy="no-referrer" style="' + st + '" onerror="var p=this.closest(\'.plastic\');if(p)p.classList.add(\'roto\');this.style.opacity=0">'; };
+    if (!x || !x.c) return '<span class="ft">' + img('width:100%;height:100%;left:0;top:0;object-fit:cover') + '</span>';
+    if (!x.r) return '<span class="ft">' + img(capaFoto(x.c, x.a, PROP_TARJETA)) + '</span>';
+    // vertical: un marco girado 90° del tamaño exacto del plástico
+    return '<span class="ft"><span class="ft-rot" style="width:' + (100 / PROP_TARJETA).toFixed(3) + '%;height:' + (100 * PROP_TARJETA).toFixed(3) + '%;left:' +
+      ((1 - 1 / PROP_TARJETA) / 2 * 100).toFixed(3) + '%;top:' + ((1 - PROP_TARJETA) / 2 * 100).toFixed(3) + '%">' + img(capaFoto(x.c, x.a, 1 / PROP_TARJETA)) + '</span></span>';
+  }
   // Imagen elegida para una cuenta o tarjeta (se guarda en este dispositivo; ver admin.js).
   function imgTarjeta(nombre) { try { var m = JSON.parse(leerLocal('imgTarjetas') || '{}'); return m && typeof m[nombre] === 'string' ? m[nombre] : ''; } catch (e) { return ''; } }
   function plastico(nombre) {
@@ -1262,7 +1281,7 @@
     if (foto) {
       var e0 = ent(nombre) || {}, c0 = colorMarca(nombre);
       return '<div class="plastic virtual foto" style="--bc:' + c0 + '"><div class="v-top">' + logo(nombre) + '<span>' + esc(nombre) + '</span></div><div class="v-name">' + esc(nombre) + '</div>' +
-        '<img src="' + esc(foto) + '" alt="' + esc(nombre) + '" loading="lazy" decoding="async" referrerpolicy="no-referrer" onerror="this.parentNode.classList.add(\'roto\');this.remove()"></div>';
+        fotoTarjeta(foto, nombre) + '</div>';
     }
     if (t) return '<div class="plastic"><img src="' + t.img + '" alt="' + esc(t.nombre) + '" loading="lazy" decoding="async"></div>';
     var e = ent(nombre) || {}, c = colorMarca(nombre);
@@ -1561,7 +1580,7 @@
 
   /* ---------- lo que necesita el botón de registrar (registro.js) ---------- */
   window.MF = {
-    API: API, imgTarjeta: imgTarjeta, DEMO: DEMO, clave: clave, leerLocal: leerLocal, guardarLocal: guardarLocal, esc: esc, el: el, pesos: pesosReal,
+    API: API, imgTarjeta: imgTarjeta, fotoTarjeta: fotoTarjeta, DEMO: DEMO, clave: clave, leerLocal: leerLocal, guardarLocal: guardarLocal, esc: esc, el: el, pesos: pesosReal,
     datos: function () { return datos; }, abrirHoja: abrirHoja, cerrarHoja: function () { cerrarHoja(true); }, logo: logo, ir: ir, fechaCorta: fechaCorta, icon: ICON,
     hoy: function () { return datos && datos.hoy; },
     listo: function () { return !!datos && !nav.hidden; },
