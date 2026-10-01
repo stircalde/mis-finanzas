@@ -212,7 +212,7 @@
   }
 
   /* =================== MIS CUENTAS Y CRÉDITOS =================== */
-  var COLORES = ['#3D8BFF', '#7A2FD6', '#C3137A', '#D8263C', '#E0572D', '#C8952B', '#1FA35C', '#11A39A', '#0B0B0B', '#5B6B85'];
+  var COLORES = ['#1D5FD1', '#7A2FD6', '#C3137A', '#D8263C', '#E0572D', '#C8952B', '#1FA35C', '#11A39A', '#0B0B0B', '#5B6B85'];
   function tipoDe(c) { return c.tipo === 'Plata' ? 'plata' : (c.modo === 'Corte mensual' && !c.pideValor) ? 'tarjeta' : 'credito'; }
 
   /* ---------- imagen de la tarjeta (catálogo de cards.js; se guarda en este dispositivo) ---------- */

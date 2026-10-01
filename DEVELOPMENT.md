@@ -131,6 +131,14 @@ A.fin('mi_caso');
 - **Transiciones entre pestañas** con View Transitions; nunca se quita una clase que vuelva a disparar
   la animación de entrada (se usa `style.animation = 'none'`).
 - La clave se escribe una vez en la app y queda solo en ese dispositivo.
+- **Apariencia** (Más → Configuración → Apariencia; se guarda por dispositivo): 4 ejes independientes, todos con
+  variables CSS en `<html>` (`data-theme`, `data-color`, `data-estilo`, `data-oled`). Cada color define solo
+  7 valores (`--c1…--c4`, `--c1c`, `--on`, `--ch`); fondos, superficies, textos y bordes se derivan con
+  `color-mix()` desde `--tinte`. Los colores con significado (verde, rojo, ámbar), la paleta de gráficas y
+  los colores de bancos **no cambian**. `tests/auditoria/apariencia.js` verifica contraste y que ningún
+  color se confunda con los semánticos ni con colores de bancos. Cristal **no usa `backdrop-filter`**.
+  OLED solo aplica en tema oscuro (en Automático, cuando el sistema está en oscuro); no se puede detectar
+  el tipo de pantalla desde el navegador, por eso es un interruptor visible para todos.
 
 ## Cómo reportar un hallazgo (auditores)
 
