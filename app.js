@@ -1260,6 +1260,7 @@
   var PROP_TARJETA = 1.586;
   function capaFoto(c, a, R) {
     // c = recorte [x, y, ancho, alto] (fracciones de la imagen), a = ancho/alto de la imagen, R = ancho/alto del marco.
+    c = [c[0] + c[2] * 0.012, c[1] + c[3] * 0.012, c[2] * 0.976, c[3] * 0.976];   // un poco hacia adentro: sin bordes ni halos del recorte
     var ca = c[2] * a / c[3], wd, left, top;
     if (ca > R) { wd = a / (R * c[3]); left = (-c[0] * wd + (1 - c[2] * wd) / 2) * 100; top = -c[1] / c[3] * 100; }
     else { wd = 1 / c[2]; var hd = wd / a * R; left = -c[0] / c[2] * 100; top = (-c[1] * hd + (1 - c[3] * hd) / 2) * 100; }
