@@ -134,6 +134,7 @@ A.fin('mi_caso');
 - **Transiciones entre pestañas** con View Transitions; nunca se quita una clase que vuelva a disparar
   la animación de entrada (se usa `style.animation = 'none'`).
 - La clave se escribe una vez en la app y queda solo en ese dispositivo.
+- **Movimientos → Filtros → "Elegir mes"** preselecciona el mes más reciente (se ve en el selector). Decidido por Hector.
 
 ## Cómo reportar un hallazgo (auditores)
 
