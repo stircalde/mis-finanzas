@@ -59,6 +59,9 @@ function doPost(e) {
       return json({ ok: true, mensaje: '👌 Ya estaba registrado. No lo dupliqué.', config: configTelefono(cfg) });
     }
     let mensaje = '';
+    // Todas las filas de este registro se escriben juntas al final (una sola escritura): si algo falla,
+    // no queda un registro a medias que el reintento con el mismo rid tome por completo.
+    PEND_ = [];
     switch (p.accion) {
       case 'config': break;
       case 'gasto': mensaje = registrarGasto(p, cfg); break;
@@ -75,15 +78,17 @@ function doPost(e) {
       case 'cuentaadmin': mensaje = administrarCuenta(p, cfg); break;
       default: throw new Error('Acción desconocida: ' + p.accion);
     }
+    guardarPendientes_();
     return json({ ok: true, mensaje: mensaje, config: configTelefono(CACHE_CFG_ ? cfg : leerConfig()) });
   } catch (err) {
     return json({ ok: false, mensaje: '❌ ' + (conLock ? err.message : 'La hoja está ocupada. Intenta de nuevo en unos segundos.') });
   } finally {
     RID_ = '';
+    PEND_ = null;   // si hubo error, lo pendiente se descarta: nada quedó escrito
     if (conLock) lock.releaseLock();
   }
 }
-let RID_ = '', RID_N_ = 0;
+let RID_ = '', RID_N_ = 0, PEND_ = null;
 
 function registrarGasto(p, cfg) {
   const monto = aNumero(p.monto);
@@ -1929,13 +1934,30 @@ function agregarMovimiento(fila, id) {
   if (!id && RID_) { id = RID_ + (RID_N_ ? '#' + (RID_N_ + 1) : ''); RID_N_++; }
   // Un texto que empieza por = + - @ se volvería fórmula en Sheets: se guarda como texto.
   fila = fila.map(function (x) { return typeof x === 'string' && /^[=+\-@]/.test(x) && !/^-?\d[\d.,]*$/.test(x) ? "'" + x : x; });
-  const completa = fila.concat([new Date(), id || Utilities.getUuid().slice(0, 8)]);
+  const completa = fila.slice(0, ENC_MOV.length - 2).concat([new Date(), id || Utilities.getUuid().slice(0, 8)]);
+  while (completa.length < ENC_MOV.length) completa.splice(completa.length - 2, 0, '');
+  CACHE_MOVS_ = null;
+  if (PEND_) { PEND_.push(completa); return; }   // dentro de doPost: se escribe al final, todo junto
   h.appendRow(completa);
-  const r = h.getLastRow();
-  h.getRange(r, 1).setNumberFormat('dd/mm/yyyy');
-  h.getRange(r, 4).setNumberFormat('$#,##0;-$#,##0');
-  h.getRange(r, 10, 1, 2).setNumberFormat('$#,##0');
-  h.getRange(r, 12).setNumberFormat('dd/mm/yyyy hh:mm');
+  formatoFilas_(h, h.getLastRow(), 1);
+}
+
+function formatoFilas_(h, r, n) {
+  h.getRange(r, 1, n, 1).setNumberFormat('dd/mm/yyyy');
+  h.getRange(r, 4, n, 1).setNumberFormat('$#,##0;-$#,##0');
+  h.getRange(r, 10, n, 2).setNumberFormat('$#,##0');
+  h.getRange(r, 12, n, 1).setNumberFormat('dd/mm/yyyy hh:mm');
+}
+
+/** Escribe de una vez las filas pendientes del registro en curso. */
+function guardarPendientes_() {
+  const filas = PEND_ || [];
+  PEND_ = null;
+  if (!filas.length) return;
+  const h = hojaMovimientos();
+  const r = h.getLastRow() + 1;
+  h.getRange(r, 1, filas.length, ENC_MOV.length).setValues(filas);
+  try { formatoFilas_(h, r, filas.length); } catch (e) { /* el formato es cosmético: los datos ya quedaron */ }
   CACHE_MOVS_ = null;
 }
 
@@ -1944,8 +1966,8 @@ function leerMovimientos() {
   if (CACHE_MOVS_) return CACHE_MOVS_;
   const h = hojaMovimientos();
   const n = h.getLastRow() - 1;
-  if (n < 1) return (CACHE_MOVS_ = []);
-  CACHE_MOVS_ = h.getRange(2, 1, n, ENC_MOV.length).getValues()
+  const filas = (n < 1 ? [] : h.getRange(2, 1, n, ENC_MOV.length).getValues()).concat(PEND_ || []);
+  CACHE_MOVS_ = filas
     .filter(function (r) { return r[0] instanceof Date && r[1] && r[3] !== ''; })
     .map(function (r) {
       return {

@@ -514,7 +514,17 @@
   function avisarRechazo() {
     var x = rechazados[0]; if (!x) return;
     aviso('error', 'No se guardó ' + x.it.titulo + ': ' + x.msg + (rechazados.length > 1 ? ' (y ' + (rechazados.length - 1) + ' más sin guardar)' : ''), 'Corregir',
-      function () { rechazados.shift(); guardarRechazados(); corregir(x.it, x.msg); });
+      function corregirRechazo() {
+        // Si estás llenando otro registro, no se te borra: primero guárdalo o ciérralo.
+        if (formularioConDatos()) { aviso('error', 'Primero guarda o cierra el registro que tienes abierto; luego corrige ' + x.it.titulo + '.', 'Corregir', corregirRechazo); return; }
+        rechazados.shift(); guardarRechazados(); corregir(x.it, x.msg);
+      });
+  }
+  function formularioConDatos() {
+    if (!hoja || !cuerpo || !cuerpo.querySelector('.reg-form')) return false;
+    return ['desc', 'monto', 'cuenta', 'credito', 'fijo', 'tipoIng', 'desde', 'hacia', 'real', 'persona'].some(function (k) {
+      var v = st[k]; return v != null && v !== '' && !(typeof v === 'number' && isNaN(v));
+    });
   }
   function tituloDe(d) {
     var q = { gasto: 'el gasto', ingreso: 'el ingreso', mepagaron: 'el pago de ' + (d.persona || ''), meprestaron: 'el préstamo de ' + (d.persona || ''), lepague: 'la devolución a ' + (d.persona || ''),

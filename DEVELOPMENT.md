@@ -97,6 +97,11 @@ A.fin('mi_caso');
 - **Pagarle a alguien más de lo que le debes** exige decir qué pasa con la diferencia (`exceso`):
   `debe` (te la queda debiendo → pasa a *Me deben*) o `regalo` (gasto tuyo). Sin eso, el backend lo
   rechaza, para que nunca desaparezca plata. Al revés (*Me pagaron* de más) existe `exceso=ingreso`.
+  El exceso se calcula contra lo que se debe **hoy** (con todos los préstamos y pagos registrados), no
+  contra lo que se debía en la fecha del pago: el resultado final —quién le debe a quién y cuánto— es
+  el mismo, sin importar el orden en que se registren.
+- **Cada registro se escribe en la hoja de una sola vez** al final de `doPost` (aunque genere varias
+  filas). Si la escritura falla no queda nada a medias, y el reintento con el mismo `rid` lo guarda completo.
 - **Bolsillos** (cuenta de plata con "Aparta para"): dinero separado para pagar una tarjeta; cuenta
   como plata y se muestra junto a la tarjeta que alimenta.
 - **"Disponible para gastar"** = plata total − cuotas de créditos que vencen en los próximos 30 días −
