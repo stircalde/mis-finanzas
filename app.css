@@ -943,3 +943,40 @@ body.con-hoja .fab-wrap, body.con-reg .fab-wrap, .shell:has(#nav[hidden]) ~ .fab
 .cupo-nota.pasa { color: var(--crit); }
 .plastic.foto { isolation: isolate; }
 .wcard .wstrip, .bol-tira .bol-top { z-index: 3; }
+
+/* ============ v5.46: registrar instantáneo (aviso de la cola) y transición entre pestañas ============ */
+.reg-cola { position: fixed; z-index: 60; left: 50%; bottom: calc(158px + env(safe-area-inset-bottom)); transform: translate(-50%, 16px); opacity: 0;
+  display: flex; align-items: center; gap: 10px; max-width: min(92vw, 520px); padding: 10px 10px 10px 14px; border-radius: 16px;
+  background: rgba(14, 22, 42, 0.97); border: 1px solid var(--line-strong); color: var(--ink); font-size: .86rem; box-shadow: 0 18px 40px -18px rgba(0, 0, 0, .8);
+  transition: transform .28s cubic-bezier(.2, .8, .2, 1), opacity .22s ease; }
+@media (min-width: 900px) { .reg-cola { bottom: 104px; } }
+.reg-cola.ver { transform: translate(-50%, 0); opacity: 1; }
+.reg-cola .rc-txt { flex: 1; min-width: 0; line-height: 1.35; }
+.reg-cola .rc-ico { width: 18px; height: 18px; flex: none; border-radius: 50%; }
+.reg-cola.enviando .rc-ico { border: 2px solid var(--line-strong); border-top-color: var(--accent); animation: spin .8s linear infinite; }
+.reg-cola.ok .rc-ico { background: var(--good); }
+.reg-cola.error .rc-ico, .reg-cola.espera .rc-ico { background: var(--crit); }
+.reg-cola.espera .rc-ico { background: #f2b33d; }
+.reg-cola .rc-btn { flex: none; border: 0; border-radius: 999px; padding: 7px 12px; font: inherit; font-weight: 700; font-size: .8rem; background: var(--accent); color: #fff; cursor: pointer; }
+.reg-cola .rc-x { flex: none; border: 0; background: none; color: var(--muted); font-size: 1.2rem; line-height: 1; padding: 2px 6px; cursor: pointer; }
+:root[data-theme="light"] .reg-cola { background: rgba(255, 255, 255, .98); }
+@keyframes entraDer { from { opacity: 0; transform: translateX(32px); } to { opacity: 1; transform: none; } }
+@keyframes entraIzq { from { opacity: 0; transform: translateX(-32px); } to { opacity: 1; transform: none; } }
+.page.ir-der > * { animation: entraDer .42s cubic-bezier(.2, .75, .2, 1) both; }
+.page.ir-izq > * { animation: entraIzq .42s cubic-bezier(.2, .75, .2, 1) both; }
+.page.ir-der > :nth-child(2), .page.ir-izq > :nth-child(2) { animation-delay: .04s; }
+.page.ir-der > :nth-child(3), .page.ir-izq > :nth-child(3) { animation-delay: .08s; }
+.page.ir-der > :nth-child(4), .page.ir-izq > :nth-child(4) { animation-delay: .12s; }
+.page.ir-der > :nth-child(n+5), .page.ir-izq > :nth-child(n+5) { animation-delay: .16s; }
+.page.ir-der, .page.ir-izq { overflow-x: clip; }
+@media (prefers-reduced-motion: reduce) { .page.ir-der > *, .page.ir-izq > * { animation: none; } .reg-cola { transition: none; } }
+
+/* ============ v5.47: billetera arrastrable con el mouse ============ */
+@media (hover: hover) and (pointer: fine) { .wallet { cursor: grab; } .wallet .wcard { cursor: grab; } }
+.wallet.arrastrando { scroll-snap-type: none; cursor: grabbing; user-select: none; }
+.wallet.arrastrando .wcard { cursor: grabbing; transform: none; }
+.wallet img { -webkit-user-drag: none; user-select: none; }
+.reg-cola { width: max-content; min-width: min(300px, 92vw); }
+/* con el formulario abierto, el aviso aparece arriba para no tapar los botones */
+body.con-reg .reg-cola { bottom: auto; top: calc(12px + env(safe-area-inset-top)); transform: translate(-50%, -16px); }
+body.con-reg .reg-cola.ver { transform: translate(-50%, 0); }

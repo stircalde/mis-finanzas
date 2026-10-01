@@ -201,12 +201,19 @@
   window.addEventListener('hashchange', function () {
     var nuevo = location.hash || '#/inicio';
     var desdeDetalle = /^#\/(cuenta|credito)\//.test(rutaActual) && !/^#\/(cuenta|credito)\//.test(nuevo);
+    var anterior = rutaActual;
     abiertosPor[rutaActual] = abiertos;
     var w = document.querySelector('.wallet'); if (w) posiciones[rutaActual + '|wallet'] = w.scrollLeft;
     var volver = desdeDetalle && posiciones[nuevo] != null;
     rutaActual = nuevo;
     abiertos = volver ? (abiertosPor[nuevo] || {}) : {};
     var y = volver ? posiciones[nuevo] : 0;
+    // Transición entre pestañas: la pantalla nueva entra deslizándose desde el lado hacia donde vas.
+    var ORDEN = ['inicio', 'creditos', 'calendario', 'movimientos', 'medeben'];
+    var vista = function (h) { var v = (h.slice(2).split('/')[0] || 'inicio'); return v === 'cuenta' || v === 'credito' ? 9 : Math.max(0, ORDEN.indexOf(v)); };
+    var a = vista(anterior), b = vista(nuevo);
+    app.classList.remove('ir-der', 'ir-izq');
+    if (a !== b) { void app.offsetWidth; app.classList.add(b > a ? 'ir-der' : 'ir-izq'); clearTimeout(window.__tTab); window.__tTab = setTimeout(function () { app.classList.remove('ir-der', 'ir-izq'); }, 900); }
     pintar();
     window.scrollTo(0, y);
     posiciones[nuevo] = y;
@@ -1292,6 +1299,41 @@
   }
   // Billetera: "Deslizar" (carrusel) o "Apilar" (bolsillo con las tarjetas asomando). Se recuerda en este dispositivo.
   var modoBilletera = leerLocal('billetera') === 'apilar' ? 'apilar' : 'deslizar', bolSel = null;
+  // En PC (mouse): mantener el clic sobre las tarjetas y arrastrar las desplaza, con inercia y se acomoda en una tarjeta, como en el celular.
+  function arrastrable(w) {
+    var x0 = 0, s0 = 0, activo = false, movido = false, ult = [], raf = 0;
+    w.addEventListener('pointerdown', function (e) {
+      if (e.pointerType !== 'mouse' || e.button !== 0) return;
+      cancelAnimationFrame(raf);
+      activo = true; movido = false; x0 = e.clientX; s0 = w.scrollLeft; ult = [[e.clientX, performance.now()]];
+      w.dataset.arrastre = '0';
+    });
+    w.addEventListener('pointermove', function (e) {
+      if (!activo) return;
+      var dx = e.clientX - x0;
+      if (!movido && Math.abs(dx) > 6) { movido = true; w.classList.add('arrastrando'); w.dataset.arrastre = '1'; try { w.setPointerCapture(e.pointerId); } catch (er) { /* nada */ } }
+      if (!movido) return;
+      e.preventDefault();
+      w.scrollLeft = s0 - dx;
+      ult.push([e.clientX, performance.now()]); if (ult.length > 5) ult.shift();
+    });
+    var soltar = function () {
+      if (!activo) return;
+      activo = false;
+      if (!movido) return;
+      // inercia según la velocidad de los últimos movimientos
+      var a = ult[0], b = ult[ult.length - 1], v = b && a && b[1] > a[1] ? (a[0] - b[0]) / (b[1] - a[1]) : 0, t = performance.now();
+      (function paso(ahora) {
+        var dt = ahora - t; t = ahora; v *= Math.pow(0.94, dt / 16);
+        if (Math.abs(v) > 0.05) { w.scrollLeft += v * dt; raf = requestAnimationFrame(paso); return; }
+        w.classList.remove('arrastrando');   // vuelve el ajuste a la tarjeta más cercana
+        setTimeout(function () { w.dataset.arrastre = '0'; }, 50);
+      })(t);
+    };
+    w.addEventListener('pointerup', soltar);
+    w.addEventListener('pointercancel', soltar);
+    w.addEventListener('dragstart', function (e) { e.preventDefault(); });
+  }
   function billetera(d) {
     var cred = d.creditos.filter(function (c) { return !c.persona; });
     var items = [];
@@ -1322,9 +1364,10 @@
       var b = el('<button type="button" class="wcard" role="listitem" aria-label="' + esc(it.nombre) + '">' + plastico(it.nombre) +
         '<div class="wstrip"><div><span class="k">' + (it.deuda ? 'Debes' : 'Saldo') + '</span><b class="num">' + pesos(c.saldo) + '</b></div>' +
         (it.info ? '<span class="s">' + esc(it.info) + '</span>' : '') + '</div></button>');
-      b.addEventListener('click', function () { ir(it.ruta); });
+      b.addEventListener('click', function (e) { if (w.dataset.arrastre === '1') { e.preventDefault(); return; } ir(it.ruta); });
       w.appendChild(b);
     });
+    arrastrable(w);
     n.appendChild(w);
     return n;
   }

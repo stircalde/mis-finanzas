@@ -362,7 +362,7 @@
   }
 
   /* ---------- hoja de registro ---------- */
-  var hoja = null, cuerpo = null, guardando = false, scrollTipos = 0;
+  var hoja = null, cuerpo = null, scrollTipos = 0;
   var ICO_X = '<svg viewBox="0 0 24 24"><path d="M6 6l12 12M18 6L6 18"/></svg>';
 
   function abrir() {
@@ -470,38 +470,86 @@
   }
 
   function guardar(form) {
-    if (guardando) return;
-    var err = form.querySelector('.reg-err'), btn = form.querySelector('.guardar'), datos;
+    var err = form.querySelector('.reg-err'), datos;
     try { datos = armar(); } catch (e) { err.textContent = e.message; err.hidden = false; err.scrollIntoView({ block: 'nearest' }); return; }
     err.hidden = true;
     // Identificador del envío: si se reintenta lo mismo (doble toque o corte de internet), la hoja no lo duplica.
     var firma = JSON.stringify(datos);
     if (st._firma !== firma) { st._firma = firma; st._rid = Date.now().toString(36) + Math.random().toString(36).slice(2, 8); }
     datos.rid = st._rid;
-    guardando = true; btn.disabled = true; btn.innerHTML = '<span class="spin-mini"></span> Guardando…';
+    if (cola.some(function (x) { return x.datos.rid === datos.rid; })) { listo(); return; }   // doble toque: ya va en camino
     if (datos.cuenta && tipo === 'gasto') MF.guardarLocal('regCuenta', datos.cuenta);
-    enviar(datos).then(function (r) {
-      guardando = false;
-      if (!r.ok) throw new Error(String(r.mensaje || 'No se registró.').replace(/^❌\s*/, ''));
-      listo(r.mensaje);
-      MF.refrescar();
-    }).catch(function (e) {
-      guardando = false;
-      if (!hoja) return;
-      btn.disabled = false; btn.textContent = 'Guardar';
-      err.textContent = (e instanceof TypeError ? 'No pude confirmar con tu hoja (¿sin internet?). Toca Guardar de nuevo: si ya había quedado, no se duplica.' : e.message || String(e));
-      err.hidden = false;
-    });
+    // Registrar instantáneo: queda en la cola y se guarda en tu hoja en segundo plano.
+    cola.push({ datos: datos, tipo: tipo, st: JSON.parse(JSON.stringify(st)), titulo: tituloDe(datos) });
+    guardarCola();
+    listo();
+    procesar();
   }
 
-  function listo(mensaje) {
+  function listo() {
     if (!cuerpo) return;
-    cuerpo.innerHTML = '<div class="reg-ok"><div class="reg-ok-ico">✓</div><h3>Listo, quedó guardado</h3><p>' +
-      esc(mensaje || '').replace(/\n/g, '<br>') + '</p><div class="reg-ok-acc">' +
+    cuerpo.innerHTML = '<div class="reg-ok"><div class="reg-ok-ico">✓</div><h3>Listo</h3><p>Se está guardando en tu hoja. Te aviso abajo cuando quede confirmado; si no hay internet, se envía solo cuando vuelva.</p><div class="reg-ok-acc">' +
       '<button class="btn" type="button" data-otro>➕ Registrar otro</button><button class="btn primary" type="button" data-fin>Listo</button></div></div>';
     cuerpo.querySelector('[data-otro]').addEventListener('click', function () { reiniciar(); pintar(); });
     cuerpo.querySelector('[data-fin]').addEventListener('click', function () { cerrar(); });
   }
+
+  /* ---------- cola de envíos: guarda en segundo plano, reintenta sin conexión y avisa el resultado ---------- */
+  var cola = [];
+  try { cola = JSON.parse(MF.leerLocal('colaRegistro') || '[]') || []; } catch (e) { cola = []; }
+  var enviando = false, tReintento = null, tAviso = null;
+  function guardarCola() { MF.guardarLocal('colaRegistro', cola.length ? JSON.stringify(cola) : null); }
+  function tituloDe(d) {
+    var q = { gasto: 'el gasto', ingreso: 'el ingreso', mepagaron: 'el pago de ' + (d.persona || ''), meprestaron: 'el préstamo de ' + (d.persona || ''), lepague: 'la devolución a ' + (d.persona || ''),
+      pagocredito: 'el pago de ' + (d.credito || 'crédito'), fijo: d.fijo || 'el gasto fijo', transferencia: 'el movimiento', ajuste: 'el ajuste', monedas: 'las monedas' }[d.accion] || 'el registro';
+    var desc = d.descripcion ? ' "' + String(d.descripcion).slice(0, 24) + '"' : '';
+    return q + desc + (d.monto ? ' de ' + pesos(Number(d.monto)) : '');
+  }
+  var pill = el('<div class="reg-cola" role="status" aria-live="polite" hidden><span class="rc-ico" aria-hidden="true"></span><span class="rc-txt"></span><button type="button" class="rc-btn" hidden></button><button type="button" class="rc-x" aria-label="Cerrar aviso">×</button></div>');
+  document.body.appendChild(pill);
+  var pillAccion = null;
+  pill.querySelector('.rc-btn').addEventListener('click', function () { var a = pillAccion; ocultarAviso(); if (a) a(); });
+  pill.querySelector('.rc-x').addEventListener('click', ocultarAviso);
+  function ocultarAviso() { clearTimeout(tAviso); pill.classList.remove('ver'); setTimeout(function () { if (!pill.classList.contains('ver')) pill.hidden = true; }, 260); }
+  function aviso(estado, texto, boton, accion, ms) {
+    clearTimeout(tAviso);
+    pill.className = 'reg-cola ' + estado;
+    pill.querySelector('.rc-txt').textContent = texto;
+    var b = pill.querySelector('.rc-btn'); b.hidden = !boton; b.textContent = boton || ''; pillAccion = accion || null;
+    pill.hidden = false; void pill.offsetWidth; pill.classList.add('ver');
+    if (ms) tAviso = setTimeout(ocultarAviso, ms);
+  }
+  function corregir(it, msg) {
+    tipo = it.tipo; st = it.st || {};
+    abrir();
+    setTimeout(function () { var e = hoja && hoja.querySelector('.reg-err'); if (e) { e.textContent = msg; e.hidden = false; } }, 60);
+  }
+  function procesar() {
+    clearTimeout(tReintento);
+    if (enviando || !cola.length) return;
+    enviando = true;
+    var it = cola[0];
+    aviso('enviando', 'Guardando ' + it.titulo + (cola.length > 1 ? ' (y ' + (cola.length - 1) + ' más)' : '') + '…');
+    enviar(Object.assign({}, it.datos)).then(function (r) {
+      enviando = false;
+      cola.shift(); guardarCola();
+      if (!r.ok) {
+        var msg = String(r.mensaje || 'No se registró.').replace(/^❌\s*/, '');
+        aviso('error', 'No se guardó ' + it.titulo + ': ' + msg, 'Corregir', function () { corregir(it, msg); });
+        procesar(); return;
+      }
+      var linea = String(r.mensaje || 'Guardado').split('\n')[0].replace(/^✅\s*/, '');
+      if (!cola.length) aviso('ok', '✓ ' + linea, null, null, 4500);
+      MF.refrescar();
+      procesar();
+    }).catch(function () {
+      enviando = false;
+      aviso('espera', 'Sin conexión: ' + it.titulo + ' se guardará cuando vuelva el internet.', 'Reintentar', procesar);
+      tReintento = setTimeout(procesar, 20000);
+    });
+  }
+  window.addEventListener('online', procesar);
+  if (cola.length && !MF.DEMO) setTimeout(procesar, 2000);
 
   /* ---------- botón flotante: tócalo para registrar, deslízalo a la derecha para ocultarlo ---------- */
   var ICO_MAS = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg>';
