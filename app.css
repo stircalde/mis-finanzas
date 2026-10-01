@@ -965,15 +965,18 @@ body.con-hoja .fab-wrap, body.con-reg .fab-wrap, .shell:has(#nav[hidden]) ~ .fab
 .nav { view-transition-name: menu; }
 .fab-wrap { view-transition-name: fab; }
 ::view-transition-group(menu), ::view-transition-group(fab) { animation: none; }
-::view-transition-group(pagina) { animation-duration: .32s; }
-::view-transition-old(pagina) { animation: vtSale .24s cubic-bezier(.4, 0, 1, 1) both; }
-::view-transition-new(pagina) { animation: vtEntra .34s cubic-bezier(.2, .75, .2, 1) both; }
+/* Sin fundido cruzado (era el efecto "fantasma"): la pantalla vieja se va rápido y la nueva entra limpia después. */
+::view-transition-old(root), ::view-transition-new(root) { animation: none; mix-blend-mode: normal; }
+::view-transition-group(pagina) { animation: none; }
+::view-transition-image-pair(pagina) { isolation: auto; }
+::view-transition-old(pagina) { animation: vtSale .14s ease-in both; mix-blend-mode: normal; }
+::view-transition-new(pagina) { animation: vtEntra .3s cubic-bezier(.2, .75, .2, 1) .1s both; mix-blend-mode: normal; }
 html[data-dir="izq"]::view-transition-old(pagina) { animation-name: vtSaleIzq; }
 html[data-dir="izq"]::view-transition-new(pagina) { animation-name: vtEntraIzq; }
-@keyframes vtSale { to { opacity: 0; transform: translateX(-36px); } }
-@keyframes vtEntra { from { opacity: 0; transform: translateX(36px); } }
-@keyframes vtSaleIzq { to { opacity: 0; transform: translateX(36px); } }
-@keyframes vtEntraIzq { from { opacity: 0; transform: translateX(-36px); } }
+@keyframes vtSale { to { opacity: 0; transform: translateX(-18px); } }
+@keyframes vtEntra { from { opacity: 0; transform: translateX(24px); } }
+@keyframes vtSaleIzq { to { opacity: 0; transform: translateX(18px); } }
+@keyframes vtEntraIzq { from { opacity: 0; transform: translateX(-24px); } }
 
 /* ============ v5.47: billetera arrastrable con el mouse ============ */
 @media (hover: hover) and (pointer: fine) { .wallet { cursor: grab; } .wallet .wcard { cursor: grab; } }
