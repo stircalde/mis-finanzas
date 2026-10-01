@@ -27,7 +27,7 @@ const sheets={};
 global.SpreadsheetApp={getActiveSpreadsheet:()=>({getSpreadsheetTimeZone:()=>'America/Bogota',getSheetByName:n=>sheets[n]||null,insertSheet:(n)=>(sheets[n]=new Sheet(n)),setActiveSheet(){}}),
   newDataValidation:()=>new Proxy({},{get:(t,k)=>k==='build'?()=>({}):function(){return this;}}),
   newConditionalFormatRule:()=>new Proxy({},{get:(t,k)=>k==='build'?()=>({}):function(){return this;}}),getUi:()=>({alert:console.log})};
-global.Utilities={formatDate:(d)=>{const p=n=>String(n).padStart(2,'0');return d.getFullYear()+'-'+p(d.getMonth()+1)+'-'+p(d.getDate());},getUuid:()=>Math.random().toString(16).slice(2)+'00000000'};
+global.Utilities={formatDate:(d)=>{const p=n=>String(n).padStart(2,'0');return d.getFullYear()+'-'+p(d.getMonth()+1)+'-'+p(d.getDate());},getUuid:()=>{global.__uuid=(global.__uuid||0)+1;return ('0000000'+global.__uuid.toString(16)).slice(-8)+'-sim';}};
 global.Session={getScriptTimeZone:()=>'America/Bogota',getActiveUser:()=>({getEmail:()=>''}),getEffectiveUser:()=>({getEmail:()=>'yo@x.com'})};
 global.LockService={getScriptLock:()=>({waitLock(){},tryLock(){return true},releaseLock(){}})};
 global.ContentService={createTextOutput:(s)=>({setMimeType(){return {s}}}),MimeType:{JSON:1}};
