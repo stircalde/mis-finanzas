@@ -125,7 +125,7 @@
     tipoIng: ['persona', 'personaNueva', 'aplica', 'compra', 'exceso', 'monto', '_montoAuto'],
     persona: ['aplica', 'compra', 'exceso'],
     aplica: ['compra'],
-    credito: ['monto', 'origen', 'mama', '_montoAuto'],
+    credito: ['monto', 'origen', 'mama', 'exceso', '_montoAuto'],
     origen: ['mama'],
     fijo: ['monto', 'cuenta', 'mama', '_montoAuto'],
     desde: ['hacia'],
@@ -236,6 +236,9 @@
       if (d.bolsillo && !d.persona) { var b = plata(d.bolsillo); if (b) ori.push([b.n, '🎯 ' + b.n + ' · tiene ' + pesos(b.s)]); }
       cfg.plata.forEach(function (c) { if (!ori.some(function (o) { return o[0] === c.n; })) ori.push([c.n, c.e + ' ' + c.n + ' · tiene ' + pesos(c.s)]); });
       if (cfg.mama && !d.mama && !d.persona) ori.push(['__mama', '👩 Lo pagó mamá']);
+      if (d.persona && st.monto > d.s) {
+        h += fChips('exceso', 'Le pagas ' + pesos(st.monto - d.s) + ' de más a ' + esc(d.n), [['debe', '🤝 Me lo queda debiendo'], ['regalo', '🎁 Se lo regalé']]);
+      }
       h += fSelect('origen', '¿De dónde sale la plata?', ori, 'Elige la cuenta');
       if (st.origen === '__mama') h += fChips('mama', '¿Tu mamá te lo regaló o te lo prestó?', [['regalo', '🎁 Me lo regaló'], ['prestamo', '🤝 Me lo prestó']]);
       return h + fFecha();
@@ -294,8 +297,9 @@
         if (!st.cuenta) falta('Elige con qué pagaste.');
         var d = deuda(st.cuenta), cuotas = '';
         if (d && d.cuotas) {
-          cuotas = st.cuotas === 'otro' ? Math.min(st.cuotasOtro || 0, d.max) : Number(st.cuotas) || 1;
+          cuotas = st.cuotas === 'otro' ? st.cuotasOtro || 0 : Number(st.cuotas) || 1;
           if (!(cuotas > 0)) falta('Escribe a cuántas cuotas.');
+          if (d.max && cuotas > d.max) falta(d.n + ' permite máximo ' + d.max + ' cuotas.');
         }
         var para = '';
         if (st.para === '__otra') {
@@ -329,7 +333,11 @@
         if (!st.credito) falta('Elige qué vas a pagar.');
         monto('monto');
         if (!st.origen) falta('Elige de dónde sale la plata.');
-        if (String(st.credito).indexOf('p|') === 0) return { accion: 'lepague', fecha: f, persona: st.credito.slice(2), monto: st.monto, cuenta: st.origen };
+        if (String(st.credito).indexOf('p|') === 0) {
+          var cp = credito();
+          if (st.monto > cp.s && !st.exceso) falta('Dime qué pasa con los ' + pesos(st.monto - cp.s) + ' de más.');
+          return { accion: 'lepague', fecha: f, persona: st.credito.slice(2), monto: st.monto, cuenta: st.origen, exceso: st.monto > cp.s ? st.exceso : '' };
+        }
         if (st.origen === '__mama' && !st.mama) falta('Dime si tu mamá te lo regaló o te lo prestó.');
         var dt = { accion: 'pagocredito', fecha: f, credito: st.credito, monto: st.monto };
         if (st.origen === '__mama') dt.origen = st.mama; else { dt.origen = 'cuenta'; dt.cuenta = st.origen; }
@@ -458,7 +466,7 @@
         }
       });
       // Lo que cambia otras preguntas (p. ej. pagar de más) se repinta al salir del campo.
-      if (k === 'monto' && tipo === 'ingreso') i.addEventListener('change', pintar);
+      if (k === 'monto' && (tipo === 'ingreso' || (tipo === 'pagar' && String(st.credito || '').indexOf('p|') === 0))) i.addEventListener('change', pintar);
       if (k === 'fecha') i.addEventListener('change', function () { st.fecha = i.value || hoyISO(); });
     });
     form.querySelectorAll('select[data-k]').forEach(function (s) { s.addEventListener('change', function () { cambiar(s.dataset.k, s.value); }); });
@@ -499,6 +507,25 @@
   try { cola = JSON.parse(MF.leerLocal('colaRegistro') || '[]') || []; } catch (e) { cola = []; }
   var enviando = false, tReintento = null, tAviso = null;
   function guardarCola() { MF.guardarLocal('colaRegistro', cola.length ? JSON.stringify(cola) : null); }
+  // Registros que la hoja rechazó: quedan guardados hasta que toques "Corregir", aunque la cola siga con otros.
+  var rechazados = [];
+  try { rechazados = JSON.parse(MF.leerLocal('regRechazados') || '[]') || []; } catch (e) { rechazados = []; }
+  function guardarRechazados() { MF.guardarLocal('regRechazados', rechazados.length ? JSON.stringify(rechazados) : null); }
+  function avisarRechazo() {
+    var x = rechazados[0]; if (!x) return;
+    aviso('error', 'No se guardó ' + x.it.titulo + ': ' + x.msg + (rechazados.length > 1 ? ' (y ' + (rechazados.length - 1) + ' más sin guardar)' : ''), 'Corregir',
+      function corregirRechazo() {
+        // Si estás llenando otro registro, no se te borra: primero guárdalo o ciérralo.
+        if (formularioConDatos()) { aviso('error', 'Primero guarda o cierra el registro que tienes abierto; luego corrige ' + x.it.titulo + '.', 'Corregir', corregirRechazo); return; }
+        rechazados.shift(); guardarRechazados(); corregir(x.it, x.msg);
+      });
+  }
+  function formularioConDatos() {
+    if (!hoja || !cuerpo || !cuerpo.querySelector('.reg-form')) return false;
+    return ['desc', 'monto', 'cuenta', 'credito', 'fijo', 'tipoIng', 'desde', 'hacia', 'real', 'persona'].some(function (k) {
+      var v = st[k]; return v != null && v !== '' && !(typeof v === 'number' && isNaN(v));
+    });
+  }
   function tituloDe(d) {
     var q = { gasto: 'el gasto', ingreso: 'el ingreso', mepagaron: 'el pago de ' + (d.persona || ''), meprestaron: 'el préstamo de ' + (d.persona || ''), lepague: 'la devolución a ' + (d.persona || ''),
       pagocredito: 'el pago de ' + (d.credito || 'crédito'), fijo: d.fijo || 'el gasto fijo', transferencia: 'el movimiento', ajuste: 'el ajuste', monedas: 'las monedas' }[d.accion] || 'el registro';
@@ -521,7 +548,7 @@
   }
   function corregir(it, msg) {
     tipo = it.tipo; st = it.st || {};
-    abrir();
+    if (hoja) pintar(); else abrir();
     setTimeout(function () { var e = hoja && hoja.querySelector('.reg-err'); if (e) { e.textContent = msg; e.hidden = false; } }, 60);
   }
   function procesar() {
@@ -535,11 +562,12 @@
       cola.shift(); guardarCola();
       if (!r.ok) {
         var msg = String(r.mensaje || 'No se registró.').replace(/^❌\s*/, '');
-        aviso('error', 'No se guardó ' + it.titulo + ': ' + msg, 'Corregir', function () { corregir(it, msg); });
+        rechazados.push({ it: it, msg: msg }); guardarRechazados();
+        if (!cola.length) avisarRechazo();
         procesar(); return;
       }
       var linea = String(r.mensaje || 'Guardado').split('\n')[0].replace(/^✅\s*/, '');
-      if (!cola.length) aviso('ok', '✓ ' + linea, null, null, 4500);
+      if (!cola.length) { if (rechazados.length) avisarRechazo(); else aviso('ok', '✓ ' + linea, null, null, 4500); }
       MF.refrescar();
       procesar();
     }).catch(function () {
@@ -550,6 +578,7 @@
   }
   window.addEventListener('online', procesar);
   if (cola.length && !MF.DEMO) setTimeout(procesar, 2000);
+  else if (rechazados.length && !MF.DEMO) setTimeout(avisarRechazo, 2000);
 
   /* ---------- botón flotante: tócalo para registrar, deslízalo a la derecha para ocultarlo ---------- */
   var ICO_MAS = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg>';

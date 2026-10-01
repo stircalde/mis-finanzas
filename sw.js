@@ -1,5 +1,5 @@
 // Service worker: la app abre rápido y sin conexión; los datos siempre se piden en vivo.
-const VERSION = 'mf-v5-51';
+const VERSION = 'mf-v5-52';
 const ARCHIVOS = ['./', 'index.html', 'app.css', 'app.js', 'registro.js', 'admin.js', 'logos.js', 'cards.js', 'manifest.webmanifest', 'icons/icon-180.png', 'icons/icon-192.png', 'icons/icon-512.png'];
 
 self.addEventListener('install', (e) => {
@@ -27,8 +27,9 @@ self.addEventListener('fetch', (e) => {
       const t = setTimeout(() => deCache().then(dar), 3000);
       fetch(e.request, { cache: 'no-cache' }).then((r) => {
         clearTimeout(t);
-        if (r.ok) { const copia = r.clone(); caches.open(VERSION).then((c) => c.put(e.request, copia)); }
-        if (!listo) { listo = true; resolve(r); }
+        if (r.ok) { const copia = r.clone(); caches.open(VERSION).then((c) => c.put(e.request, copia)); if (!listo) { listo = true; resolve(r); } return; }
+        // Error del servidor (404/500, p. ej. durante una publicación): mejor la última copia que funcionó.
+        deCache().then((hit) => { if (!listo) { listo = true; resolve(hit || r); } });
       }).catch(() => { clearTimeout(t); deCache().then((hit) => { if (!listo) { listo = true; resolve(hit || Response.error()); } }); });
     }));
   }

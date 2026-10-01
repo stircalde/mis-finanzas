@@ -59,6 +59,9 @@ function doPost(e) {
       return json({ ok: true, mensaje: '👌 Ya estaba registrado. No lo dupliqué.', config: configTelefono(cfg) });
     }
     let mensaje = '';
+    // Todas las filas de este registro se escriben juntas al final (una sola escritura): si algo falla,
+    // no queda un registro a medias que el reintento con el mismo rid tome por completo.
+    PEND_ = [];
     switch (p.accion) {
       case 'config': break;
       case 'gasto': mensaje = registrarGasto(p, cfg); break;
@@ -75,15 +78,17 @@ function doPost(e) {
       case 'cuentaadmin': mensaje = administrarCuenta(p, cfg); break;
       default: throw new Error('Acción desconocida: ' + p.accion);
     }
+    guardarPendientes_();
     return json({ ok: true, mensaje: mensaje, config: configTelefono(CACHE_CFG_ ? cfg : leerConfig()) });
   } catch (err) {
     return json({ ok: false, mensaje: '❌ ' + (conLock ? err.message : 'La hoja está ocupada. Intenta de nuevo en unos segundos.') });
   } finally {
     RID_ = '';
+    PEND_ = null;   // si hubo error, lo pendiente se descarta: nada quedó escrito
     if (conLock) lock.releaseLock();
   }
 }
-let RID_ = '', RID_N_ = 0;
+let RID_ = '', RID_N_ = 0, PEND_ = null;
 
 function registrarGasto(p, cfg) {
   const monto = aNumero(p.monto);
@@ -260,7 +265,23 @@ function registrarLePague(p, cfg) {
   const cta = cuentaPorNombre(cfg, p.cuenta);
   if (!persona) throw new Error('Falta la persona.');
   if (!(monto > 0)) throw new Error('El monto no es válido.');
-  agregarMovimiento([leerFechaMov(p.fecha), TIPO.LEPAGUE, 'Le pagué a ' + persona, monto, '', cta.nombre, '', persona, '', '', '']);
+  const fecha = leerFechaMov(p.fecha);
+  // Si le pagas más de lo que le debes, la diferencia no puede desaparecer: o te la queda debiendo, o fue un regalo (gasto tuyo).
+  const antes = calcular(leerMovimientos(), cfg, hoy()).lesDebo.find(function (y) { return y.persona === persona; });
+  const debe = antes ? Math.max(0, antes.saldo) : 0;
+  const exceso = monto > debe ? monto - debe : 0;
+  if (exceso > 0 && p.exceso !== 'debe' && p.exceso !== 'regalo') {
+    throw new Error((debe > 0 ? 'Solo le debes ' + pesos(debe) + ' a ' + persona + '.' : 'No le debes nada a ' + persona + '.') +
+      ' Regístralo desde la app para elegir qué pasa con los ' + pesos(exceso) + ' de más.');
+  }
+  if (monto - exceso > 0) agregarMovimiento([fecha, TIPO.LEPAGUE, 'Le pagué a ' + persona, monto - exceso, '', cta.nombre, '', persona, '', '', '']);
+  if (exceso > 0 && p.exceso === 'debe') agregarMovimiento([fecha, TIPO.GASTO, 'Le pagué de más a ' + persona, exceso, 'Otros', cta.nombre, '', persona, '', '', '']);
+  if (exceso > 0 && p.exceso === 'regalo') agregarMovimiento([fecha, TIPO.GASTO, 'Le pagué de más a ' + persona + ' (regalo)', exceso, 'Otros', cta.nombre, '', '', '', '', '']);
+  if (exceso > 0) {
+    return '✅ Le pagaste ' + pesos(monto) + ' a ' + persona + ' desde ' + cta.nombre + '\n' +
+      (debe > 0 ? '🎉 Quedaste a paz y salvo (le debías ' + pesos(debe) + ')\n' : '') +
+      (p.exceso === 'debe' ? '🤝 ' + persona + ' te queda debiendo ' + pesos(exceso) : '🎁 Los ' + pesos(exceso) + ' de más quedaron como gasto tuyo');
+  }
   const est = calcular(leerMovimientos(), cfg, hoy());
   const x = est.lesDebo.find(function (y) { return y.persona === persona; });
   return '✅ Le pagaste ' + pesos(monto) + ' a ' + persona + ' desde ' + cta.nombre + '\n' + (x ? '🙋 Todavía le debes ' + pesos(x.saldo) : '🎉 Quedaste a paz y salvo con ' + persona);
@@ -720,6 +741,7 @@ function calcular(movs, cfg, hoyF) {
       if (!atras.length || atras[atras.length - 1].f !== f) atras.push({ f: f, s: Math.round(s) });
       if (m.tipo === TIPO.GASTO && m.cuenta === c.nombre) s -= m.monto + (m.costo || 0);
       else if ((m.tipo === TIPO.TRANSF || m.tipo === TIPO.INGRESO) && m.destino === c.nombre) s += m.monto;
+      else if (m.tipo === TIPO.TRANSF && m.cuenta === c.nombre) s -= m.monto;   // avance: antes de él, la deuda era menor
       else if (m.tipo === TIPO.INGRESO && m.cuenta === c.nombre) s += m.monto;
     });
     atras.push({ f: fmt(addDias(hist[hist.length - 1].fecha, -1)), s: Math.max(0, Math.round(s)) });
@@ -1501,7 +1523,11 @@ function administrarFijo(p, cfg) {
   const f = cfg.fijos.find(function (x) { return x.nombre === nombre; });
   const hoyF = hoy();
   if (op === 'guardar') {
-    if (!f) nombreValido(nombre);
+    if (!f) {
+      nombreValido(nombre);
+      const parecido = cfg.fijos.find(function (x) { return normalizarTexto(x.nombre) === normalizarTexto(nombre); });
+      if (parecido) throw new Error('Ya tienes "' + parecido.nombre + '". Usa otro nombre.');
+    }
     const valor = aNumero(p.valor);
     if (!(valor > 0)) throw new Error('El valor no es válido.');
     const frec = /^anual/i.test(p.frecuencia) ? 'Anual' : /^una/i.test(p.frecuencia) ? 'Una vez' : 'Mensual';
@@ -1907,14 +1933,31 @@ function agregarMovimiento(fila, id) {
   const h = hojaMovimientos();
   if (!id && RID_) { id = RID_ + (RID_N_ ? '#' + (RID_N_ + 1) : ''); RID_N_++; }
   // Un texto que empieza por = + - @ se volvería fórmula en Sheets: se guarda como texto.
-  fila = fila.map(function (x) { return typeof x === 'string' && /^[=+\-@]/.test(x) && !/^-?\d/.test(x) ? "'" + x : x; });
-  const completa = fila.concat([new Date(), id || Utilities.getUuid().slice(0, 8)]);
+  fila = fila.map(function (x) { return typeof x === 'string' && /^[=+\-@]/.test(x) && !/^-?\d[\d.,]*$/.test(x) ? "'" + x : x; });
+  const completa = fila.slice(0, ENC_MOV.length - 2).concat([new Date(), id || Utilities.getUuid().slice(0, 8)]);
+  while (completa.length < ENC_MOV.length) completa.splice(completa.length - 2, 0, '');
+  CACHE_MOVS_ = null;
+  if (PEND_) { PEND_.push(completa); return; }   // dentro de doPost: se escribe al final, todo junto
   h.appendRow(completa);
-  const r = h.getLastRow();
-  h.getRange(r, 1).setNumberFormat('dd/mm/yyyy');
-  h.getRange(r, 4).setNumberFormat('$#,##0;-$#,##0');
-  h.getRange(r, 10, 1, 2).setNumberFormat('$#,##0');
-  h.getRange(r, 12).setNumberFormat('dd/mm/yyyy hh:mm');
+  formatoFilas_(h, h.getLastRow(), 1);
+}
+
+function formatoFilas_(h, r, n) {
+  h.getRange(r, 1, n, 1).setNumberFormat('dd/mm/yyyy');
+  h.getRange(r, 4, n, 1).setNumberFormat('$#,##0;-$#,##0');
+  h.getRange(r, 10, n, 2).setNumberFormat('$#,##0');
+  h.getRange(r, 12, n, 1).setNumberFormat('dd/mm/yyyy hh:mm');
+}
+
+/** Escribe de una vez las filas pendientes del registro en curso. */
+function guardarPendientes_() {
+  const filas = PEND_ || [];
+  PEND_ = null;
+  if (!filas.length) return;
+  const h = hojaMovimientos();
+  const r = h.getLastRow() + 1;
+  h.getRange(r, 1, filas.length, ENC_MOV.length).setValues(filas);
+  try { formatoFilas_(h, r, filas.length); } catch (e) { /* el formato es cosmético: los datos ya quedaron */ }
   CACHE_MOVS_ = null;
 }
 
@@ -1923,8 +1966,8 @@ function leerMovimientos() {
   if (CACHE_MOVS_) return CACHE_MOVS_;
   const h = hojaMovimientos();
   const n = h.getLastRow() - 1;
-  if (n < 1) return (CACHE_MOVS_ = []);
-  CACHE_MOVS_ = h.getRange(2, 1, n, ENC_MOV.length).getValues()
+  const filas = (n < 1 ? [] : h.getRange(2, 1, n, ENC_MOV.length).getValues()).concat(PEND_ || []);
+  CACHE_MOVS_ = filas
     .filter(function (r) { return r[0] instanceof Date && r[1] && r[3] !== ''; })
     .map(function (r) {
       return {

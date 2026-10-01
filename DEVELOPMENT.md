@@ -94,6 +94,14 @@ A.fin('mi_caso');
   inicial); en los resúmenes mensuales solo cuentan desde `RESUMEN_DESDE`.
 - **Cuenta "Mamá" y "Mamá (regalo)".** "Mamá" es una deuda (lo que ella presta). "Mamá (regalo)" es una
   cuenta de paso que siempre queda en $0: registra lo que ella paga y regala, como ingreso y gasto a la vez.
+- **Pagarle a alguien más de lo que le debes** exige decir qué pasa con la diferencia (`exceso`):
+  `debe` (te la queda debiendo → pasa a *Me deben*) o `regalo` (gasto tuyo). Sin eso, el backend lo
+  rechaza, para que nunca desaparezca plata. Al revés (*Me pagaron* de más) existe `exceso=ingreso`.
+  El exceso se calcula contra lo que se debe **hoy** (con todos los préstamos y pagos registrados), no
+  contra lo que se debía en la fecha del pago: el resultado final —quién le debe a quién y cuánto— es
+  el mismo, sin importar el orden en que se registren.
+- **Cada registro se escribe en la hoja de una sola vez** al final de `doPost` (aunque genere varias
+  filas). Si la escritura falla no queda nada a medias, y el reintento con el mismo `rid` lo guarda completo.
 - **Bolsillos** (cuenta de plata con "Aparta para"): dinero separado para pagar una tarjeta; cuenta
   como plata y se muestra junto a la tarjeta que alimenta.
 - **"Disponible para gastar"** = plata total − cuotas de créditos que vencen en los próximos 30 días −
@@ -131,6 +139,7 @@ A.fin('mi_caso');
 - **Transiciones entre pestañas** con View Transitions; nunca se quita una clase que vuelva a disparar
   la animación de entrada (se usa `style.animation = 'none'`).
 - La clave se escribe una vez en la app y queda solo en ese dispositivo.
+- **Movimientos → Filtros → "Elegir mes"** preselecciona el mes más reciente (se ve en el selector). Decidido por Hector.
 
 ## Cómo reportar un hallazgo (auditores)
 
