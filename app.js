@@ -152,6 +152,7 @@
         if (igual) marcarSync();
         else if (habia) pintarSuave();
         else pintar();
+        setTimeout(sincronizarImagenes, 1500);
       })
       .catch(function (e) {
         sync = 'off';
@@ -212,14 +213,22 @@
     var ORDEN = ['inicio', 'creditos', 'calendario', 'movimientos', 'medeben'];
     var vista = function (h) { var v = (h.slice(2).split('/')[0] || 'inicio'); return v === 'cuenta' || v === 'credito' ? 9 : Math.max(0, ORDEN.indexOf(v)); };
     var a = vista(anterior), b = vista(nuevo);
-    app.classList.remove('ir-der', 'ir-izq');
-    if (a !== b) { void app.offsetWidth; app.classList.add(b > a ? 'ir-der' : 'ir-izq'); clearTimeout(window.__tTab); window.__tTab = setTimeout(function () { app.classList.remove('ir-der', 'ir-izq'); }, 900); }
-    pintar();
-    window.scrollTo(0, y);
-    posiciones[nuevo] = y;
-    // La billetera vuelve a mostrar la tarjeta que estabas viendo.
-    var w2 = document.querySelector('.wallet');
-    if (w2 && volver && posiciones[nuevo + '|wallet']) w2.scrollLeft = posiciones[nuevo + '|wallet'];
+    var cambiar = function () {
+      pintar();
+      window.scrollTo(0, y);
+      posiciones[nuevo] = y;
+      // La billetera vuelve a mostrar la tarjeta que estabas viendo.
+      var w2 = document.querySelector('.wallet');
+      if (w2 && volver && posiciones[nuevo + '|wallet']) w2.scrollLeft = posiciones[nuevo + '|wallet'];
+    };
+    // Con View Transitions la pantalla vieja se queda visible hasta que la nueva está lista (sin parpadeo) y se deslizan juntas.
+    if (a !== b && document.startViewTransition && !matchMedia('(prefers-reduced-motion: reduce)').matches && !hojaAbierta) {
+      document.documentElement.dataset.dir = b > a ? 'der' : 'izq';
+      app.classList.add('sin-entrada');
+      var vt = document.startViewTransition(cambiar);
+      vt.finished.then(fin, fin);
+    } else cambiar();
+    function fin() { app.classList.remove('sin-entrada'); delete document.documentElement.dataset.dir; }
   });
   document.addEventListener('click', function (e) { if (!e.target.closest('.hit, .seg')) ocultarTip(); });
 
@@ -1283,7 +1292,22 @@
       ((1 - 1 / PROP_TARJETA) / 2 * 100).toFixed(3) + '%;top:' + ((1 - PROP_TARJETA) / 2 * 100).toFixed(3) + '%">' + img(capaFoto(x.c, x.a, 1 / PROP_TARJETA)) + '</span></span>';
   }
   // Imagen elegida para una cuenta o tarjeta (se guarda en este dispositivo; ver admin.js).
-  function imgTarjeta(nombre) { try { var m = JSON.parse(leerLocal('imgTarjetas') || '{}'); return m && typeof m[nombre] === 'string' ? m[nombre] : ''; } catch (e) { return ''; } }
+  // Primero la de tu hoja (se ve igual en todos tus dispositivos); si la hoja aún no la tiene, la guardada en este dispositivo.
+  function imgTarjeta(nombre) {
+    var c = datos && (datos.cuentasCfg || []).filter(function (x) { return x.nombre === nombre; })[0];
+    if (c && typeof c.imagen === 'string' && (c.imagen || leerLocal('imgSync') === '1')) return c.imagen;
+    try { var m = JSON.parse(leerLocal('imgTarjetas') || '{}'); return m && typeof m[nombre] === 'string' ? m[nombre] : ''; } catch (e) { return ''; }
+  }
+  // Una sola vez: las imágenes que elegiste antes en este dispositivo pasan a tu hoja.
+  function sincronizarImagenes() {
+    if (DEMO || leerLocal('imgSync') === '1' || !datos || !datos.cuentasCfg || !window.MF || !MF.enviar) return;
+    if (!datos.cuentasCfg.some(function (c) { return typeof c.imagen === 'string'; })) return;   // la hoja todavía no guarda imágenes
+    var m = {}; try { m = JSON.parse(leerLocal('imgTarjetas') || '{}') || {}; } catch (e) { m = {}; }
+    var pend = Object.keys(m).filter(function (n) { var c = datos.cuentasCfg.filter(function (x) { return x.nombre === n; })[0]; return c && !c.imagen && m[n]; });
+    guardarLocal('imgSync', '1');
+    pend.reduce(function (pr, n) { return pr.then(function () { return MF.enviar({ accion: 'cuentaadmin', op: 'imagen', nombre: n, imagen: m[n] }); }); }, Promise.resolve())
+      .then(function () { if (pend.length) cargar('', true); }).catch(function () { guardarLocal('imgSync', null); });
+  }
   function plastico(nombre) {
     var t = PLASTICOS[nombre], foto = imgTarjeta(nombre);
     if (foto) {

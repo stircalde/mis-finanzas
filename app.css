@@ -960,16 +960,21 @@ body.con-hoja .fab-wrap, body.con-reg .fab-wrap, .shell:has(#nav[hidden]) ~ .fab
 .reg-cola .rc-btn { flex: none; border: 0; border-radius: 999px; padding: 7px 12px; font: inherit; font-weight: 700; font-size: .8rem; background: var(--accent); color: #fff; cursor: pointer; }
 .reg-cola .rc-x { flex: none; border: 0; background: none; color: var(--muted); font-size: 1.2rem; line-height: 1; padding: 2px 6px; cursor: pointer; }
 :root[data-theme="light"] .reg-cola { background: rgba(255, 255, 255, .98); }
-@keyframes entraDer { from { opacity: 0; transform: translateX(32px); } to { opacity: 1; transform: none; } }
-@keyframes entraIzq { from { opacity: 0; transform: translateX(-32px); } to { opacity: 1; transform: none; } }
-.page.ir-der > * { animation: entraDer .42s cubic-bezier(.2, .75, .2, 1) both; }
-.page.ir-izq > * { animation: entraIzq .42s cubic-bezier(.2, .75, .2, 1) both; }
-.page.ir-der > :nth-child(2), .page.ir-izq > :nth-child(2) { animation-delay: .04s; }
-.page.ir-der > :nth-child(3), .page.ir-izq > :nth-child(3) { animation-delay: .08s; }
-.page.ir-der > :nth-child(4), .page.ir-izq > :nth-child(4) { animation-delay: .12s; }
-.page.ir-der > :nth-child(n+5), .page.ir-izq > :nth-child(n+5) { animation-delay: .16s; }
-.page.ir-der, .page.ir-izq { overflow-x: clip; }
-@media (prefers-reduced-motion: reduce) { .page.ir-der > *, .page.ir-izq > * { animation: none; } .reg-cola { transition: none; } }
+/* Cambio de pestaña con View Transitions: el menú y el botón Registrar se quedan quietos; el contenido se desliza. */
+#app { view-transition-name: pagina; }
+.nav { view-transition-name: menu; }
+.fab-wrap { view-transition-name: fab; }
+::view-transition-group(menu), ::view-transition-group(fab) { animation: none; }
+::view-transition-group(pagina) { animation-duration: .32s; }
+::view-transition-old(pagina) { animation: vtSale .24s cubic-bezier(.4, 0, 1, 1) both; }
+::view-transition-new(pagina) { animation: vtEntra .34s cubic-bezier(.2, .75, .2, 1) both; }
+html[data-dir="izq"]::view-transition-old(pagina) { animation-name: vtSaleIzq; }
+html[data-dir="izq"]::view-transition-new(pagina) { animation-name: vtEntraIzq; }
+@keyframes vtSale { to { opacity: 0; transform: translateX(-36px); } }
+@keyframes vtEntra { from { opacity: 0; transform: translateX(36px); } }
+@keyframes vtSaleIzq { to { opacity: 0; transform: translateX(36px); } }
+@keyframes vtEntraIzq { from { opacity: 0; transform: translateX(-36px); } }
+.page.sin-entrada > * { animation: none !important; }
 
 /* ============ v5.47: billetera arrastrable con el mouse ============ */
 @media (hover: hover) and (pointer: fine) { .wallet { cursor: grab; } .wallet .wcard { cursor: grab; } }

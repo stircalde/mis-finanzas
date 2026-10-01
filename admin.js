@@ -291,6 +291,7 @@
         }
       }
       datos._img = { nombre: nombre, url: st.imagen || '' };
+      datos.imagen = st.imagen || '';   // también en tu hoja, para verla en todos tus dispositivos
       return datos;
     }, function (st) {
       if (nuevo) return '';
