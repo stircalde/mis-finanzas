@@ -1,0 +1,10146 @@
+{
+ "semilla": 7,
+ "pasos": 400,
+ "fotos": [
+  {
+   "hoy": "2026-09-30",
+   "patrimonio": -1520000,
+   "totalPlata": 620000,
+   "totalDeudas": 2200000,
+   "totalMeDeben": 60000,
+   "totalLesDebo": 0,
+   "ingresos": 0,
+   "gastos": 0,
+   "disponible": {
+    "tienes": 620000,
+    "creditos": 730000,
+    "fijos": 259000,
+    "valor": -369000
+   },
+   "cuentas": [
+    [
+     "Nequi",
+     500000
+    ],
+    [
+     "Daviplata",
+     120000
+    ],
+    [
+     "Efectivo",
+     0
+    ],
+    [
+     "Bolsillo para la tarjeta",
+     0
+    ]
+   ],
+   "creditos": [
+    {
+     "n": "Addi",
+     "saldo": 600000,
+     "proximo": {
+      "fecha": "2026-10-01",
+      "monto": 150000
+     },
+     "sinFecha": 50000,
+     "intereses": 0,
+     "interesesEst": 0,
+     "calendario": [
+      [
+       "2026-10-01",
+       150000
+      ],
+      [
+       "2026-11-01",
+       150000
+      ],
+      [
+       "2026-12-01",
+       150000
+      ],
+      [
+       "2027-01-01",
+       100000
+      ]
+     ],
+     "planes": [
+      [
+       "Repuestos moto",
+       600000,
+       6,
+       2,
+       400000
+      ],
+      [
+       "Tienda de ropa",
+       150000,
+       3,
+       0,
+       150000
+      ]
+     ]
+    },
+    {
+     "n": "TC Nubank",
+     "saldo": 300000,
+     "proximo": {
+      "fecha": "2026-10-21",
+      "monto": 180000
+     },
+     "sinFecha": 80000,
+     "intereses": 0,
+     "interesesEst": 0,
+     "calendario": [
+      [
+       "2026-10-21",
+       180000
+      ],
+      [
+       "2026-11-21",
+       42556
+      ]
+     ],
+     "planes": [
+      [
+       "Droguería",
+       82556,
+       2,
+       0,
+       80000
+      ]
+     ]
+    },
+    {
+     "n": "TC Davibank",
+     "saldo": 1200000,
+     "proximo": {
+      "fecha": "2026-10-07",
+      "monto": 350000
+     },
+     "sinFecha": 0,
+     "intereses": 0,
+     "interesesEst": 0,
+     "calendario": [
+      [
+       "2026-10-07",
+       350000
+      ],
+      [
+       "2026-11-04",
+       171726
+      ],
+      [
+       "2026-12-09",
+       168531
+      ],
+      [
+       "2027-01-12",
+       105336
+      ],
+      [
+       "2027-02-10",
+       103419
+      ],
+      [
+       "2027-03-10",
+       101502
+      ],
+      [
+       "2027-04-07",
+       99585
+      ],
+      [
+       "2027-05-05",
+       97668
+      ],
+      [
+       "2027-06-09",
+       95751
+      ],
+      [
+       "2027-07-07",
+       93834
+      ],
+      [
+       "2027-08-04",
+       91917
+      ]
+     ],
+     "planes": [
+      [
+       "Electrodoméstico",
+       1229526,
+       12,
+       1,
+       990000
+      ],
+      [
+       "Supermercado",
+       187668,
+       3,
+       0,
+       180000
+      ]
+     ]
+    },
+    {
+     "n": "Credifin",
+     "saldo": 100000,
+     "proximo": {
+      "fecha": "2026-10-09",
+      "monto": 50000
+     },
+     "sinFecha": 0,
+     "intereses": 0,
+     "interesesEst": 0,
+     "calendario": [
+      [
+       "2026-10-09",
+       50000
+      ],
+      [
+       "2026-11-09",
+       50000
+      ]
+     ],
+     "planes": [
+      [
+       "Cine",
+       150000,
+       3,
+       1,
+       100000
+      ]
+     ]
+    }
+   ],
+   "meDeben": [
+    [
+     "Ana",
+     60000,
+     60000
+    ]
+   ],
+   "presupuestos": [
+    [
+     "Ocio",
+     350000,
+     0
+    ]
+   ],
+   "proximos": [
+    [
+     "credito",
+     "Addi",
+     150000,
+     "2026-10-01",
+     "pendiente"
+    ],
+    [
+     "fijo",
+     "Cuota de manejo Nubank",
+     12000,
+     "2026-10-01",
+     "automatico"
+    ],
+    [
+     "credito",
+     "TC Davibank",
+     350000,
+     "2026-10-07",
+     "pendiente"
+    ],
+    [
+     "credito",
+     "Credifin",
+     50000,
+     "2026-10-09",
+     "pendiente"
+    ],
+    [
+     "fijo",
+     "Streaming familiar",
+     42000,
+     "2026-10-09",
+     "automatico"
+    ],
+    [
+     "fijo",
+     "Gimnasio",
+     120000,
+     "2026-10-18",
+     "automatico"
+    ],
+    [
+     "fijo",
+     "Seguro de vida Davibank",
+     5490,
+     "2026-10-18",
+     "automatico"
+    ],
+    [
+     "fijo",
+     "Prueba gratis",
+     24490,
+     "2026-10-20",
+     "cancelar"
+    ],
+    [
+     "credito",
+     "TC Nubank",
+     180000,
+     "2026-10-21",
+     "pendiente"
+    ],
+    [
+     "fijo",
+     "Internet y TV",
+     107000,
+     "2026-10-21",
+     "pendiente"
+    ],
+    [
+     "fijo",
+     "Google One",
+     19900,
+     "2026-10-22",
+     "automatico"
+    ],
+    [
+     "fijo",
+     "Plan celular familiar",
+     32000,
+     "2026-10-26",
+     "pendiente"
+    ],
+    [
+     "fijo",
+     "Suscripción de apps",
+     66000,
+     "2026-10-28",
+     "automatico"
+    ],
+    [
+     "credito",
+     "Addi",
+     150000,
+     "2026-11-01",
+     "pendiente"
+    ],
+    [
+     "fijo",
+     "Cuota de manejo Nubank",
+     12000,
+     "2026-11-01",
+     "automatico"
+    ],
+    [
+     "credito",
+     "TC Davibank",
+     171726,
+     "2026-11-04",
+     "pendiente"
+    ]
+   ]
+  },
+  {
+   "hoy": "2026-09-30",
+   "patrimonio": -1695400,
+   "totalPlata": 444600,
+   "totalDeudas": 2200000,
+   "totalMeDeben": 60000,
+   "totalLesDebo": 0,
+   "ingresos": 0,
+   "gastos": 175400,
+   "disponible": {
+    "tienes": 444600,
+    "creditos": 730000,
+    "fijos": 259000,
+    "valor": -544400
+   },
+   "cuentas": [
+    [
+     "Nequi",
+     500000
+    ],
+    [
+     "Daviplata",
+     120000
+    ],
+    [
+     "Efectivo",
+     -175400
+    ],
+    [
+     "Bolsillo para la tarjeta",
+     0
+    ]
+   ],
+   "creditos": [
+    {
+     "n": "Addi",
+     "saldo": 600000,
+     "proximo": {
+      "fecha": "2026-10-01",
+      "monto": 150000
+     },
+     "sinFecha": 50000,
+     "intereses": 0,
+     "interesesEst": 0,
+     "calendario": [
+      [
+       "2026-10-01",
+       150000
+      ],
+      [
+       "2026-11-01",
+       150000
+      ],
+      [
+       "2026-12-01",
+       150000
+      ],
+      [
+       "2027-01-01",
+       100000
+      ]
+     ],
+     "planes": [
+      [
+       "Repuestos moto",
+       600000,
+       6,
+       2,
+       400000
+      ],
+      [
+       "Tienda de ropa",
+       150000,
+       3,
+       0,
+       150000
+      ]
+     ]
+    },
+    {
+     "n": "TC Nubank",
+     "saldo": 300000,
+     "proximo": {
+      "fecha": "2026-10-21",
+      "monto": 180000
+     },
+     "sinFecha": 80000,
+     "intereses": 0,
+     "interesesEst": 0,
+     "calendario": [
+      [
+       "2026-10-21",
+       180000
+      ],
+      [
+       "2026-11-21",
+       42556
+      ]
+     ],
+     "planes": [
+      [
+       "Droguería",
+       82556,
+       2,
+       0,
+       80000
+      ]
+     ]
+    },
+    {
+     "n": "TC Davibank",
+     "saldo": 1200000,
+     "proximo": {
+      "fecha": "2026-10-07",
+      "monto": 350000
+     },
+     "sinFecha": 0,
+     "intereses": 0,
+     "interesesEst": 0,
+     "calendario": [
+      [
+       "2026-10-07",
+       350000
+      ],
+      [
+       "2026-11-04",
+       171726
+      ],
+      [
+       "2026-12-09",
+       168531
+      ],
+      [
+       "2027-01-12",
+       105336
+      ],
+      [
+       "2027-02-10",
+       103419
+      ],
+      [
+       "2027-03-10",
+       101502
+      ],
+      [
+       "2027-04-07",
+       99585
+      ],
+      [
+       "2027-05-05",
+       97668
+      ],
+      [
+       "2027-06-09",
+       95751
+      ],
+      [
+       "2027-07-07",
+       93834
+      ],
+      [
+       "2027-08-04",
+       91917
+      ]
+     ],
+     "planes": [
+      [
+       "Electrodoméstico",
+       1229526,
+       12,
+       1,
+       990000
+      ],
+      [
+       "Supermercado",
+       187668,
+       3,
+       0,
+       180000
+      ]
+     ]
+    },
+    {
+     "n": "Credifin",
+     "saldo": 100000,
+     "proximo": {
+      "fecha": "2026-10-09",
+      "monto": 50000
+     },
+     "sinFecha": 0,
+     "intereses": 0,
+     "interesesEst": 0,
+     "calendario": [
+      [
+       "2026-10-09",
+       50000
+      ],
+      [
+       "2026-11-09",
+       50000
+      ]
+     ],
+     "planes": [
+      [
+       "Cine",
+       150000,
+       3,
+       1,
+       100000
+      ]
+     ]
+    }
+   ],
+   "meDeben": [
+    [
+     "Ana",
+     60000,
+     60000
+    ]
+   ],
+   "presupuestos": [
+    [
+     "Ocio",
+     350000,
+     0
+    ]
+   ],
+   "proximos": [
+    [
+     "credito",
+     "Addi",
+     150000,
+     "2026-10-01",
+     "pendiente"
+    ],
+    [
+     "fijo",
+     "Cuota de manejo Nubank",
+     12000,
+     "2026-10-01",
+     "automatico"
+    ],
+    [
+     "credito",
+     "TC Davibank",
+     350000,
+     "2026-10-07",
+     "pendiente"
+    ],
+    [
+     "credito",
+     "Credifin",
+     50000,
+     "2026-10-09",
+     "pendiente"
+    ],
+    [
+     "fijo",
+     "Streaming familiar",
+     42000,
+     "2026-10-09",
+     "automatico"
+    ],
+    [
+     "fijo",
+     "Gimnasio",
+     120000,
+     "2026-10-18",
+     "automatico"
+    ],
+    [
+     "fijo",
+     "Seguro de vida Davibank",
+     5490,
+     "2026-10-18",
+     "automatico"
+    ],
+    [
+     "fijo",
+     "Prueba gratis",
+     24490,
+     "2026-10-20",
+     "cancelar"
+    ],
+    [
+     "credito",
+     "TC Nubank",
+     180000,
+     "2026-10-21",
+     "pendiente"
+    ],
+    [
+     "fijo",
+     "Internet y TV",
+     107000,
+     "2026-10-21",
+     "pendiente"
+    ],
+    [
+     "fijo",
+     "Google One",
+     19900,
+     "2026-10-22",
+     "automatico"
+    ],
+    [
+     "fijo",
+     "Plan celular familiar",
+     32000,
+     "2026-10-26",
+     "pendiente"
+    ],
+    [
+     "fijo",
+     "Suscripción de apps",
+     66000,
+     "2026-10-28",
+     "automatico"
+    ],
+    [
+     "credito",
+     "Addi",
+     150000,
+     "2026-11-01",
+     "pendiente"
+    ],
+    [
+     "fijo",
+     "Cuota de manejo Nubank",
+     12000,
+     "2026-11-01",
+     "automatico"
+    ],
+    [
+     "credito",
+     "TC Davibank",
+     171726,
+     "2026-11-04",
+     "pendiente"
+    ]
+   ]
+  },
+  {
+   "hoy": "2026-10-07",
+   "patrimonio": 508515,
+   "totalPlata": 2855375,
+   "totalDeudas": 2463067,
+   "totalMeDeben": 116207,
+   "totalLesDebo": 0,
+   "ingresos": 3796800,
+   "gastos": 1227392,
+   "disponible": {
+    "tienes": 2855375,
+    "creditos": 591408,
+    "fijos": 259000,
+    "valor": 2004967
+   },
+   "cuentas": [
+    [
+     "Nequi",
+     299000
+    ],
+    [
+     "Daviplata",
+     751300
+    ],
+    [
+     "Efectivo",
+     765275
+    ],
+    [
+     "Bolsillo para la tarjeta",
+     1039800
+    ]
+   ],
+   "creditos": [
+    {
+     "n": "Addi",
+     "saldo": 1046892,
+     "proximo": {
+      "fecha": "2026-11-01",
+      "monto": 249482
+     },
+     "sinFecha": 50000,
+     "intereses": 7423,
+     "interesesEst": 7423,
+     "calendario": [
+      [
+       "2026-11-01",
+       249482
+      ],
+      [
+       "2026-12-01",
+       249482
+      ],
+      [
+       "2027-01-01",
+       199482
+      ],
+      [
+       "2027-02-01",
+       99482
+      ],
+      [
+       "2027-03-01",
+       99482
+      ],
+      [
+       "2027-04-01",
+       99482
+      ]
+     ],
+     "planes": [
+      [
+       "Steam 14",
+       519700,
+       6,
+       0,
+       519700
+      ],
+      [
+       "Repuestos moto",
+       600000,
+       6,
+       3,
+       300000
+      ],
+      [
+       "Tienda de ropa",
+       150000,
+       3,
+       1,
+       100000
+      ]
+     ]
+    },
+    {
+     "n": "TC Nubank",
+     "saldo": 422775,
+     "proximo": {
+      "fecha": "2026-11-21",
+      "monto": 136571
+     },
+     "sinFecha": 80000,
+     "intereses": 14590,
+     "interesesEst": 14590,
+     "calendario": [
+      [
+       "2026-11-21",
+       136571
+      ],
+      [
+       "2026-12-21",
+       84182
+      ],
+      [
+       "2027-01-21",
+       19057
+      ],
+      [
+       "2027-02-21",
+       18717
+      ],
+      [
+       "2027-03-21",
+       18376
+      ],
+      [
+       "2027-04-21",
+       18035
+      ],
+      [
+       "2027-05-21",
+       17695
+      ],
+      [
+       "2027-06-21",
+       17354
+      ],
+      [
+       "2027-07-21",
+       17014
+      ],
+      [
+       "2027-08-21",
+       16673
+      ],
+      [
+       "2027-09-21",
+       16332
+      ]
+     ],
+     "planes": [
+      [
+       "Éxito 2",
+       191900,
+       12,
+       1,
+       175908
+      ],
+      [
+       "Compartido 6",
+       190300,
+       3,
+       1,
+       126866
+      ],
+      [
+       "Droguería",
+       82556,
+       2,
+       0,
+       80000
+      ]
+     ]
+    },
+    {
+     "n": "TC Davibank",
+     "saldo": 1020200,
+     "proximo": {
+      "fecha": "2026-10-07",
+      "monto": 170200
+     },
+     "sinFecha": 0,
+     "intereses": 0,
+     "interesesEst": 0,
+     "calendario": [
+      [
+       "2026-10-07",
+       170200
+      ],
+      [
+       "2026-11-04",
+       171726
+      ],
+      [
+       "2026-12-09",
+       168531
+      ],
+      [
+       "2027-01-12",
+       105336
+      ],
+      [
+       "2027-02-10",
+       103419
+      ],
+      [
+       "2027-03-10",
+       101502
+      ],
+      [
+       "2027-04-07",
+       99585
+      ],
+      [
+       "2027-05-05",
+       97668
+      ],
+      [
+       "2027-06-09",
+       95751
+      ],
+      [
+       "2027-07-07",
+       93834
+      ],
+      [
+       "2027-08-04",
+       91917
+      ]
+     ],
+     "planes": [
+      [
+       "Electrodoméstico",
+       1229526,
+       12,
+       1,
+       990000
+      ],
+      [
+       "Supermercado",
+       187668,
+       3,
+       0,
+       180000
+      ]
+     ]
+    },
+    {
+     "n": "Credifin",
+     "saldo": -26800,
+     "proximo": null,
+     "sinFecha": 0,
+     "intereses": 0,
+     "interesesEst": 0,
+     "calendario": [],
+     "planes": [
+      [
+       "Cine",
+       150000,
+       3,
+       3,
+       0
+      ]
+     ]
+    }
+   ],
+   "meDeben": [
+    [
+     "mamá",
+     88507,
+     88507
+    ],
+    [
+     "Ana",
+     27700,
+     27700
+    ]
+   ],
+   "presupuestos": [
+    [
+     "Ocio",
+     350000,
+     938100
+    ]
+   ],
+   "proximos": [
+    [
+     "fijo",
+     "Cuota de manejo Nubank",
+     12000,
+     "2026-10-01",
+     "cobrado"
+    ],
+    [
+     "credito",
+     "TC Davibank",
+     170200,
+     "2026-10-07",
+     "pendiente"
+    ],
+    [
+     "fijo",
+     "Streaming familiar",
+     42000,
+     "2026-10-09",
+     "automatico"
+    ],
+    [
+     "fijo",
+     "Gimnasio",
+     120000,
+     "2026-10-18",
+     "automatico"
+    ],
+    [
+     "fijo",
+     "Seguro de vida Davibank",
+     5490,
+     "2026-10-18",
+     "automatico"
+    ],
+    [
+     "fijo",
+     "Prueba gratis",
+     24490,
+     "2026-10-20",
+     "cancelar"
+    ],
+    [
+     "fijo",
+     "Internet y TV",
+     107000,
+     "2026-10-21",
+     "pendiente"
+    ],
+    [
+     "fijo",
+     "Google One",
+     19900,
+     "2026-10-22",
+     "automatico"
+    ],
+    [
+     "fijo",
+     "Plan celular familiar",
+     32000,
+     "2026-10-26",
+     "pendiente"
+    ],
+    [
+     "fijo",
+     "Suscripción de apps",
+     66000,
+     "2026-10-28",
+     "automatico"
+    ],
+    [
+     "credito",
+     "Addi",
+     249482,
+     "2026-11-01",
+     "pendiente"
+    ],
+    [
+     "fijo",
+     "Cuota de manejo Nubank",
+     12000,
+     "2026-11-01",
+     "automatico"
+    ],
+    [
+     "credito",
+     "TC Davibank",
+     171726,
+     "2026-11-04",
+     "pendiente"
+    ],
+    [
+     "fijo",
+     "Streaming familiar",
+     42000,
+     "2026-11-09",
+     "automatico"
+    ]
+   ]
+  },
+  {
+   "hoy": "2026-10-15",
+   "patrimonio": 3442388,
+   "totalPlata": 6043261,
+   "totalDeudas": 2714358,
+   "totalMeDeben": 113485,
+   "totalLesDebo": 0,
+   "ingresos": 7299200,
+   "gastos": 2598319,
+   "disponible": {
+    "tienes": 6043261,
+    "creditos": 464472,
+    "fijos": 259000,
+    "valor": 5319789
+   },
+   "cuentas": [
+    [
+     "Nequi",
+     -67868
+    ],
+    [
+     "Daviplata",
+     1866554
+    ],
+    [
+     "Efectivo",
+     429175
+    ],
+    [
+     "Bolsillo para la tarjeta",
+     3815400
+    ]
+   ],
+   "creditos": [
+    {
+     "n": "Addi",
+     "saldo": 805492,
+     "proximo": {
+      "fecha": "2026-11-01",
+      "monto": 8082
+     },
+     "sinFecha": 50000,
+     "intereses": 7423,
+     "interesesEst": 7423,
+     "calendario": [
+      [
+       "2026-11-01",
+       8082
+      ],
+      [
+       "2026-12-01",
+       249482
+      ],
+      [
+       "2027-01-01",
+       199482
+      ],
+      [
+       "2027-02-01",
+       99482
+      ],
+      [
+       "2027-03-01",
+       99482
+      ],
+      [
+       "2027-04-01",
+       99482
+      ]
+     ],
+     "planes": [
+      [
+       "Steam 14",
+       519700,
+       6,
+       0,
+       440120
+      ],
+      [
+       "Repuestos moto",
+       600000,
+       6,
+       4,
+       200000
+      ],
+      [
+       "Tienda de ropa",
+       150000,
+       3,
+       2,
+       50000
+      ]
+     ]
+    },
+    {
+     "n": "TC Nubank",
+     "saldo": 742429,
+     "proximo": {
+      "fecha": "2026-12-21",
+      "monto": 145976
+     },
+     "sinFecha": 80000,
+     "intereses": 14590,
+     "interesesEst": 14590,
+     "calendario": [
+      [
+       "2026-12-21",
+       145976
+      ],
+      [
+       "2027-01-21",
+       69366
+      ],
+      [
+       "2027-02-21",
+       68143
+      ],
+      [
+       "2027-03-21",
+       66918
+      ],
+      [
+       "2027-04-21",
+       65694
+      ],
+      [
+       "2027-05-21",
+       64471
+      ],
+      [
+       "2027-06-21",
+       63246
+      ],
+      [
+       "2027-07-21",
+       62023
+      ],
+      [
+       "2027-08-21",
+       60798
+      ],
+      [
+       "2027-09-21",
+       59574
+      ],
+      [
+       "2027-10-21",
+       42358
+      ]
+     ],
+     "planes": [
+      [
+       "Steam 41",
+       497700,
+       12,
+       1,
+       456225
+      ],
+      [
+       "Éxito 2",
+       191900,
+       12,
+       2,
+       159917
+      ],
+      [
+       "Compartido 6",
+       190300,
+       3,
+       2,
+       63433
+      ],
+      [
+       "Droguería",
+       82556,
+       2,
+       1,
+       40000
+      ]
+     ]
+    },
+    {
+     "n": "TC Davibank",
+     "saldo": 892000,
+     "proximo": {
+      "fecha": "2026-11-04",
+      "monto": 213726
+     },
+     "sinFecha": 0,
+     "intereses": 0,
+     "interesesEst": 0,
+     "calendario": [
+      [
+       "2026-11-04",
+       213726
+      ],
+      [
+       "2026-12-09",
+       168531
+      ],
+      [
+       "2027-01-12",
+       105336
+      ],
+      [
+       "2027-02-10",
+       103419
+      ],
+      [
+       "2027-03-10",
+       101502
+      ],
+      [
+       "2027-04-07",
+       99585
+      ],
+      [
+       "2027-05-05",
+       97668
+      ],
+      [
+       "2027-06-09",
+       95751
+      ],
+      [
+       "2027-07-07",
+       93834
+      ],
+      [
+       "2027-08-04",
+       91917
+      ]
+     ],
+     "planes": [
+      [
+       "Electrodoméstico",
+       1229526,
+       12,
+       2,
+       900000
+      ],
+      [
+       "Supermercado",
+       187668,
+       3,
+       1,
+       120000
+      ]
+     ]
+    },
+    {
+     "n": "Credifin",
+     "saldo": 274437,
+     "proximo": {
+      "fecha": "2026-11-09",
+      "monto": 4974
+     },
+     "sinFecha": 0,
+     "intereses": 9620,
+     "interesesEst": 9620,
+     "calendario": [
+      [
+       "2026-11-09",
+       4974
+      ],
+      [
+       "2026-11-10",
+       237690
+      ],
+      [
+       "2026-12-05",
+       31773
+      ]
+     ],
+     "planes": [
+      [
+       "Farmacia 33",
+       53300,
+       2,
+       1,
+       26650
+      ],
+      [
+       "Cine",
+       150000,
+       3,
+       2,
+       4974
+      ]
+     ]
+    }
+   ],
+   "meDeben": [
+    [
+     "mamá",
+     64785,
+     64785
+    ],
+    [
+     "Ana",
+     34700,
+     34700
+    ],
+    [
+     "Carlos",
+     7000,
+     7000
+    ],
+    [
+     "Luisa",
+     7000,
+     7000
+    ]
+   ],
+   "presupuestos": [
+    [
+     "Ocio",
+     350000,
+     1755600
+    ]
+   ],
+   "proximos": [
+    [
+     "fijo",
+     "Streaming familiar",
+     42000,
+     "2026-10-09",
+     "cobrado"
+    ],
+    [
+     "fijo",
+     "Gimnasio",
+     120000,
+     "2026-10-18",
+     "automatico"
+    ],
+    [
+     "fijo",
+     "Seguro de vida Davibank",
+     5490,
+     "2026-10-18",
+     "automatico"
+    ],
+    [
+     "fijo",
+     "Prueba gratis",
+     24490,
+     "2026-10-20",
+     "pagado"
+    ],
+    [
+     "fijo",
+     "Internet y TV",
+     107000,
+     "2026-10-21",
+     "pendiente"
+    ],
+    [
+     "fijo",
+     "Google One",
+     19900,
+     "2026-10-22",
+     "automatico"
+    ],
+    [
+     "fijo",
+     "Plan celular familiar",
+     32000,
+     "2026-10-26",
+     "pendiente"
+    ],
+    [
+     "fijo",
+     "Suscripción de apps",
+     66000,
+     "2026-10-28",
+     "automatico"
+    ],
+    [
+     "credito",
+     "Addi",
+     8082,
+     "2026-11-01",
+     "pendiente"
+    ],
+    [
+     "fijo",
+     "Cuota de manejo Nubank",
+     12000,
+     "2026-11-01",
+     "automatico"
+    ],
+    [
+     "credito",
+     "TC Davibank",
+     213726,
+     "2026-11-04",
+     "pendiente"
+    ],
+    [
+     "credito",
+     "Credifin",
+     4974,
+     "2026-11-09",
+     "pendiente"
+    ],
+    [
+     "fijo",
+     "Streaming familiar",
+     42000,
+     "2026-11-09",
+     "automatico"
+    ],
+    [
+     "credito",
+     "Credifin",
+     237690,
+     "2026-11-10",
+     "pendiente"
+    ],
+    [
+     "fijo",
+     "Gimnasio",
+     120000,
+     "2026-11-18",
+     "automatico"
+    ],
+    [
+     "fijo",
+     "Seguro de vida Davibank",
+     5490,
+     "2026-11-18",
+     "automatico"
+    ]
+   ]
+  },
+  {
+   "hoy": "2026-10-24",
+   "patrimonio": 4321492,
+   "totalPlata": 7269935,
+   "totalDeudas": 3043587,
+   "totalMeDeben": 95144,
+   "totalLesDebo": 0,
+   "ingresos": 10299000,
+   "gastos": 4743858,
+   "disponible": {
+    "tienes": 7269935,
+    "creditos": 445421,
+    "fijos": 366000,
+    "valor": 6458514
+   },
+   "cuentas": [
+    [
+     "Nequi",
+     -244284
+    ],
+    [
+     "Daviplata",
+     1635978
+    ],
+    [
+     "Efectivo",
+     1039175
+    ],
+    [
+     "Bolsillo para la tarjeta",
+     4839066
+    ]
+   ],
+   "creditos": [
+    {
+     "n": "Addi",
+     "saldo": 797410,
+     "proximo": {
+      "fecha": "2026-12-01",
+      "monto": 249482
+     },
+     "sinFecha": 50000,
+     "intereses": 7423,
+     "interesesEst": 7423,
+     "calendario": [
+      [
+       "2026-12-01",
+       249482
+      ],
+      [
+       "2027-01-01",
+       199482
+      ],
+      [
+       "2027-02-01",
+       99482
+      ],
+      [
+       "2027-03-01",
+       99482
+      ],
+      [
+       "2027-04-01",
+       99482
+      ]
+     ],
+     "planes": [
+      [
+       "Steam 14",
+       519700,
+       6,
+       1,
+       433083
+      ],
+      [
+       "Repuestos moto",
+       600000,
+       6,
+       4,
+       200000
+      ],
+      [
+       "Tienda de ropa",
+       150000,
+       3,
+       2,
+       50000
+      ]
+     ]
+    },
+    {
+     "n": "TC Nubank",
+     "saldo": 1041753,
+     "proximo": {
+      "fecha": "2026-11-21",
+      "monto": 76674
+     },
+     "sinFecha": 80000,
+     "intereses": 14590,
+     "interesesEst": 14590,
+     "calendario": [
+      [
+       "2026-11-21",
+       76674
+      ],
+      [
+       "2026-12-21",
+       382853
+      ],
+      [
+       "2027-01-21",
+       69366
+      ],
+      [
+       "2027-02-21",
+       68143
+      ],
+      [
+       "2027-03-21",
+       66918
+      ],
+      [
+       "2027-04-21",
+       65694
+      ],
+      [
+       "2027-05-21",
+       64471
+      ],
+      [
+       "2027-06-21",
+       63246
+      ],
+      [
+       "2027-07-21",
+       62023
+      ],
+      [
+       "2027-08-21",
+       60798
+      ],
+      [
+       "2027-09-21",
+       59574
+      ],
+      [
+       "2027-10-21",
+       42358
+      ]
+     ],
+     "planes": [
+      [
+       "Uber 69",
+       445300,
+       2,
+       0,
+       299324
+      ],
+      [
+       "Steam 41",
+       497700,
+       12,
+       1,
+       456225
+      ],
+      [
+       "Éxito 2",
+       191900,
+       12,
+       2,
+       159917
+      ],
+      [
+       "Compartido 6",
+       190300,
+       3,
+       2,
+       63433
+      ],
+      [
+       "Droguería",
+       82556,
+       2,
+       2,
+       0
+      ]
+     ]
+    },
+    {
+     "n": "TC Davibank",
+     "saldo": 551738,
+     "proximo": {
+      "fecha": "2026-12-09",
+      "monto": 1
+     },
+     "sinFecha": 0,
+     "intereses": 7492,
+     "interesesEst": 2002,
+     "calendario": [
+      [
+       "2026-12-09",
+       1
+      ],
+      [
+       "2027-01-12",
+       153337
+      ],
+      [
+       "2027-02-10",
+       103419
+      ],
+      [
+       "2027-03-10",
+       101502
+      ],
+      [
+       "2027-04-07",
+       99585
+      ],
+      [
+       "2027-05-05",
+       97668
+      ],
+      [
+       "2027-06-09",
+       95751
+      ],
+      [
+       "2027-07-07",
+       93834
+      ],
+      [
+       "2027-08-04",
+       91917
+      ]
+     ],
+     "planes": [
+      [
+       "Compartido 51",
+       141000,
+       3,
+       2,
+       47000
+      ],
+      [
+       "Electrodoméstico",
+       1229526,
+       12,
+       4,
+       720000
+      ],
+      [
+       "Supermercado",
+       187668,
+       3,
+       3,
+       0
+      ]
+     ]
+    },
+    {
+     "n": "Credifin",
+     "saldo": 652686,
+     "proximo": {
+      "fecha": "2026-11-09",
+      "monto": 4974
+     },
+     "sinFecha": 0,
+     "intereses": 33969,
+     "interesesEst": 33969,
+     "calendario": [
+      [
+       "2026-11-09",
+       4974
+      ],
+      [
+       "2026-11-10",
+       237690
+      ],
+      [
+       "2026-11-20",
+       126083
+      ],
+      [
+       "2026-12-05",
+       31773
+      ],
+      [
+       "2026-12-20",
+       126083
+      ],
+      [
+       "2027-01-20",
+       126083
+      ]
+     ],
+     "planes": [
+      [
+       "Tienda D1 65",
+       353900,
+       3,
+       0,
+       353900
+      ],
+      [
+       "Farmacia 33",
+       53300,
+       2,
+       1,
+       26650
+      ],
+      [
+       "Cine",
+       150000,
+       3,
+       2,
+       4974
+      ]
+     ]
+    }
+   ],
+   "meDeben": [
+    [
+     "Juan",
+     47500,
+     47500
+    ],
+    [
+     "Ana",
+     33643,
+     33643
+    ],
+    [
+     "Carlos",
+     7000,
+     7000
+    ],
+    [
+     "Luisa",
+     7000,
+     7000
+    ],
+    [
+     "mamá",
+     1,
+     1
+    ]
+   ],
+   "presupuestos": [
+    [
+     "Ocio",
+     350000,
+     1798000
+    ]
+   ],
+   "proximos": [
+    [
+     "fijo",
+     "Gimnasio",
+     120000,
+     "2026-10-18",
+     "cobrado"
+    ],
+    [
+     "fijo",
+     "Seguro de vida Davibank",
+     5490,
+     "2026-10-18",
+     "cobrado"
+    ],
+    [
+     "fijo",
+     "Prueba gratis",
+     24490,
+     "2026-10-20",
+     "pagado"
+    ],
+    [
+     "fijo",
+     "Internet y TV",
+     107000,
+     "2026-10-21",
+     "pendiente"
+    ],
+    [
+     "fijo",
+     "Google One",
+     19900,
+     "2026-10-22",
+     "cobrado"
+    ],
+    [
+     "fijo",
+     "Plan celular familiar",
+     32000,
+     "2026-10-26",
+     "pendiente"
+    ],
+    [
+     "fijo",
+     "Suscripción de apps",
+     66000,
+     "2026-10-28",
+     "automatico"
+    ],
+    [
+     "fijo",
+     "Cuota de manejo Nubank",
+     12000,
+     "2026-11-01",
+     "automatico"
+    ],
+    [
+     "credito",
+     "Credifin",
+     4974,
+     "2026-11-09",
+     "pendiente"
+    ],
+    [
+     "fijo",
+     "Streaming familiar",
+     42000,
+     "2026-11-09",
+     "automatico"
+    ],
+    [
+     "credito",
+     "Credifin",
+     237690,
+     "2026-11-10",
+     "pendiente"
+    ],
+    [
+     "fijo",
+     "Gimnasio",
+     120000,
+     "2026-11-18",
+     "automatico"
+    ],
+    [
+     "fijo",
+     "Seguro de vida Davibank",
+     5490,
+     "2026-11-18",
+     "automatico"
+    ],
+    [
+     "credito",
+     "Credifin",
+     126083,
+     "2026-11-20",
+     "pendiente"
+    ],
+    [
+     "credito",
+     "TC Nubank",
+     76674,
+     "2026-11-21",
+     "pendiente"
+    ],
+    [
+     "fijo",
+     "Internet y TV",
+     107000,
+     "2026-11-21",
+     "pendiente"
+    ],
+    [
+     "fijo",
+     "Google One",
+     19900,
+     "2026-11-22",
+     "automatico"
+    ],
+    [
+     "fijo",
+     "Plan celular familiar",
+     32000,
+     "2026-11-26",
+     "pendiente"
+    ],
+    [
+     "fijo",
+     "Suscripción de apps",
+     66000,
+     "2026-11-28",
+     "automatico"
+    ]
+   ]
+  },
+  {
+   "hoy": "2026-11-02",
+   "patrimonio": 7096277,
+   "totalPlata": 9979150,
+   "totalDeudas": 2874616,
+   "totalMeDeben": 67443,
+   "totalLesDebo": 75700,
+   "ingresos": 2176500,
+   "gastos": 182600,
+   "disponible": {
+    "tienes": 9979150,
+    "creditos": 365056,
+    "fijos": 334000,
+    "valor": 9280094
+   },
+   "cuentas": [
+    [
+     "Nequi",
+     -796884
+    ],
+    [
+     "Daviplata",
+     1286393
+    ],
+    [
+     "Efectivo",
+     882175
+    ],
+    [
+     "Bolsillo para la tarjeta",
+     8607466
+    ]
+   ],
+   "creditos": [
+    {
+     "n": "Addi",
+     "saldo": 797410,
+     "proximo": {
+      "fecha": "2026-12-01",
+      "monto": 249482
+     },
+     "sinFecha": 50000,
+     "intereses": 9625,
+     "interesesEst": 9625,
+     "calendario": [
+      [
+       "2026-12-01",
+       249482
+      ],
+      [
+       "2027-01-01",
+       199482
+      ],
+      [
+       "2027-02-01",
+       99482
+      ],
+      [
+       "2027-03-01",
+       99482
+      ],
+      [
+       "2027-04-01",
+       99482
+      ]
+     ],
+     "planes": [
+      [
+       "Steam 14",
+       519700,
+       6,
+       1,
+       433083
+      ],
+      [
+       "Repuestos moto",
+       600000,
+       6,
+       4,
+       200000
+      ],
+      [
+       "Tienda de ropa",
+       150000,
+       3,
+       2,
+       50000
+      ]
+     ]
+    },
+    {
+     "n": "TC Nubank",
+     "saldo": 1080653,
+     "proximo": {
+      "fecha": "2026-11-21",
+      "monto": 115574
+     },
+     "sinFecha": 80000,
+     "intereses": 39303,
+     "interesesEst": 39303,
+     "calendario": [
+      [
+       "2026-11-21",
+       115574
+      ],
+      [
+       "2026-12-21",
+       382853
+      ],
+      [
+       "2027-01-21",
+       69366
+      ],
+      [
+       "2027-02-21",
+       68143
+      ],
+      [
+       "2027-03-21",
+       66918
+      ],
+      [
+       "2027-04-21",
+       65694
+      ],
+      [
+       "2027-05-21",
+       64471
+      ],
+      [
+       "2027-06-21",
+       63246
+      ],
+      [
+       "2027-07-21",
+       62023
+      ],
+      [
+       "2027-08-21",
+       60798
+      ],
+      [
+       "2027-09-21",
+       59574
+      ],
+      [
+       "2027-10-21",
+       42358
+      ]
+     ],
+     "planes": [
+      [
+       "Uber 69",
+       445300,
+       2,
+       0,
+       260224
+      ],
+      [
+       "Steam 41",
+       497700,
+       12,
+       1,
+       456225
+      ],
+      [
+       "Éxito 2",
+       191900,
+       12,
+       2,
+       159917
+      ],
+      [
+       "Compartido 6",
+       190300,
+       3,
+       2,
+       63433
+      ],
+      [
+       "Droguería",
+       82556,
+       2,
+       2,
+       0
+      ]
+     ]
+    },
+    {
+     "n": "TC Davibank",
+     "saldo": 996553,
+     "proximo": {
+      "fecha": "2026-12-09",
+      "monto": 88933
+     },
+     "sinFecha": 0,
+     "intereses": 20176,
+     "interesesEst": 14686,
+     "calendario": [
+      [
+       "2026-12-09",
+       88933
+      ],
+      [
+       "2027-01-12",
+       388121
+      ],
+      [
+       "2027-02-10",
+       248069
+      ],
+      [
+       "2027-03-10",
+       101502
+      ],
+      [
+       "2027-04-07",
+       99585
+      ],
+      [
+       "2027-05-05",
+       97668
+      ],
+      [
+       "2027-06-09",
+       95751
+      ],
+      [
+       "2027-07-07",
+       93834
+      ],
+      [
+       "2027-08-04",
+       91917
+      ]
+     ],
+     "planes": [
+      [
+       "Éxito 100",
+       170600,
+       2,
+       0,
+       170599
+      ],
+      [
+       "Steam 81",
+       424900,
+       3,
+       1,
+       283267
+      ],
+      [
+       "Compartido 51",
+       141000,
+       3,
+       2,
+       47000
+      ],
+      [
+       "Electrodoméstico",
+       1229526,
+       12,
+       4,
+       720000
+      ],
+      [
+       "Supermercado",
+       187668,
+       3,
+       3,
+       0
+      ]
+     ]
+    },
+    {
+     "n": "Credifin",
+     "saldo": 0,
+     "proximo": null,
+     "sinFecha": 0,
+     "intereses": 33969,
+     "interesesEst": 33969,
+     "calendario": [],
+     "planes": [
+      [
+       "Tienda D1 65",
+       353900,
+       3,
+       3,
+       0
+      ],
+      [
+       "Farmacia 33",
+       53300,
+       2,
+       2,
+       0
+      ],
+      [
+       "Cine",
+       150000,
+       3,
+       3,
+       0
+      ]
+     ]
+    }
+   ],
+   "meDeben": [
+    [
+     "Juan",
+     47500,
+     47500
+    ],
+    [
+     "Carlos",
+     7000,
+     7000
+    ],
+    [
+     "Luisa",
+     7000,
+     7000
+    ],
+    [
+     "Ana",
+     5943,
+     5943
+    ]
+   ],
+   "presupuestos": [
+    [
+     "Ocio",
+     350000,
+     0
+    ]
+   ],
+   "proximos": [
+    [
+     "fijo",
+     "Internet y TV",
+     107000,
+     "2026-10-21",
+     "pendiente"
+    ],
+    [
+     "fijo",
+     "Suscripción de apps",
+     66000,
+     "2026-10-28",
+     "cobrado"
+    ],
+    [
+     "fijo",
+     "Cuota de manejo Nubank",
+     12000,
+     "2026-11-01",
+     "cobrado"
+    ],
+    [
+     "fijo",
+     "Streaming familiar",
+     42000,
+     "2026-11-09",
+     "automatico"
+    ],
+    [
+     "fijo",
+     "Gimnasio",
+     120000,
+     "2026-11-18",
+     "automatico"
+    ],
+    [
+     "fijo",
+     "Seguro de vida Davibank",
+     5490,
+     "2026-11-18",
+     "automatico"
+    ],
+    [
+     "credito",
+     "TC Nubank",
+     115574,
+     "2026-11-21",
+     "pendiente"
+    ],
+    [
+     "fijo",
+     "Internet y TV",
+     107000,
+     "2026-11-21",
+     "pendiente"
+    ],
+    [
+     "fijo",
+     "Google One",
+     19900,
+     "2026-11-22",
+     "automatico"
+    ],
+    [
+     "fijo",
+     "Suscripción de apps",
+     66000,
+     "2026-11-28",
+     "automatico"
+    ],
+    [
+     "credito",
+     "Addi",
+     249482,
+     "2026-12-01",
+     "pendiente"
+    ],
+    [
+     "fijo",
+     "Cuota de manejo Nubank",
+     12000,
+     "2026-12-01",
+     "automatico"
+    ]
+   ]
+  },
+  {
+   "hoy": "2026-11-08",
+   "patrimonio": 7826482,
+   "totalPlata": 10428992,
+   "totalDeudas": 2448834,
+   "totalMeDeben": 61224,
+   "totalLesDebo": 214900,
+   "ingresos": 3128800,
+   "gastos": 1254200,
+   "disponible": {
+    "tienes": 10428992,
+    "creditos": 115574,
+    "fijos": 120000,
+    "valor": 10193418
+   },
+   "cuentas": [
+    [
+     "Nequi",
+     -919784
+    ],
+    [
+     "Daviplata",
+     1334893
+    ],
+    [
+     "Efectivo",
+     1547517
+    ],
+    [
+     "Bolsillo para la tarjeta",
+     8466366
+    ]
+   ],
+   "creditos": [
+    {
+     "n": "Addi",
+     "saldo": 547928,
+     "proximo": {
+      "fecha": "2027-01-01",
+      "monto": 199482
+     },
+     "sinFecha": 50000,
+     "intereses": 10819,
+     "interesesEst": 10819,
+     "calendario": [
+      [
+       "2027-01-01",
+       199482
+      ],
+      [
+       "2027-02-01",
+       99482
+      ],
+      [
+       "2027-03-01",
+       99482
+      ],
+      [
+       "2027-04-01",
+       99482
+      ]
+     ],
+     "planes": [
+      [
+       "Steam 14",
+       519700,
+       6,
+       2,
+       346467
+      ],
+      [
+       "Repuestos moto",
+       600000,
+       6,
+       5,
+       100000
+      ],
+      [
+       "Compartido 111",
+       107400,
+       2,
+       2,
+       0
+      ],
+      [
+       "Tienda de ropa",
+       150000,
+       3,
+       3,
+       0
+      ]
+     ]
+    },
+    {
+     "n": "TC Nubank",
+     "saldo": 1080653,
+     "proximo": {
+      "fecha": "2026-11-21",
+      "monto": 115574
+     },
+     "sinFecha": 80000,
+     "intereses": 39303,
+     "interesesEst": 39303,
+     "calendario": [
+      [
+       "2026-11-21",
+       115574
+      ],
+      [
+       "2026-12-21",
+       382853
+      ],
+      [
+       "2027-01-21",
+       69366
+      ],
+      [
+       "2027-02-21",
+       68143
+      ],
+      [
+       "2027-03-21",
+       66918
+      ],
+      [
+       "2027-04-21",
+       65694
+      ],
+      [
+       "2027-05-21",
+       64471
+      ],
+      [
+       "2027-06-21",
+       63246
+      ],
+      [
+       "2027-07-21",
+       62023
+      ],
+      [
+       "2027-08-21",
+       60798
+      ],
+      [
+       "2027-09-21",
+       59574
+      ],
+      [
+       "2027-10-21",
+       42358
+      ]
+     ],
+     "planes": [
+      [
+       "Uber 69",
+       445300,
+       2,
+       0,
+       260224
+      ],
+      [
+       "Steam 41",
+       497700,
+       12,
+       1,
+       456225
+      ],
+      [
+       "Éxito 2",
+       191900,
+       12,
+       2,
+       159917
+      ],
+      [
+       "Compartido 6",
+       190300,
+       3,
+       2,
+       63433
+      ],
+      [
+       "Droguería",
+       82556,
+       2,
+       2,
+       0
+      ]
+     ]
+    },
+    {
+     "n": "TC Davibank",
+     "saldo": 608999,
+     "proximo": {
+      "fecha": "2027-01-12",
+      "monto": 62844
+     },
+     "sinFecha": 0,
+     "intereses": 22083,
+     "interesesEst": 16593,
+     "calendario": [
+      [
+       "2027-01-12",
+       62844
+      ],
+      [
+       "2027-02-10",
+       278538
+      ],
+      [
+       "2027-03-10",
+       101502
+      ],
+      [
+       "2027-04-07",
+       99585
+      ],
+      [
+       "2027-05-05",
+       97668
+      ],
+      [
+       "2027-06-09",
+       95751
+      ],
+      [
+       "2027-07-07",
+       93834
+      ],
+      [
+       "2027-08-04",
+       91917
+      ]
+     ],
+     "planes": [
+      [
+       "Farmacia 125",
+       89500,
+       3,
+       1,
+       59667
+      ],
+      [
+       "Éxito 100",
+       170600,
+       2,
+       1,
+       31078
+      ],
+      [
+       "Steam 81",
+       424900,
+       3,
+       2,
+       141633
+      ],
+      [
+       "Electrodoméstico",
+       1229526,
+       12,
+       5,
+       630000
+      ],
+      [
+       "Compartido 51",
+       141000,
+       3,
+       3,
+       0
+      ],
+      [
+       "Supermercado",
+       187668,
+       3,
+       3,
+       0
+      ]
+     ]
+    },
+    {
+     "n": "Credifin",
+     "saldo": -153600,
+     "proximo": null,
+     "sinFecha": 0,
+     "intereses": 25014,
+     "interesesEst": 25014,
+     "calendario": [],
+     "planes": [
+      [
+       "Tienda D1 65",
+       353900,
+       3,
+       3,
+       0
+      ],
+      [
+       "Farmacia 33",
+       53300,
+       2,
+       2,
+       0
+      ],
+      [
+       "Cine",
+       150000,
+       3,
+       3,
+       0
+      ]
+     ]
+    },
+    {
+     "n": "Mamá",
+     "saldo": 364854,
+     "proximo": null,
+     "sinFecha": 364854,
+     "intereses": 0,
+     "interesesEst": 0,
+     "calendario": [],
+     "planes": []
+    }
+   ],
+   "meDeben": [
+    [
+     "Juan",
+     47500,
+     47500
+    ],
+    [
+     "Ana",
+     5943,
+     5943
+    ],
+    [
+     "Luisa",
+     3400,
+     3400
+    ],
+    [
+     "Pedro",
+     2581,
+     -136319
+    ],
+    [
+     "mamá",
+     1800,
+     1800
+    ]
+   ],
+   "presupuestos": [
+    [
+     "Ocio",
+     350000,
+     43800
+    ]
+   ],
+   "proximos": [
+    [
+     "fijo",
+     "Cuota de manejo Nubank",
+     12000,
+     "2026-11-01",
+     "cobrado"
+    ],
+    [
+     "fijo",
+     "Streaming familiar",
+     42000,
+     "2026-11-09",
+     "automatico"
+    ],
+    [
+     "fijo",
+     "Gimnasio",
+     120000,
+     "2026-11-18",
+     "automatico"
+    ],
+    [
+     "fijo",
+     "Seguro de vida Davibank",
+     5490,
+     "2026-11-18",
+     "automatico"
+    ],
+    [
+     "credito",
+     "TC Nubank",
+     115574,
+     "2026-11-21",
+     "pendiente"
+    ],
+    [
+     "fijo",
+     "Internet y TV",
+     107000,
+     "2026-11-21",
+     "pagado"
+    ],
+    [
+     "fijo",
+     "Google One",
+     19900,
+     "2026-11-22",
+     "automatico"
+    ],
+    [
+     "fijo",
+     "Suscripción de apps",
+     66000,
+     "2026-11-28",
+     "automatico"
+    ],
+    [
+     "fijo",
+     "Cuota de manejo Nubank",
+     12000,
+     "2026-12-01",
+     "automatico"
+    ],
+    [
+     "fijo",
+     "Streaming familiar",
+     42000,
+     "2026-12-09",
+     "automatico"
+    ]
+   ]
+  },
+  {
+   "hoy": "2026-11-16",
+   "patrimonio": 9673070,
+   "totalPlata": 12769172,
+   "totalDeudas": 2714545,
+   "totalMeDeben": 71743,
+   "totalLesDebo": 453300,
+   "ingresos": 6570400,
+   "gastos": 2864912,
+   "disponible": {
+    "tienes": 12769172,
+    "creditos": 115574,
+    "fijos": 120000,
+    "valor": 12533598
+   },
+   "cuentas": [
+    [
+     "Nequi",
+     -1556804
+    ],
+    [
+     "Daviplata",
+     1186993
+    ],
+    [
+     "Efectivo",
+     3941317
+    ],
+    [
+     "Bolsillo para la tarjeta",
+     9197666
+    ]
+   ],
+   "creditos": [
+    {
+     "n": "Addi",
+     "saldo": 348446,
+     "proximo": {
+      "fecha": "2027-02-01",
+      "monto": 99482
+     },
+     "sinFecha": 50000,
+     "intereses": 10819,
+     "interesesEst": 10819,
+     "calendario": [
+      [
+       "2027-02-01",
+       99482
+      ],
+      [
+       "2027-03-01",
+       99482
+      ],
+      [
+       "2027-04-01",
+       99482
+      ]
+     ],
+     "planes": [
+      [
+       "Steam 14",
+       519700,
+       6,
+       3,
+       259850
+      ],
+      [
+       "Compartido 111",
+       107400,
+       2,
+       2,
+       0
+      ],
+      [
+       "Repuestos moto",
+       600000,
+       6,
+       6,
+       0
+      ],
+      [
+       "Tienda de ropa",
+       150000,
+       3,
+       3,
+       0
+      ]
+     ]
+    },
+    {
+     "n": "TC Nubank",
+     "saldo": 1080653,
+     "proximo": {
+      "fecha": "2026-11-21",
+      "monto": 115574
+     },
+     "sinFecha": 80000,
+     "intereses": 39303,
+     "interesesEst": 39303,
+     "calendario": [
+      [
+       "2026-11-21",
+       115574
+      ],
+      [
+       "2026-12-21",
+       382853
+      ],
+      [
+       "2027-01-21",
+       69366
+      ],
+      [
+       "2027-02-21",
+       68143
+      ],
+      [
+       "2027-03-21",
+       66918
+      ],
+      [
+       "2027-04-21",
+       65694
+      ],
+      [
+       "2027-05-21",
+       64471
+      ],
+      [
+       "2027-06-21",
+       63246
+      ],
+      [
+       "2027-07-21",
+       62023
+      ],
+      [
+       "2027-08-21",
+       60798
+      ],
+      [
+       "2027-09-21",
+       59574
+      ],
+      [
+       "2027-10-21",
+       42358
+      ]
+     ],
+     "planes": [
+      [
+       "Uber 69",
+       445300,
+       2,
+       0,
+       260224
+      ],
+      [
+       "Steam 41",
+       497700,
+       12,
+       1,
+       456225
+      ],
+      [
+       "Éxito 2",
+       191900,
+       12,
+       2,
+       159917
+      ],
+      [
+       "Compartido 6",
+       190300,
+       3,
+       2,
+       63433
+      ],
+      [
+       "Droguería",
+       82556,
+       2,
+       2,
+       0
+      ]
+     ]
+    },
+    {
+     "n": "TC Davibank",
+     "saldo": 965380,
+     "proximo": {
+      "fecha": "2027-01-12",
+      "monto": 419225
+     },
+     "sinFecha": 0,
+     "intereses": 22083,
+     "interesesEst": 16593,
+     "calendario": [
+      [
+       "2027-01-12",
+       419225
+      ],
+      [
+       "2027-02-10",
+       278538
+      ],
+      [
+       "2027-03-10",
+       101502
+      ],
+      [
+       "2027-04-07",
+       99585
+      ],
+      [
+       "2027-05-05",
+       97668
+      ],
+      [
+       "2027-06-09",
+       95751
+      ],
+      [
+       "2027-07-07",
+       93834
+      ],
+      [
+       "2027-08-04",
+       91917
+      ]
+     ],
+     "planes": [
+      [
+       "Farmacia 125",
+       89500,
+       3,
+       1,
+       59667
+      ],
+      [
+       "Éxito 100",
+       170600,
+       2,
+       1,
+       85300
+      ],
+      [
+       "Steam 81",
+       424900,
+       3,
+       1,
+       283267
+      ],
+      [
+       "Compartido 51",
+       141000,
+       3,
+       2,
+       47000
+      ],
+      [
+       "Electrodoméstico",
+       1229526,
+       12,
+       4,
+       720000
+      ],
+      [
+       "Supermercado",
+       187668,
+       3,
+       3,
+       0
+      ]
+     ]
+    },
+    {
+     "n": "Credifin",
+     "saldo": -44788,
+     "proximo": null,
+     "sinFecha": 0,
+     "intereses": 40733,
+     "interesesEst": 40733,
+     "calendario": [],
+     "planes": [
+      [
+       "Éxito 130",
+       87500,
+       6,
+       6,
+       0
+      ],
+      [
+       "Tienda D1 65",
+       353900,
+       3,
+       3,
+       0
+      ],
+      [
+       "Farmacia 33",
+       53300,
+       2,
+       2,
+       0
+      ],
+      [
+       "Cine",
+       150000,
+       3,
+       3,
+       0
+      ]
+     ]
+    },
+    {
+     "n": "Mamá",
+     "saldo": 364854,
+     "proximo": null,
+     "sinFecha": 364854,
+     "intereses": 0,
+     "interesesEst": 0,
+     "calendario": [],
+     "planes": []
+    }
+   ],
+   "meDeben": [
+    [
+     "Juan",
+     47500,
+     47500
+    ],
+    [
+     "Luisa",
+     10400,
+     10400
+    ],
+    [
+     "Carlos",
+     7000,
+     -144800
+    ],
+    [
+     "Ana",
+     3962,
+     3962
+    ],
+    [
+     "Pedro",
+     2581,
+     -284819
+    ],
+    [
+     "mamá",
+     300,
+     300
+    ]
+   ],
+   "presupuestos": [
+    [
+     "Ocio",
+     350000,
+     255400
+    ]
+   ],
+   "proximos": [
+    [
+     "fijo",
+     "Streaming familiar",
+     42000,
+     "2026-11-09",
+     "cobrado"
+    ],
+    [
+     "fijo",
+     "Gimnasio",
+     120000,
+     "2026-11-18",
+     "automatico"
+    ],
+    [
+     "fijo",
+     "Seguro de vida Davibank",
+     5490,
+     "2026-11-18",
+     "automatico"
+    ],
+    [
+     "credito",
+     "TC Nubank",
+     115574,
+     "2026-11-21",
+     "pendiente"
+    ],
+    [
+     "fijo",
+     "Internet y TV",
+     107000,
+     "2026-11-21",
+     "pagado"
+    ],
+    [
+     "fijo",
+     "Google One",
+     19900,
+     "2026-11-22",
+     "automatico"
+    ],
+    [
+     "fijo",
+     "Suscripción de apps",
+     66000,
+     "2026-11-28",
+     "automatico"
+    ],
+    [
+     "fijo",
+     "Cuota de manejo Nubank",
+     12000,
+     "2026-12-01",
+     "automatico"
+    ],
+    [
+     "fijo",
+     "Streaming familiar",
+     42000,
+     "2026-12-09",
+     "automatico"
+    ],
+    [
+     "fijo",
+     "Gimnasio",
+     120000,
+     "2026-12-18",
+     "automatico"
+    ],
+    [
+     "fijo",
+     "Seguro de vida Davibank",
+     5490,
+     "2026-12-18",
+     "automatico"
+    ],
+    [
+     "credito",
+     "TC Nubank",
+     382853,
+     "2026-12-21",
+     "pendiente"
+    ],
+    [
+     "fijo",
+     "Internet y TV",
+     107000,
+     "2026-12-21",
+     "pendiente"
+    ]
+   ]
+  },
+  {
+   "hoy": "2026-11-22",
+   "patrimonio": 8329308,
+   "totalPlata": 13772472,
+   "totalDeudas": 4908607,
+   "totalMeDeben": 43843,
+   "totalLesDebo": 578400,
+   "ingresos": 6570400,
+   "gastos": 5540474,
+   "disponible": {
+    "tienes": 13772472,
+    "creditos": 1183222,
+    "fijos": 227000,
+    "valor": 12362250
+   },
+   "cuentas": [
+    [
+     "Nequi",
+     -1928204
+    ],
+    [
+     "Daviplata",
+     3211993
+    ],
+    [
+     "Efectivo",
+     3601617
+    ],
+    [
+     "Bolsillo para la tarjeta",
+     8887066
+    ]
+   ],
+   "creditos": [
+    {
+     "n": "Addi",
+     "saldo": 821277,
+     "proximo": {
+      "fecha": "2026-12-01",
+      "monto": 30433
+     },
+     "sinFecha": 50000,
+     "intereses": 12155,
+     "interesesEst": 12155,
+     "calendario": [
+      [
+       "2026-12-01",
+       30433
+      ],
+      [
+       "2027-01-01",
+       442398
+      ],
+      [
+       "2027-02-01",
+       99482
+      ],
+      [
+       "2027-03-01",
+       99482
+      ],
+      [
+       "2027-04-01",
+       99482
+      ]
+     ],
+     "planes": [
+      [
+       "Farmacia 164",
+       470600,
+       2,
+       0,
+       264779
+      ],
+      [
+       "Steam 14",
+       519700,
+       6,
+       2,
+       346467
+      ],
+      [
+       "Repuestos moto",
+       600000,
+       6,
+       5,
+       100000
+      ],
+      [
+       "Compartido 111",
+       107400,
+       2,
+       2,
+       0
+      ],
+      [
+       "Tienda de ropa",
+       150000,
+       3,
+       3,
+       0
+      ]
+     ]
+    },
+    {
+     "n": "TC Nubank",
+     "saldo": 1080653,
+     "proximo": {
+      "fecha": "2026-11-21",
+      "monto": 115574
+     },
+     "sinFecha": 80000,
+     "intereses": 39303,
+     "interesesEst": 39303,
+     "calendario": [
+      [
+       "2026-11-21",
+       115574
+      ],
+      [
+       "2026-12-21",
+       382853
+      ],
+      [
+       "2027-01-21",
+       69366
+      ],
+      [
+       "2027-02-21",
+       68143
+      ],
+      [
+       "2027-03-21",
+       66918
+      ],
+      [
+       "2027-04-21",
+       65694
+      ],
+      [
+       "2027-05-21",
+       64471
+      ],
+      [
+       "2027-06-21",
+       63246
+      ],
+      [
+       "2027-07-21",
+       62023
+      ],
+      [
+       "2027-08-21",
+       60798
+      ],
+      [
+       "2027-09-21",
+       59574
+      ],
+      [
+       "2027-10-21",
+       42358
+      ]
+     ],
+     "planes": [
+      [
+       "Uber 69",
+       445300,
+       2,
+       0,
+       260224
+      ],
+      [
+       "Steam 41",
+       497700,
+       12,
+       1,
+       456225
+      ],
+      [
+       "Éxito 2",
+       191900,
+       12,
+       2,
+       159917
+      ],
+      [
+       "Compartido 6",
+       190300,
+       3,
+       2,
+       63433
+      ],
+      [
+       "Droguería",
+       82556,
+       2,
+       2,
+       0
+      ]
+     ]
+    },
+    {
+     "n": "TC Davibank",
+     "saldo": 2066070,
+     "proximo": {
+      "fecha": "2026-12-09",
+      "monto": 594247
+     },
+     "sinFecha": 0,
+     "intereses": 20732,
+     "interesesEst": 20732,
+     "calendario": [
+      [
+       "2026-12-09",
+       594247
+      ],
+      [
+       "2027-01-12",
+       495018
+      ],
+      [
+       "2027-02-10",
+       333467
+      ],
+      [
+       "2027-03-10",
+       155466
+      ],
+      [
+       "2027-04-07",
+       152585
+      ],
+      [
+       "2027-05-05",
+       149703
+      ],
+      [
+       "2027-06-09",
+       146822
+      ],
+      [
+       "2027-07-07",
+       143940
+      ],
+      [
+       "2027-08-04",
+       141058
+      ],
+      [
+       "2027-09-08",
+       48177
+      ],
+      [
+       "2027-10-06",
+       47212
+      ],
+      [
+       "2027-11-10",
+       46248
+      ]
+     ],
+     "planes": [
+      [
+       "Farmacia 125",
+       89500,
+       3,
+       1,
+       59667
+      ],
+      [
+       "Éxito 100",
+       170600,
+       2,
+       1,
+       85300
+      ],
+      [
+       "Rappi 157",
+       543400,
+       12,
+       1,
+       498117
+      ],
+      [
+       "Steam 81",
+       424900,
+       3,
+       1,
+       283267
+      ],
+      [
+       "Compartido 51",
+       141000,
+       3,
+       2,
+       47000
+      ],
+      [
+       "Electrodoméstico",
+       1229526,
+       12,
+       4,
+       720000
+      ],
+      [
+       "Supermercado",
+       187668,
+       3,
+       3,
+       0
+      ]
+     ]
+    },
+    {
+     "n": "Credifin",
+     "saldo": 575753,
+     "proximo": {
+      "fecha": "2026-12-22",
+      "monto": 60115
+     },
+     "sinFecha": 0,
+     "intereses": 73726,
+     "interesesEst": 73726,
+     "calendario": [
+      [
+       "2026-12-22",
+       60115
+      ],
+      [
+       "2027-01-10",
+       18135
+      ],
+      [
+       "2027-01-18",
+       298878
+      ],
+      [
+       "2027-01-20",
+       126083
+      ],
+      [
+       "2027-02-10",
+       18135
+      ],
+      [
+       "2027-03-10",
+       18135
+      ],
+      [
+       "2027-04-10",
+       18135
+      ],
+      [
+       "2027-05-10",
+       18137
+      ]
+     ],
+     "planes": [
+      [
+       "Pan 160",
+       546300,
+       2,
+       1,
+       273150
+      ],
+      [
+       "Éxito 130",
+       87500,
+       6,
+       1,
+       72917
+      ],
+      [
+       "Tienda D1 65",
+       353900,
+       3,
+       2,
+       117967
+      ],
+      [
+       "Farmacia 33",
+       53300,
+       2,
+       2,
+       0
+      ],
+      [
+       "Cine",
+       150000,
+       3,
+       3,
+       0
+      ]
+     ]
+    },
+    {
+     "n": "Mamá",
+     "saldo": 364854,
+     "proximo": null,
+     "sinFecha": 364854,
+     "intereses": 0,
+     "interesesEst": 0,
+     "calendario": [],
+     "planes": []
+    }
+   ],
+   "meDeben": [
+    [
+     "mamá",
+     26900,
+     26900
+    ],
+    [
+     "Luisa",
+     10400,
+     10400
+    ],
+    [
+     "Ana",
+     3962,
+     3962
+    ],
+    [
+     "Pedro",
+     2581,
+     -284819
+    ]
+   ],
+   "presupuestos": [
+    [
+     "Ocio",
+     350000,
+     1056500
+    ]
+   ],
+   "proximos": [
+    [
+     "fijo",
+     "Gimnasio",
+     120000,
+     "2026-11-18",
+     "cobrado"
+    ],
+    [
+     "credito",
+     "TC Nubank",
+     115574,
+     "2026-11-21",
+     "pendiente"
+    ],
+    [
+     "fijo",
+     "Internet y TV",
+     107000,
+     "2026-11-21",
+     "pagado"
+    ],
+    [
+     "fijo",
+     "Google One",
+     19900,
+     "2026-11-22",
+     "cobrado"
+    ],
+    [
+     "fijo",
+     "Suscripción de apps",
+     66000,
+     "2026-11-28",
+     "automatico"
+    ],
+    [
+     "credito",
+     "Addi",
+     30433,
+     "2026-12-01",
+     "pendiente"
+    ],
+    [
+     "fijo",
+     "Cuota de manejo Nubank",
+     12000,
+     "2026-12-01",
+     "automatico"
+    ],
+    [
+     "credito",
+     "TC Davibank",
+     594247,
+     "2026-12-09",
+     "pendiente"
+    ],
+    [
+     "fijo",
+     "Streaming familiar",
+     42000,
+     "2026-12-09",
+     "automatico"
+    ],
+    [
+     "fijo",
+     "Gimnasio",
+     120000,
+     "2026-12-18",
+     "automatico"
+    ],
+    [
+     "credito",
+     "TC Nubank",
+     382853,
+     "2026-12-21",
+     "pendiente"
+    ],
+    [
+     "fijo",
+     "Internet y TV",
+     107000,
+     "2026-12-21",
+     "pendiente"
+    ],
+    [
+     "credito",
+     "Credifin",
+     60115,
+     "2026-12-22",
+     "pendiente"
+    ],
+    [
+     "fijo",
+     "Google One",
+     19900,
+     "2026-12-22",
+     "automatico"
+    ]
+   ]
+  },
+  {
+   "hoy": "2026-11-28",
+   "patrimonio": 8512694,
+   "totalPlata": 13078213,
+   "totalDeudas": 4027881,
+   "totalMeDeben": 66962,
+   "totalLesDebo": 604600,
+   "ingresos": 8379500,
+   "gastos": 7054788,
+   "disponible": {
+    "tienes": 13078213,
+    "creditos": 211706,
+    "fijos": 227000,
+    "valor": 12639507
+   },
+   "cuentas": [
+    [
+     "Nequi",
+     -2122604
+    ],
+    [
+     "Daviplata",
+     5001919
+    ],
+    [
+     "Efectivo",
+     2282145
+    ],
+    [
+     "Bolsillo para la tarjeta",
+     7916753
+    ]
+   ],
+   "creditos": [
+    {
+     "n": "Addi",
+     "saldo": 941591,
+     "proximo": {
+      "fecha": "2026-12-01",
+      "monto": 90590
+     },
+     "sinFecha": 50000,
+     "intereses": 14873,
+     "interesesEst": 14873,
+     "calendario": [
+      [
+       "2026-12-01",
+       90590
+      ],
+      [
+       "2027-01-01",
+       502555
+      ],
+      [
+       "2027-02-01",
+       99482
+      ],
+      [
+       "2027-03-01",
+       99482
+      ],
+      [
+       "2027-04-01",
+       99482
+      ]
+     ],
+     "planes": [
+      [
+       "Éxito 181",
+       110000,
+       2,
+       0,
+       110000
+      ],
+      [
+       "Farmacia 164",
+       470600,
+       2,
+       0,
+       264779
+      ],
+      [
+       "Steam 14",
+       519700,
+       6,
+       2,
+       346467
+      ],
+      [
+       "Repuestos moto",
+       600000,
+       6,
+       5,
+       100000
+      ],
+      [
+       "Compartido 111",
+       107400,
+       2,
+       2,
+       0
+      ],
+      [
+       "Tienda de ropa",
+       150000,
+       3,
+       3,
+       0
+      ]
+     ]
+    },
+    {
+     "n": "TC Nubank",
+     "saldo": 871560,
+     "proximo": {
+      "fecha": "2026-12-21",
+      "monto": 61001
+     },
+     "sinFecha": 80000,
+     "intereses": 39303,
+     "interesesEst": 39303,
+     "calendario": [
+      [
+       "2026-12-21",
+       61001
+      ],
+      [
+       "2027-01-21",
+       144831
+      ],
+      [
+       "2027-02-21",
+       136003
+      ],
+      [
+       "2027-03-21",
+       102239
+      ],
+      [
+       "2027-04-21",
+       100308
+      ],
+      [
+       "2027-05-21",
+       98378
+      ],
+      [
+       "2027-06-21",
+       63246
+      ],
+      [
+       "2027-07-21",
+       62023
+      ],
+      [
+       "2027-08-21",
+       60798
+      ],
+      [
+       "2027-09-21",
+       59574
+      ],
+      [
+       "2027-10-21",
+       42358
+      ]
+     ],
+     "planes": [
+      [
+       "Rappi 196",
+       199200,
+       6,
+       1,
+       166000
+      ],
+      [
+       "Cinemark 191",
+       93500,
+       3,
+       1,
+       62334
+      ],
+      [
+       "Steam 41",
+       497700,
+       12,
+       2,
+       414750
+      ],
+      [
+       "Éxito 2",
+       191900,
+       12,
+       3,
+       143925
+      ],
+      [
+       "Uber 69",
+       445300,
+       2,
+       2,
+       0
+      ],
+      [
+       "Compartido 6",
+       190300,
+       3,
+       3,
+       0
+      ],
+      [
+       "Droguería",
+       82556,
+       2,
+       2,
+       0
+      ]
+     ]
+    },
+    {
+     "n": "TC Davibank",
+     "saldo": 1274123,
+     "proximo": {
+      "fecha": "2027-01-12",
+      "monto": 297318
+     },
+     "sinFecha": 0,
+     "intereses": 20732,
+     "interesesEst": 20732,
+     "calendario": [
+      [
+       "2027-01-12",
+       297318
+      ],
+      [
+       "2027-02-10",
+       333467
+      ],
+      [
+       "2027-03-10",
+       155466
+      ],
+      [
+       "2027-04-07",
+       152585
+      ],
+      [
+       "2027-05-05",
+       149703
+      ],
+      [
+       "2027-06-09",
+       146822
+      ],
+      [
+       "2027-07-07",
+       143940
+      ],
+      [
+       "2027-08-04",
+       141058
+      ],
+      [
+       "2027-09-08",
+       48177
+      ],
+      [
+       "2027-10-06",
+       47212
+      ],
+      [
+       "2027-11-10",
+       46248
+      ]
+     ],
+     "planes": [
+      [
+       "Farmacia 125",
+       89500,
+       3,
+       1,
+       59667
+      ],
+      [
+       "Éxito 100",
+       170600,
+       2,
+       1,
+       85300
+      ],
+      [
+       "Rappi 157",
+       543400,
+       12,
+       1,
+       498117
+      ],
+      [
+       "Steam 81",
+       424900,
+       3,
+       1,
+       240716
+      ],
+      [
+       "Electrodoméstico",
+       1229526,
+       12,
+       5,
+       630000
+      ],
+      [
+       "Compartido 51",
+       141000,
+       3,
+       3,
+       0
+      ],
+      [
+       "Supermercado",
+       187668,
+       3,
+       3,
+       0
+      ]
+     ]
+    },
+    {
+     "n": "Credifin",
+     "saldo": 575753,
+     "proximo": {
+      "fecha": "2026-12-22",
+      "monto": 60115
+     },
+     "sinFecha": 0,
+     "intereses": 73726,
+     "interesesEst": 73726,
+     "calendario": [
+      [
+       "2026-12-22",
+       60115
+      ],
+      [
+       "2027-01-10",
+       18135
+      ],
+      [
+       "2027-01-18",
+       298878
+      ],
+      [
+       "2027-01-20",
+       126083
+      ],
+      [
+       "2027-02-10",
+       18135
+      ],
+      [
+       "2027-03-10",
+       18135
+      ],
+      [
+       "2027-04-10",
+       18135
+      ],
+      [
+       "2027-05-10",
+       18137
+      ]
+     ],
+     "planes": [
+      [
+       "Pan 160",
+       546300,
+       2,
+       1,
+       273150
+      ],
+      [
+       "Éxito 130",
+       87500,
+       6,
+       1,
+       72917
+      ],
+      [
+       "Tienda D1 65",
+       353900,
+       3,
+       2,
+       117967
+      ],
+      [
+       "Farmacia 33",
+       53300,
+       2,
+       2,
+       0
+      ],
+      [
+       "Cine",
+       150000,
+       3,
+       3,
+       0
+      ]
+     ]
+    },
+    {
+     "n": "Mamá",
+     "saldo": 364854,
+     "proximo": null,
+     "sinFecha": 364854,
+     "intereses": 0,
+     "interesesEst": 0,
+     "calendario": [],
+     "planes": []
+    }
+   ],
+   "meDeben": [
+    [
+     "Ana",
+     30481,
+     30481
+    ],
+    [
+     "mamá",
+     26900,
+     26900
+    ],
+    [
+     "Luisa",
+     7000,
+     7000
+    ],
+    [
+     "Pedro",
+     2581,
+     -284819
+    ]
+   ],
+   "presupuestos": [
+    [
+     "Ocio",
+     350000,
+     1705000
+    ]
+   ],
+   "proximos": [
+    [
+     "fijo",
+     "Google One",
+     19900,
+     "2026-11-22",
+     "cobrado"
+    ],
+    [
+     "fijo",
+     "Suscripción de apps",
+     66000,
+     "2026-11-28",
+     "cobrado"
+    ],
+    [
+     "credito",
+     "Addi",
+     90590,
+     "2026-12-01",
+     "pendiente"
+    ],
+    [
+     "fijo",
+     "Cuota de manejo Nubank",
+     12000,
+     "2026-12-01",
+     "automatico"
+    ],
+    [
+     "fijo",
+     "Streaming familiar",
+     42000,
+     "2026-12-09",
+     "automatico"
+    ],
+    [
+     "fijo",
+     "Gimnasio",
+     120000,
+     "2026-12-18",
+     "automatico"
+    ],
+    [
+     "credito",
+     "TC Nubank",
+     61001,
+     "2026-12-21",
+     "pendiente"
+    ],
+    [
+     "fijo",
+     "Internet y TV",
+     107000,
+     "2026-12-21",
+     "pendiente"
+    ],
+    [
+     "credito",
+     "Credifin",
+     60115,
+     "2026-12-22",
+     "pendiente"
+    ],
+    [
+     "fijo",
+     "Google One",
+     19900,
+     "2026-12-22",
+     "automatico"
+    ],
+    [
+     "fijo",
+     "Suscripción de apps",
+     66000,
+     "2026-12-28",
+     "automatico"
+    ],
+    [
+     "credito",
+     "Addi",
+     502555,
+     "2027-01-01",
+     "pendiente"
+    ],
+    [
+     "fijo",
+     "Cuota de manejo Nubank",
+     12000,
+     "2027-01-01",
+     "automatico"
+    ]
+   ]
+  },
+  {
+   "hoy": "2026-12-04",
+   "patrimonio": 9806491,
+   "totalPlata": 14542239,
+   "totalDeudas": 4287220,
+   "totalMeDeben": 156072,
+   "totalLesDebo": 604600,
+   "ingresos": 2890100,
+   "gastos": 1028203,
+   "disponible": {
+    "tienes": 14542239,
+    "creditos": 281667,
+    "fijos": 227000,
+    "valor": 14033572
+   },
+   "cuentas": [
+    [
+     "Nequi",
+     -1967194
+    ],
+    [
+     "Daviplata",
+     6903264
+    ],
+    [
+     "Efectivo",
+     1622816
+    ],
+    [
+     "Bolsillo para la tarjeta",
+     7983353
+    ]
+   ],
+   "creditos": [
+    {
+     "n": "Addi",
+     "saldo": 446408,
+     "proximo": {
+      "fecha": "2027-01-01",
+      "monto": 97962
+     },
+     "sinFecha": 50000,
+     "intereses": 14873,
+     "interesesEst": 14873,
+     "calendario": [
+      [
+       "2027-01-01",
+       97962
+      ],
+      [
+       "2027-02-01",
+       99482
+      ],
+      [
+       "2027-03-01",
+       99482
+      ],
+      [
+       "2027-04-01",
+       99482
+      ]
+     ],
+     "planes": [
+      [
+       "Steam 14",
+       519700,
+       6,
+       3,
+       259850
+      ],
+      [
+       "Éxito 181",
+       110000,
+       2,
+       2,
+       0
+      ],
+      [
+       "Farmacia 164",
+       470600,
+       2,
+       2,
+       0
+      ],
+      [
+       "Compartido 111",
+       107400,
+       2,
+       2,
+       0
+      ],
+      [
+       "Repuestos moto",
+       600000,
+       6,
+       6,
+       0
+      ],
+      [
+       "Tienda de ropa",
+       150000,
+       3,
+       3,
+       0
+      ]
+     ]
+    },
+    {
+     "n": "TC Nubank",
+     "saldo": 753359,
+     "proximo": {
+      "fecha": "2027-01-21",
+      "monto": 87631
+     },
+     "sinFecha": 80000,
+     "intereses": 22998,
+     "interesesEst": 22998,
+     "calendario": [
+      [
+       "2027-01-21",
+       87631
+      ],
+      [
+       "2027-02-21",
+       136003
+      ],
+      [
+       "2027-03-21",
+       102239
+      ],
+      [
+       "2027-04-21",
+       100308
+      ],
+      [
+       "2027-05-21",
+       98378
+      ],
+      [
+       "2027-06-21",
+       63246
+      ],
+      [
+       "2027-07-21",
+       62023
+      ],
+      [
+       "2027-08-21",
+       60798
+      ],
+      [
+       "2027-09-21",
+       59574
+      ],
+      [
+       "2027-10-21",
+       42358
+      ]
+     ],
+     "planes": [
+      [
+       "Rappi 196",
+       199200,
+       6,
+       1,
+       166000
+      ],
+      [
+       "Cinemark 191",
+       93500,
+       3,
+       1,
+       62334
+      ],
+      [
+       "Steam 41",
+       497700,
+       12,
+       2,
+       383305
+      ],
+      [
+       "Éxito 2",
+       191900,
+       12,
+       4,
+       127934
+      ],
+      [
+       "Uber 69",
+       445300,
+       2,
+       2,
+       0
+      ],
+      [
+       "Compartido 6",
+       190300,
+       3,
+       3,
+       0
+      ],
+      [
+       "Droguería",
+       82556,
+       2,
+       2,
+       0
+      ]
+     ]
+    },
+    {
+     "n": "TC Davibank",
+     "saldo": 1405305,
+     "proximo": {
+      "fecha": "2027-01-12",
+      "monto": 80545
+     },
+     "sinFecha": 0,
+     "intereses": 29859,
+     "interesesEst": 29859,
+     "calendario": [
+      [
+       "2027-01-12",
+       80545
+      ],
+      [
+       "2027-02-10",
+       412490
+      ],
+      [
+       "2027-03-10",
+       232967
+      ],
+      [
+       "2027-04-07",
+       228565
+      ],
+      [
+       "2027-05-05",
+       224162
+      ],
+      [
+       "2027-06-09",
+       219760
+      ],
+      [
+       "2027-07-07",
+       143940
+      ],
+      [
+       "2027-08-04",
+       141058
+      ],
+      [
+       "2027-09-08",
+       48177
+      ],
+      [
+       "2027-10-06",
+       47212
+      ],
+      [
+       "2027-11-10",
+       46248
+      ]
+     ],
+     "planes": [
+      [
+       "Steam 211",
+       428500,
+       6,
+       0,
+       428500
+      ],
+      [
+       "Farmacia 125",
+       89500,
+       3,
+       2,
+       29834
+      ],
+      [
+       "Rappi 157",
+       543400,
+       12,
+       2,
+       452833
+      ],
+      [
+       "Steam 81",
+       424900,
+       3,
+       2,
+       141633
+      ],
+      [
+       "Electrodoméstico",
+       1229526,
+       12,
+       5,
+       630000
+      ],
+      [
+       "Éxito 100",
+       170600,
+       2,
+       2,
+       0
+      ],
+      [
+       "Compartido 51",
+       141000,
+       3,
+       3,
+       0
+      ],
+      [
+       "Supermercado",
+       187668,
+       3,
+       3,
+       0
+      ]
+     ]
+    },
+    {
+     "n": "Credifin",
+     "saldo": 1317294,
+     "proximo": {
+      "fecha": "2026-12-22",
+      "monto": 60115
+     },
+     "sinFecha": 0,
+     "intereses": 181351,
+     "interesesEst": 181351,
+     "calendario": [
+      [
+       "2026-12-22",
+       60115
+      ],
+      [
+       "2027-01-01",
+       123590
+      ],
+      [
+       "2027-01-10",
+       18135
+      ],
+      [
+       "2027-01-18",
+       298878
+      ],
+      [
+       "2027-01-20",
+       126083
+      ],
+      [
+       "2027-02-01",
+       123590
+      ],
+      [
+       "2027-02-10",
+       18135
+      ],
+      [
+       "2027-03-01",
+       123590
+      ],
+      [
+       "2027-03-10",
+       18135
+      ],
+      [
+       "2027-04-01",
+       123590
+      ],
+      [
+       "2027-04-10",
+       18135
+      ],
+      [
+       "2027-05-01",
+       123590
+      ],
+      [
+       "2027-05-10",
+       18137
+      ],
+      [
+       "2027-06-01",
+       123591
+      ]
+     ],
+     "planes": [
+      [
+       "Terpel 214",
+       596300,
+       6,
+       0,
+       596300
+      ],
+      [
+       "Pan 160",
+       546300,
+       2,
+       1,
+       273150
+      ],
+      [
+       "Éxito 130",
+       87500,
+       6,
+       1,
+       72917
+      ],
+      [
+       "Tienda D1 65",
+       353900,
+       3,
+       2,
+       117967
+      ],
+      [
+       "Farmacia 33",
+       53300,
+       2,
+       2,
+       0
+      ],
+      [
+       "Cine",
+       150000,
+       3,
+       3,
+       0
+      ]
+     ]
+    },
+    {
+     "n": "Mamá",
+     "saldo": 364854,
+     "proximo": null,
+     "sinFecha": 364854,
+     "intereses": 0,
+     "interesesEst": 0,
+     "calendario": [],
+     "planes": []
+    }
+   ],
+   "meDeben": [
+    [
+     "Juan",
+     95900,
+     -29200
+    ],
+    [
+     "Ana",
+     30481,
+     30481
+    ],
+    [
+     "mamá",
+     21400,
+     21400
+    ],
+    [
+     "Luisa",
+     7000,
+     7000
+    ],
+    [
+     "Pedro",
+     1291,
+     -286109
+    ]
+   ],
+   "presupuestos": [
+    [
+     "Ocio",
+     350000,
+     40700
+    ]
+   ],
+   "proximos": [
+    [
+     "fijo",
+     "Suscripción de apps",
+     66000,
+     "2026-11-28",
+     "cobrado"
+    ],
+    [
+     "fijo",
+     "Streaming familiar",
+     42000,
+     "2026-12-09",
+     "automatico"
+    ],
+    [
+     "fijo",
+     "Gimnasio",
+     120000,
+     "2026-12-18",
+     "automatico"
+    ],
+    [
+     "fijo",
+     "Internet y TV",
+     107000,
+     "2026-12-21",
+     "pendiente"
+    ],
+    [
+     "credito",
+     "Credifin",
+     60115,
+     "2026-12-22",
+     "pendiente"
+    ],
+    [
+     "fijo",
+     "Google One",
+     19900,
+     "2026-12-22",
+     "automatico"
+    ],
+    [
+     "fijo",
+     "Suscripción de apps",
+     66000,
+     "2026-12-28",
+     "automatico"
+    ],
+    [
+     "credito",
+     "Addi",
+     97962,
+     "2027-01-01",
+     "pendiente"
+    ],
+    [
+     "credito",
+     "Credifin",
+     123590,
+     "2027-01-01",
+     "pendiente"
+    ],
+    [
+     "fijo",
+     "Cuota de manejo Nubank",
+     12000,
+     "2027-01-01",
+     "automatico"
+    ]
+   ]
+  },
+  {
+   "hoy": "2026-12-13",
+   "patrimonio": 13947574,
+   "totalPlata": 19300208,
+   "totalDeudas": 5059606,
+   "totalMeDeben": 177072,
+   "totalLesDebo": 470100,
+   "ingresos": 7040462,
+   "gastos": 3111182,
+   "disponible": {
+    "tienes": 19300208,
+    "creditos": 861432,
+    "fijos": 227000,
+    "valor": 18211776
+   },
+   "cuentas": [
+    [
+     "Nequi",
+     1442906
+    ],
+    [
+     "Daviplata",
+     6586833
+    ],
+    [
+     "Efectivo",
+     3620616
+    ],
+    [
+     "Bolsillo para la tarjeta",
+     7649853
+    ]
+   ],
+   "creditos": [
+    {
+     "n": "Addi",
+     "saldo": 734207,
+     "proximo": {
+      "fecha": "2027-01-01",
+      "monto": 385761
+     },
+     "sinFecha": 50000,
+     "intereses": 14873,
+     "interesesEst": 14873,
+     "calendario": [
+      [
+       "2027-01-01",
+       385761
+      ],
+      [
+       "2027-02-01",
+       99482
+      ],
+      [
+       "2027-03-01",
+       99482
+      ],
+      [
+       "2027-04-01",
+       99482
+      ]
+     ],
+     "planes": [
+      [
+       "Steam 14",
+       519700,
+       6,
+       3,
+       259850
+      ],
+      [
+       "Éxito 181",
+       110000,
+       2,
+       2,
+       0
+      ],
+      [
+       "Farmacia 164",
+       470600,
+       2,
+       2,
+       0
+      ],
+      [
+       "Compartido 111",
+       107400,
+       2,
+       2,
+       0
+      ],
+      [
+       "Repuestos moto",
+       600000,
+       6,
+       6,
+       0
+      ],
+      [
+       "Tienda de ropa",
+       150000,
+       3,
+       3,
+       0
+      ]
+     ]
+    },
+    {
+     "n": "TC Nubank",
+     "saldo": 665728,
+     "proximo": {
+      "fecha": "2027-02-21",
+      "monto": 136003
+     },
+     "sinFecha": 80000,
+     "intereses": 22998,
+     "interesesEst": 22998,
+     "calendario": [
+      [
+       "2027-02-21",
+       136003
+      ],
+      [
+       "2027-03-21",
+       102239
+      ],
+      [
+       "2027-04-21",
+       100308
+      ],
+      [
+       "2027-05-21",
+       98378
+      ],
+      [
+       "2027-06-21",
+       63246
+      ],
+      [
+       "2027-07-21",
+       62023
+      ],
+      [
+       "2027-08-21",
+       60798
+      ],
+      [
+       "2027-09-21",
+       59574
+      ],
+      [
+       "2027-10-21",
+       42358
+      ]
+     ],
+     "planes": [
+      [
+       "Rappi 196",
+       199200,
+       6,
+       2,
+       132799
+      ],
+      [
+       "Cinemark 191",
+       93500,
+       3,
+       2,
+       31167
+      ],
+      [
+       "Steam 41",
+       497700,
+       12,
+       3,
+       373275
+      ],
+      [
+       "Éxito 2",
+       191900,
+       12,
+       4,
+       127934
+      ],
+      [
+       "Uber 69",
+       445300,
+       2,
+       2,
+       0
+      ],
+      [
+       "Compartido 6",
+       190300,
+       3,
+       3,
+       0
+      ],
+      [
+       "Droguería",
+       82556,
+       2,
+       2,
+       0
+      ]
+     ]
+    },
+    {
+     "n": "TC Davibank",
+     "saldo": 1558905,
+     "proximo": {
+      "fecha": "2027-01-12",
+      "monto": 134222
+     },
+     "sinFecha": 0,
+     "intereses": 32236,
+     "interesesEst": 32236,
+     "calendario": [
+      [
+       "2027-01-12",
+       134222
+      ],
+      [
+       "2027-02-10",
+       423969
+      ],
+      [
+       "2027-03-10",
+       244248
+      ],
+      [
+       "2027-04-07",
+       239648
+      ],
+      [
+       "2027-05-05",
+       235047
+      ],
+      [
+       "2027-06-09",
+       230447
+      ],
+      [
+       "2027-07-07",
+       154429
+      ],
+      [
+       "2027-08-04",
+       151348
+      ],
+      [
+       "2027-09-08",
+       58269
+      ],
+      [
+       "2027-10-06",
+       57106
+      ],
+      [
+       "2027-11-10",
+       55944
+      ],
+      [
+       "2027-12-08",
+       9498
+      ]
+     ],
+     "planes": [
+      [
+       "Steam 231",
+       111600,
+       12,
+       0,
+       111600
+      ],
+      [
+       "Steam 211",
+       428500,
+       6,
+       0,
+       428500
+      ],
+      [
+       "Farmacia 125",
+       89500,
+       3,
+       2,
+       29834
+      ],
+      [
+       "Rappi 157",
+       543400,
+       12,
+       2,
+       452833
+      ],
+      [
+       "Steam 81",
+       424900,
+       3,
+       2,
+       141633
+      ],
+      [
+       "Electrodoméstico",
+       1229526,
+       12,
+       5,
+       630000
+      ],
+      [
+       "Éxito 100",
+       170600,
+       2,
+       2,
+       0
+      ],
+      [
+       "Compartido 51",
+       141000,
+       3,
+       3,
+       0
+      ],
+      [
+       "Supermercado",
+       187668,
+       3,
+       3,
+       0
+      ]
+     ]
+    },
+    {
+     "n": "Credifin",
+     "saldo": 1666212,
+     "proximo": {
+      "fecha": "2027-01-01",
+      "monto": 114005
+     },
+     "sinFecha": 0,
+     "intereses": 191765,
+     "interesesEst": 191765,
+     "calendario": [
+      [
+       "2027-01-01",
+       114005
+      ],
+      [
+       "2027-01-06",
+       209309
+      ],
+      [
+       "2027-01-10",
+       18135
+      ],
+      [
+       "2027-01-18",
+       298878
+      ],
+      [
+       "2027-01-20",
+       126083
+      ],
+      [
+       "2027-02-01",
+       123590
+      ],
+      [
+       "2027-02-06",
+       209309
+      ],
+      [
+       "2027-02-10",
+       18135
+      ],
+      [
+       "2027-03-01",
+       123590
+      ],
+      [
+       "2027-03-10",
+       18135
+      ],
+      [
+       "2027-04-01",
+       123590
+      ],
+      [
+       "2027-04-10",
+       18135
+      ],
+      [
+       "2027-05-01",
+       123590
+      ],
+      [
+       "2027-05-10",
+       18137
+      ],
+      [
+       "2027-06-01",
+       123591
+      ]
+     ],
+     "planes": [
+      [
+       "Rappi 229",
+       393700,
+       2,
+       0,
+       393700
+      ],
+      [
+       "Terpel 214",
+       596300,
+       6,
+       0,
+       588592
+      ],
+      [
+       "Pan 160",
+       546300,
+       2,
+       1,
+       273150
+      ],
+      [
+       "Éxito 130",
+       87500,
+       6,
+       1,
+       72917
+      ],
+      [
+       "Tienda D1 65",
+       353900,
+       3,
+       2,
+       117967
+      ],
+      [
+       "Farmacia 33",
+       53300,
+       2,
+       2,
+       0
+      ],
+      [
+       "Cine",
+       150000,
+       3,
+       3,
+       0
+      ]
+     ]
+    },
+    {
+     "n": "Mamá",
+     "saldo": 434554,
+     "proximo": null,
+     "sinFecha": 434554,
+     "intereses": 0,
+     "interesesEst": 0,
+     "calendario": [],
+     "planes": []
+    }
+   ],
+   "meDeben": [
+    [
+     "Juan",
+     95900,
+     -29200
+    ],
+    [
+     "Ana",
+     37481,
+     37481
+    ],
+    [
+     "mamá",
+     21400,
+     21400
+    ],
+    [
+     "Luisa",
+     14000,
+     14000
+    ],
+    [
+     "Carlos",
+     7000,
+     -144800
+    ],
+    [
+     "Pedro",
+     1291,
+     -151609
+    ]
+   ],
+   "presupuestos": [
+    [
+     "Ocio",
+     350000,
+     1011400
+    ]
+   ],
+   "proximos": [
+    [
+     "fijo",
+     "Streaming familiar",
+     42000,
+     "2026-12-09",
+     "cobrado"
+    ],
+    [
+     "fijo",
+     "Gimnasio",
+     120000,
+     "2026-12-18",
+     "automatico"
+    ],
+    [
+     "fijo",
+     "Internet y TV",
+     107000,
+     "2026-12-21",
+     "pendiente"
+    ],
+    [
+     "fijo",
+     "Google One",
+     19900,
+     "2026-12-22",
+     "automatico"
+    ],
+    [
+     "fijo",
+     "Suscripción de apps",
+     66000,
+     "2026-12-28",
+     "automatico"
+    ],
+    [
+     "credito",
+     "Addi",
+     385761,
+     "2027-01-01",
+     "pendiente"
+    ],
+    [
+     "credito",
+     "Credifin",
+     114005,
+     "2027-01-01",
+     "pendiente"
+    ],
+    [
+     "fijo",
+     "Cuota de manejo Nubank",
+     12000,
+     "2027-01-01",
+     "automatico"
+    ],
+    [
+     "credito",
+     "Credifin",
+     209309,
+     "2027-01-06",
+     "pendiente"
+    ],
+    [
+     "fijo",
+     "Streaming familiar",
+     42000,
+     "2027-01-09",
+     "automatico"
+    ],
+    [
+     "credito",
+     "Credifin",
+     18135,
+     "2027-01-10",
+     "pendiente"
+    ],
+    [
+     "credito",
+     "TC Davibank",
+     134222,
+     "2027-01-12",
+     "pendiente"
+    ]
+   ]
+  },
+  {
+   "hoy": "2026-12-20",
+   "patrimonio": 13048809,
+   "totalPlata": 18509974,
+   "totalDeudas": 5192975,
+   "totalMeDeben": 202510,
+   "totalLesDebo": 470700,
+   "ingresos": 7268462,
+   "gastos": 4251015,
+   "disponible": {
+    "tienes": 18509974,
+    "creditos": 1235996,
+    "fijos": 227000,
+    "valor": 17046978
+   },
+   "cuentas": [
+    [
+     "Nequi",
+     1062806
+    ],
+    [
+     "Daviplata",
+     6281820
+    ],
+    [
+     "Efectivo",
+     3740316
+    ],
+    [
+     "Bolsillo para la tarjeta",
+     7425032
+    ]
+   ],
+   "creditos": [
+    {
+     "n": "Addi",
+     "saldo": 487414,
+     "proximo": {
+      "fecha": "2027-01-01",
+      "monto": 46323
+     },
+     "sinFecha": 50000,
+     "intereses": 15441,
+     "interesesEst": 15441,
+     "calendario": [
+      [
+       "2027-01-01",
+       46323
+      ],
+      [
+       "2027-02-01",
+       145805
+      ],
+      [
+       "2027-03-01",
+       145804
+      ],
+      [
+       "2027-04-01",
+       99482
+      ]
+     ],
+     "planes": [
+      [
+       "Compartido 267",
+       133200,
+       3,
+       0,
+       133200
+      ],
+      [
+       "Steam 14",
+       519700,
+       6,
+       3,
+       259850
+      ],
+      [
+       "Éxito 181",
+       110000,
+       2,
+       2,
+       0
+      ],
+      [
+       "Farmacia 164",
+       470600,
+       2,
+       2,
+       0
+      ],
+      [
+       "Compartido 111",
+       107400,
+       2,
+       2,
+       0
+      ],
+      [
+       "Repuestos moto",
+       600000,
+       6,
+       6,
+       0
+      ],
+      [
+       "Tienda de ropa",
+       150000,
+       3,
+       3,
+       0
+      ]
+     ]
+    },
+    {
+     "n": "TC Nubank",
+     "saldo": 537125,
+     "proximo": {
+      "fecha": "2027-02-21",
+      "monto": 7399
+     },
+     "sinFecha": 80000,
+     "intereses": 22998,
+     "interesesEst": 22998,
+     "calendario": [
+      [
+       "2027-02-21",
+       7399
+      ],
+      [
+       "2027-03-21",
+       102239
+      ],
+      [
+       "2027-04-21",
+       100308
+      ],
+      [
+       "2027-05-21",
+       98378
+      ],
+      [
+       "2027-06-21",
+       63246
+      ],
+      [
+       "2027-07-21",
+       62023
+      ],
+      [
+       "2027-08-21",
+       60798
+      ],
+      [
+       "2027-09-21",
+       59574
+      ],
+      [
+       "2027-10-21",
+       42358
+      ]
+     ],
+     "planes": [
+      [
+       "Rappi 196",
+       199200,
+       6,
+       2,
+       106417
+      ],
+      [
+       "Steam 41",
+       497700,
+       12,
+       4,
+       331800
+      ],
+      [
+       "Éxito 2",
+       191900,
+       12,
+       5,
+       111942
+      ],
+      [
+       "Cinemark 191",
+       93500,
+       3,
+       3,
+       0
+      ],
+      [
+       "Uber 69",
+       445300,
+       2,
+       2,
+       0
+      ],
+      [
+       "Compartido 6",
+       190300,
+       3,
+       3,
+       0
+      ],
+      [
+       "Droguería",
+       82556,
+       2,
+       2,
+       0
+      ]
+     ]
+    },
+    {
+     "n": "TC Davibank",
+     "saldo": 1714805,
+     "proximo": {
+      "fecha": "2027-01-12",
+      "monto": 290122
+     },
+     "sinFecha": 0,
+     "intereses": 23082,
+     "interesesEst": 23082,
+     "calendario": [
+      [
+       "2027-01-12",
+       290122
+      ],
+      [
+       "2027-02-10",
+       423969
+      ],
+      [
+       "2027-03-10",
+       244248
+      ],
+      [
+       "2027-04-07",
+       239648
+      ],
+      [
+       "2027-05-05",
+       235047
+      ],
+      [
+       "2027-06-09",
+       230447
+      ],
+      [
+       "2027-07-07",
+       154429
+      ],
+      [
+       "2027-08-04",
+       151348
+      ],
+      [
+       "2027-09-08",
+       58269
+      ],
+      [
+       "2027-10-06",
+       57106
+      ],
+      [
+       "2027-11-10",
+       55944
+      ],
+      [
+       "2027-12-08",
+       9498
+      ]
+     ],
+     "planes": [
+      [
+       "Steam 231",
+       111600,
+       12,
+       0,
+       111600
+      ],
+      [
+       "Steam 211",
+       428500,
+       6,
+       0,
+       428500
+      ],
+      [
+       "Farmacia 125",
+       89500,
+       3,
+       2,
+       29834
+      ],
+      [
+       "Rappi 157",
+       543400,
+       12,
+       2,
+       452833
+      ],
+      [
+       "Steam 81",
+       424900,
+       3,
+       2,
+       141633
+      ],
+      [
+       "Electrodoméstico",
+       1229526,
+       12,
+       5,
+       630000
+      ],
+      [
+       "Éxito 100",
+       170600,
+       2,
+       2,
+       0
+      ],
+      [
+       "Compartido 51",
+       141000,
+       3,
+       3,
+       0
+      ],
+      [
+       "Supermercado",
+       187668,
+       3,
+       3,
+       0
+      ]
+     ]
+    },
+    {
+     "n": "Credifin",
+     "saldo": 2019077,
+     "proximo": {
+      "fecha": "2027-01-06",
+      "monto": 177314
+     },
+     "sinFecha": 0,
+     "intereses": 160944,
+     "interesesEst": 160944,
+     "calendario": [
+      [
+       "2027-01-06",
+       177314
+      ],
+      [
+       "2027-01-10",
+       18135
+      ],
+      [
+       "2027-01-14",
+       405224
+      ],
+      [
+       "2027-01-18",
+       298878
+      ],
+      [
+       "2027-01-20",
+       141690
+      ],
+      [
+       "2027-02-01",
+       123590
+      ],
+      [
+       "2027-02-06",
+       209309
+      ],
+      [
+       "2027-02-10",
+       18135
+      ],
+      [
+       "2027-02-20",
+       15607
+      ],
+      [
+       "2027-03-01",
+       123590
+      ],
+      [
+       "2027-03-10",
+       18135
+      ],
+      [
+       "2027-03-20",
+       15607
+      ],
+      [
+       "2027-04-01",
+       123590
+      ],
+      [
+       "2027-04-10",
+       18135
+      ],
+      [
+       "2027-04-20",
+       15607
+      ],
+      [
+       "2027-05-01",
+       123590
+      ],
+      [
+       "2027-05-10",
+       18137
+      ],
+      [
+       "2027-05-20",
+       15607
+      ],
+      [
+       "2027-06-01",
+       123591
+      ],
+      [
+       "2027-06-20",
+       15606
+      ]
+     ],
+     "planes": [
+      [
+       "Tienda D1 274",
+       75300,
+       6,
+       0,
+       75300
+      ],
+      [
+       "Rappi 229",
+       393700,
+       2,
+       0,
+       363609
+      ],
+      [
+       "Terpel 214",
+       596300,
+       6,
+       1,
+       496917
+      ],
+      [
+       "Pan 160",
+       546300,
+       2,
+       1,
+       273150
+      ],
+      [
+       "Éxito 130",
+       87500,
+       6,
+       1,
+       72917
+      ],
+      [
+       "Tienda D1 65",
+       353900,
+       3,
+       2,
+       117967
+      ],
+      [
+       "Farmacia 33",
+       53300,
+       2,
+       2,
+       0
+      ],
+      [
+       "Cine",
+       150000,
+       3,
+       3,
+       0
+      ]
+     ]
+    },
+    {
+     "n": "Mamá",
+     "saldo": 434554,
+     "proximo": null,
+     "sinFecha": 434554,
+     "intereses": 0,
+     "interesesEst": 0,
+     "calendario": [],
+     "planes": []
+    }
+   ],
+   "meDeben": [
+    [
+     "Pedro",
+     138969,
+     -13931
+    ],
+    [
+     "Ana",
+     35141,
+     35141
+    ],
+    [
+     "mamá",
+     21400,
+     21400
+    ],
+    [
+     "Carlos",
+     7000,
+     -144800
+    ]
+   ],
+   "presupuestos": [
+    [
+     "Ocio",
+     350000,
+     1222100
+    ]
+   ],
+   "proximos": [
+    [
+     "fijo",
+     "Gimnasio",
+     120000,
+     "2026-12-18",
+     "cobrado"
+    ],
+    [
+     "fijo",
+     "Internet y TV",
+     107000,
+     "2026-12-21",
+     "pendiente"
+    ],
+    [
+     "fijo",
+     "Google One",
+     19900,
+     "2026-12-22",
+     "automatico"
+    ],
+    [
+     "fijo",
+     "Suscripción de apps",
+     66000,
+     "2026-12-28",
+     "automatico"
+    ],
+    [
+     "credito",
+     "Addi",
+     46323,
+     "2027-01-01",
+     "pendiente"
+    ],
+    [
+     "fijo",
+     "Cuota de manejo Nubank",
+     12000,
+     "2027-01-01",
+     "automatico"
+    ],
+    [
+     "credito",
+     "Credifin",
+     177314,
+     "2027-01-06",
+     "pendiente"
+    ],
+    [
+     "fijo",
+     "Streaming familiar",
+     42000,
+     "2027-01-09",
+     "automatico"
+    ],
+    [
+     "credito",
+     "Credifin",
+     18135,
+     "2027-01-10",
+     "pendiente"
+    ],
+    [
+     "credito",
+     "TC Davibank",
+     290122,
+     "2027-01-12",
+     "pendiente"
+    ],
+    [
+     "credito",
+     "Credifin",
+     405224,
+     "2027-01-14",
+     "pendiente"
+    ],
+    [
+     "credito",
+     "Credifin",
+     298878,
+     "2027-01-18",
+     "pendiente"
+    ],
+    [
+     "fijo",
+     "Gimnasio",
+     120000,
+     "2027-01-18",
+     "automatico"
+    ],
+    [
+     "credito",
+     "Credifin",
+     141690,
+     "2027-01-20",
+     "pendiente"
+    ],
+    [
+     "fijo",
+     "Internet y TV",
+     107000,
+     "2027-01-21",
+     "pendiente"
+    ],
+    [
+     "fijo",
+     "Google One",
+     19900,
+     "2027-01-22",
+     "automatico"
+    ]
+   ]
+  },
+  {
+   "hoy": "2026-12-27",
+   "patrimonio": 14502440,
+   "totalPlata": 21205413,
+   "totalDeudas": 6453286,
+   "totalMeDeben": 336213,
+   "totalLesDebo": 585900,
+   "ingresos": 9456562,
+   "gastos": 6476787,
+   "disponible": {
+    "tienes": 21205413,
+    "creditos": 2325127,
+    "fijos": 227000,
+    "valor": 18653286
+   },
+   "cuentas": [
+    [
+     "Nequi",
+     2282807
+    ],
+    [
+     "Daviplata",
+     6782620
+    ],
+    [
+     "Efectivo",
+     5331416
+    ],
+    [
+     "Bolsillo para la tarjeta",
+     6808570
+    ]
+   ],
+   "creditos": [
+    {
+     "n": "Addi",
+     "saldo": 487414,
+     "proximo": {
+      "fecha": "2027-01-01",
+      "monto": 46323
+     },
+     "sinFecha": 50000,
+     "intereses": 8971,
+     "interesesEst": 8971,
+     "calendario": [
+      [
+       "2027-01-01",
+       46323
+      ],
+      [
+       "2027-02-01",
+       145805
+      ],
+      [
+       "2027-03-01",
+       145804
+      ],
+      [
+       "2027-04-01",
+       99482
+      ]
+     ],
+     "planes": [
+      [
+       "Compartido 267",
+       133200,
+       3,
+       0,
+       133200
+      ],
+      [
+       "Steam 14",
+       519700,
+       6,
+       3,
+       259850
+      ],
+      [
+       "Éxito 181",
+       110000,
+       2,
+       2,
+       0
+      ],
+      [
+       "Farmacia 164",
+       470600,
+       2,
+       2,
+       0
+      ],
+      [
+       "Compartido 111",
+       107400,
+       2,
+       2,
+       0
+      ],
+      [
+       "Repuestos moto",
+       600000,
+       6,
+       6,
+       0
+      ],
+      [
+       "Tienda de ropa",
+       150000,
+       3,
+       3,
+       0
+      ]
+     ]
+    },
+    {
+     "n": "TC Nubank",
+     "saldo": 1115164,
+     "proximo": {
+      "fecha": "2027-01-21",
+      "monto": 285069
+     },
+     "sinFecha": 80000,
+     "intereses": 22998,
+     "interesesEst": 22998,
+     "calendario": [
+      [
+       "2027-01-21",
+       285069
+      ],
+      [
+       "2027-02-21",
+       272131
+      ],
+      [
+       "2027-03-21",
+       112530
+      ],
+      [
+       "2027-04-21",
+       110397
+      ],
+      [
+       "2027-05-21",
+       108265
+      ],
+      [
+       "2027-06-21",
+       72931
+      ],
+      [
+       "2027-07-21",
+       62023
+      ],
+      [
+       "2027-08-21",
+       60798
+      ],
+      [
+       "2027-09-21",
+       59574
+      ],
+      [
+       "2027-10-21",
+       42358
+      ]
+     ],
+     "planes": [
+      [
+       "Compartido 293",
+       75200,
+       2,
+       1,
+       37600
+      ],
+      [
+       "Tienda D1 286",
+       158700,
+       2,
+       1,
+       79350
+      ],
+      [
+       "Rappi 284",
+       56900,
+       6,
+       1,
+       47415
+      ],
+      [
+       "Rappi 196",
+       199200,
+       6,
+       2,
+       132799
+      ],
+      [
+       "Cinemark 191",
+       93500,
+       3,
+       2,
+       31167
+      ],
+      [
+       "Steam 41",
+       497700,
+       12,
+       3,
+       373275
+      ],
+      [
+       "Éxito 2",
+       191900,
+       12,
+       4,
+       127934
+      ],
+      [
+       "Uber 69",
+       445300,
+       2,
+       2,
+       0
+      ],
+      [
+       "Compartido 6",
+       190300,
+       3,
+       3,
+       0
+      ],
+      [
+       "Droguería",
+       82556,
+       2,
+       2,
+       0
+      ]
+     ]
+    },
+    {
+     "n": "TC Davibank",
+     "saldo": 1734705,
+     "proximo": {
+      "fecha": "2027-01-12",
+      "monto": 290122
+     },
+     "sinFecha": 0,
+     "intereses": 23082,
+     "interesesEst": 23082,
+     "calendario": [
+      [
+       "2027-01-12",
+       290122
+      ],
+      [
+       "2027-02-10",
+       443869
+      ],
+      [
+       "2027-03-10",
+       244248
+      ],
+      [
+       "2027-04-07",
+       239648
+      ],
+      [
+       "2027-05-05",
+       235047
+      ],
+      [
+       "2027-06-09",
+       230447
+      ],
+      [
+       "2027-07-07",
+       154429
+      ],
+      [
+       "2027-08-04",
+       151348
+      ],
+      [
+       "2027-09-08",
+       58269
+      ],
+      [
+       "2027-10-06",
+       57106
+      ],
+      [
+       "2027-11-10",
+       55944
+      ],
+      [
+       "2027-12-08",
+       9498
+      ]
+     ],
+     "planes": [
+      [
+       "Steam 231",
+       111600,
+       12,
+       0,
+       111600
+      ],
+      [
+       "Steam 211",
+       428500,
+       6,
+       0,
+       428500
+      ],
+      [
+       "Farmacia 125",
+       89500,
+       3,
+       2,
+       29834
+      ],
+      [
+       "Rappi 157",
+       543400,
+       12,
+       2,
+       452833
+      ],
+      [
+       "Steam 81",
+       424900,
+       3,
+       2,
+       141633
+      ],
+      [
+       "Electrodoméstico",
+       1229526,
+       12,
+       5,
+       630000
+      ],
+      [
+       "Éxito 100",
+       170600,
+       2,
+       2,
+       0
+      ],
+      [
+       "Compartido 51",
+       141000,
+       3,
+       3,
+       0
+      ],
+      [
+       "Supermercado",
+       187668,
+       3,
+       3,
+       0
+      ]
+     ]
+    },
+    {
+     "n": "Credifin",
+     "saldo": 2681449,
+     "proximo": {
+      "fecha": "2027-01-05",
+      "monto": 630377
+     },
+     "sinFecha": 0,
+     "intereses": 158100,
+     "interesesEst": 158100,
+     "calendario": [
+      [
+       "2027-01-05",
+       630377
+      ],
+      [
+       "2027-01-06",
+       209309
+      ],
+      [
+       "2027-01-10",
+       18135
+      ],
+      [
+       "2027-01-14",
+       405224
+      ],
+      [
+       "2027-01-18",
+       298878
+      ],
+      [
+       "2027-01-20",
+       141690
+      ],
+      [
+       "2027-02-01",
+       123590
+      ],
+      [
+       "2027-02-06",
+       209309
+      ],
+      [
+       "2027-02-10",
+       18135
+      ],
+      [
+       "2027-02-20",
+       15607
+      ],
+      [
+       "2027-03-01",
+       123590
+      ],
+      [
+       "2027-03-10",
+       18135
+      ],
+      [
+       "2027-03-20",
+       15607
+      ],
+      [
+       "2027-04-01",
+       123590
+      ],
+      [
+       "2027-04-10",
+       18135
+      ],
+      [
+       "2027-04-20",
+       15607
+      ],
+      [
+       "2027-05-01",
+       123590
+      ],
+      [
+       "2027-05-10",
+       18137
+      ],
+      [
+       "2027-05-20",
+       15607
+      ],
+      [
+       "2027-06-01",
+       123591
+      ],
+      [
+       "2027-06-20",
+       15606
+      ]
+     ],
+     "planes": [
+      [
+       "Tienda D1 274",
+       75300,
+       6,
+       0,
+       75300
+      ],
+      [
+       "Rappi 229",
+       393700,
+       2,
+       0,
+       393700
+      ],
+      [
+       "Terpel 214",
+       596300,
+       6,
+       1,
+       496917
+      ],
+      [
+       "Pan 160",
+       546300,
+       2,
+       1,
+       273150
+      ],
+      [
+       "Éxito 130",
+       87500,
+       6,
+       1,
+       72917
+      ],
+      [
+       "Tienda D1 65",
+       353900,
+       3,
+       2,
+       117967
+      ],
+      [
+       "Farmacia 33",
+       53300,
+       2,
+       2,
+       0
+      ],
+      [
+       "Cine",
+       150000,
+       3,
+       3,
+       0
+      ]
+     ]
+    },
+    {
+     "n": "Mamá",
+     "saldo": 434554,
+     "proximo": null,
+     "sinFecha": 434554,
+     "intereses": 0,
+     "interesesEst": 0,
+     "calendario": [],
+     "planes": []
+    }
+   ],
+   "meDeben": [
+    [
+     "Pedro",
+     138969,
+     -13931
+    ],
+    [
+     "mamá",
+     84500,
+     84500
+    ],
+    [
+     "Carlos",
+     77603,
+     -74197
+    ],
+    [
+     "Ana",
+     35141,
+     35141
+    ]
+   ],
+   "presupuestos": [
+    [
+     "Ocio",
+     350000,
+     2155700
+    ]
+   ],
+   "proximos": [
+    [
+     "fijo",
+     "Internet y TV",
+     107000,
+     "2026-12-21",
+     "pagado"
+    ],
+    [
+     "fijo",
+     "Google One",
+     19900,
+     "2026-12-22",
+     "cobrado"
+    ],
+    [
+     "fijo",
+     "Suscripción de apps",
+     66000,
+     "2026-12-28",
+     "automatico"
+    ],
+    [
+     "credito",
+     "Addi",
+     46323,
+     "2027-01-01",
+     "pendiente"
+    ],
+    [
+     "fijo",
+     "Cuota de manejo Nubank",
+     12000,
+     "2027-01-01",
+     "automatico"
+    ],
+    [
+     "credito",
+     "Credifin",
+     630377,
+     "2027-01-05",
+     "pendiente"
+    ],
+    [
+     "credito",
+     "Credifin",
+     209309,
+     "2027-01-06",
+     "pendiente"
+    ],
+    [
+     "fijo",
+     "Streaming familiar",
+     42000,
+     "2027-01-09",
+     "automatico"
+    ],
+    [
+     "credito",
+     "Credifin",
+     18135,
+     "2027-01-10",
+     "pendiente"
+    ],
+    [
+     "credito",
+     "TC Davibank",
+     290122,
+     "2027-01-12",
+     "pendiente"
+    ],
+    [
+     "credito",
+     "Credifin",
+     405224,
+     "2027-01-14",
+     "pendiente"
+    ],
+    [
+     "credito",
+     "Credifin",
+     298878,
+     "2027-01-18",
+     "pendiente"
+    ],
+    [
+     "fijo",
+     "Gimnasio",
+     120000,
+     "2027-01-18",
+     "automatico"
+    ],
+    [
+     "credito",
+     "Credifin",
+     141690,
+     "2027-01-20",
+     "pendiente"
+    ],
+    [
+     "credito",
+     "TC Nubank",
+     285069,
+     "2027-01-21",
+     "pendiente"
+    ],
+    [
+     "fijo",
+     "Internet y TV",
+     107000,
+     "2027-01-21",
+     "pendiente"
+    ],
+    [
+     "fijo",
+     "Google One",
+     19900,
+     "2027-01-22",
+     "automatico"
+    ],
+    [
+     "fijo",
+     "Suscripción de apps",
+     66000,
+     "2027-01-28",
+     "automatico"
+    ]
+   ]
+  },
+  {
+   "hoy": "2027-01-02",
+   "patrimonio": 12595224,
+   "totalPlata": 18925823,
+   "totalDeudas": 6028512,
+   "totalMeDeben": 283213,
+   "totalLesDebo": 585300,
+   "ingresos": 0,
+   "gastos": 703916,
+   "disponible": {
+    "tienes": 18925823,
+    "creditos": 1889448,
+    "fijos": 227000,
+    "valor": 16809375
+   },
+   "cuentas": [
+    [
+     "Nequi",
+     1753030
+    ],
+    [
+     "Daviplata",
+     5874451
+    ],
+    [
+     "Efectivo",
+     5086993
+    ],
+    [
+     "Bolsillo para la tarjeta",
+     6211349
+    ]
+   ],
+   "creditos": [
+    {
+     "n": "Addi",
+     "saldo": 295286,
+     "proximo": {
+      "fecha": "2027-03-01",
+      "monto": 145804
+     },
+     "sinFecha": 50000,
+     "intereses": 8971,
+     "interesesEst": 8971,
+     "calendario": [
+      [
+       "2027-03-01",
+       145804
+      ],
+      [
+       "2027-04-01",
+       99482
+      ]
+     ],
+     "planes": [
+      [
+       "Compartido 267",
+       133200,
+       3,
+       2,
+       44399
+      ],
+      [
+       "Steam 14",
+       519700,
+       6,
+       4,
+       173233
+      ],
+      [
+       "Éxito 181",
+       110000,
+       2,
+       2,
+       0
+      ],
+      [
+       "Farmacia 164",
+       470600,
+       2,
+       2,
+       0
+      ],
+      [
+       "Compartido 111",
+       107400,
+       2,
+       2,
+       0
+      ],
+      [
+       "Repuestos moto",
+       600000,
+       6,
+       6,
+       0
+      ],
+      [
+       "Tienda de ropa",
+       150000,
+       3,
+       3,
+       0
+      ]
+     ]
+    },
+    {
+     "n": "TC Nubank",
+     "saldo": 1318995,
+     "proximo": {
+      "fecha": "2027-01-21",
+      "monto": 488900
+     },
+     "sinFecha": 80000,
+     "intereses": 23863,
+     "interesesEst": 23863,
+     "calendario": [
+      [
+       "2027-01-21",
+       488900
+      ],
+      [
+       "2027-02-21",
+       272131
+      ],
+      [
+       "2027-03-21",
+       112530
+      ],
+      [
+       "2027-04-21",
+       110397
+      ],
+      [
+       "2027-05-21",
+       108265
+      ],
+      [
+       "2027-06-21",
+       72931
+      ],
+      [
+       "2027-07-21",
+       62023
+      ],
+      [
+       "2027-08-21",
+       60798
+      ],
+      [
+       "2027-09-21",
+       59574
+      ],
+      [
+       "2027-10-21",
+       42358
+      ]
+     ],
+     "planes": [
+      [
+       "Compartido 293",
+       75200,
+       2,
+       1,
+       37600
+      ],
+      [
+       "Tienda D1 286",
+       158700,
+       2,
+       1,
+       79350
+      ],
+      [
+       "Rappi 284",
+       56900,
+       6,
+       1,
+       47415
+      ],
+      [
+       "Rappi 196",
+       199200,
+       6,
+       2,
+       132799
+      ],
+      [
+       "Cinemark 191",
+       93500,
+       3,
+       2,
+       31167
+      ],
+      [
+       "Steam 41",
+       497700,
+       12,
+       3,
+       373275
+      ],
+      [
+       "Éxito 2",
+       191900,
+       12,
+       4,
+       127934
+      ],
+      [
+       "Uber 69",
+       445300,
+       2,
+       2,
+       0
+      ],
+      [
+       "Compartido 6",
+       190300,
+       3,
+       3,
+       0
+      ],
+      [
+       "Droguería",
+       82556,
+       2,
+       2,
+       0
+      ]
+     ]
+    },
+    {
+     "n": "TC Davibank",
+     "saldo": 1928605,
+     "proximo": {
+      "fecha": "2027-01-12",
+      "monto": 203722
+     },
+     "sinFecha": 0,
+     "intereses": 29053,
+     "interesesEst": 29053,
+     "calendario": [
+      [
+       "2027-01-12",
+       203722
+      ],
+      [
+       "2027-02-10",
+       473198
+      ],
+      [
+       "2027-03-10",
+       273079
+      ],
+      [
+       "2027-04-07",
+       267982
+      ],
+      [
+       "2027-05-05",
+       262883
+      ],
+      [
+       "2027-06-09",
+       257786
+      ],
+      [
+       "2027-07-07",
+       181270
+      ],
+      [
+       "2027-08-04",
+       177692
+      ],
+      [
+       "2027-09-08",
+       84115
+      ],
+      [
+       "2027-10-06",
+       82454
+      ],
+      [
+       "2027-11-10",
+       80795
+      ],
+      [
+       "2027-12-08",
+       33851
+      ],
+      [
+       "2028-01-05",
+       23856
+      ]
+     ],
+     "planes": [
+      [
+       "Farmacia 306",
+       280300,
+       12,
+       0,
+       280300
+      ],
+      [
+       "Steam 231",
+       111600,
+       12,
+       0,
+       106937
+      ],
+      [
+       "Steam 211",
+       428500,
+       6,
+       1,
+       357083
+      ],
+      [
+       "Farmacia 125",
+       89500,
+       3,
+       2,
+       29834
+      ],
+      [
+       "Rappi 157",
+       543400,
+       12,
+       2,
+       452833
+      ],
+      [
+       "Steam 81",
+       424900,
+       3,
+       2,
+       141633
+      ],
+      [
+       "Electrodoméstico",
+       1229526,
+       12,
+       5,
+       630000
+      ],
+      [
+       "Éxito 100",
+       170600,
+       2,
+       2,
+       0
+      ],
+      [
+       "Compartido 51",
+       141000,
+       3,
+       3,
+       0
+      ],
+      [
+       "Supermercado",
+       187668,
+       3,
+       3,
+       0
+      ]
+     ]
+    },
+    {
+     "n": "Credifin",
+     "saldo": 2051072,
+     "proximo": {
+      "fecha": "2027-01-06",
+      "monto": 209309
+     },
+     "sinFecha": 0,
+     "intereses": 63290,
+     "interesesEst": 63290,
+     "calendario": [
+      [
+       "2027-01-06",
+       209309
+      ],
+      [
+       "2027-01-10",
+       18135
+      ],
+      [
+       "2027-01-14",
+       405224
+      ],
+      [
+       "2027-01-18",
+       298878
+      ],
+      [
+       "2027-01-20",
+       141690
+      ],
+      [
+       "2027-02-01",
+       123590
+      ],
+      [
+       "2027-02-06",
+       209309
+      ],
+      [
+       "2027-02-10",
+       18135
+      ],
+      [
+       "2027-02-20",
+       15607
+      ],
+      [
+       "2027-03-01",
+       123590
+      ],
+      [
+       "2027-03-10",
+       18135
+      ],
+      [
+       "2027-03-20",
+       15607
+      ],
+      [
+       "2027-04-01",
+       123590
+      ],
+      [
+       "2027-04-10",
+       18135
+      ],
+      [
+       "2027-04-20",
+       15607
+      ],
+      [
+       "2027-05-01",
+       123590
+      ],
+      [
+       "2027-05-10",
+       18137
+      ],
+      [
+       "2027-05-20",
+       15607
+      ],
+      [
+       "2027-06-01",
+       123591
+      ],
+      [
+       "2027-06-20",
+       15606
+      ]
+     ],
+     "planes": [
+      [
+       "Tienda D1 274",
+       75300,
+       6,
+       0,
+       75300
+      ],
+      [
+       "Rappi 229",
+       393700,
+       2,
+       0,
+       393700
+      ],
+      [
+       "Terpel 214",
+       596300,
+       6,
+       1,
+       496917
+      ],
+      [
+       "Pan 160",
+       546300,
+       2,
+       1,
+       273150
+      ],
+      [
+       "Éxito 130",
+       87500,
+       6,
+       1,
+       72917
+      ],
+      [
+       "Tienda D1 65",
+       353900,
+       3,
+       2,
+       117967
+      ],
+      [
+       "Farmacia 33",
+       53300,
+       2,
+       2,
+       0
+      ],
+      [
+       "Cine",
+       150000,
+       3,
+       3,
+       0
+      ]
+     ]
+    },
+    {
+     "n": "Mamá",
+     "saldo": 434554,
+     "proximo": null,
+     "sinFecha": 434554,
+     "intereses": 0,
+     "interesesEst": 0,
+     "calendario": [],
+     "planes": []
+    }
+   ],
+   "meDeben": [
+    [
+     "Ana",
+     98741,
+     98741
+    ],
+    [
+     "mamá",
+     84500,
+     84500
+    ],
+    [
+     "Pedro",
+     66169,
+     -86731
+    ],
+    [
+     "Carlos",
+     33803,
+     -117997
+    ]
+   ],
+   "presupuestos": [
+    [
+     "Ocio",
+     350000,
+     430900
+    ]
+   ],
+   "proximos": [
+    [
+     "fijo",
+     "Suscripción de apps",
+     66000,
+     "2026-12-28",
+     "cobrado"
+    ],
+    [
+     "fijo",
+     "Cuota de manejo Nubank",
+     12000,
+     "2027-01-01",
+     "cobrado"
+    ],
+    [
+     "credito",
+     "Credifin",
+     209309,
+     "2027-01-06",
+     "pendiente"
+    ],
+    [
+     "fijo",
+     "Streaming familiar",
+     42000,
+     "2027-01-09",
+     "automatico"
+    ],
+    [
+     "credito",
+     "Credifin",
+     18135,
+     "2027-01-10",
+     "pendiente"
+    ],
+    [
+     "credito",
+     "TC Davibank",
+     203722,
+     "2027-01-12",
+     "pendiente"
+    ],
+    [
+     "credito",
+     "Credifin",
+     405224,
+     "2027-01-14",
+     "pendiente"
+    ],
+    [
+     "credito",
+     "Credifin",
+     298878,
+     "2027-01-18",
+     "pendiente"
+    ],
+    [
+     "fijo",
+     "Gimnasio",
+     120000,
+     "2027-01-18",
+     "automatico"
+    ],
+    [
+     "credito",
+     "Credifin",
+     141690,
+     "2027-01-20",
+     "pendiente"
+    ],
+    [
+     "credito",
+     "TC Nubank",
+     488900,
+     "2027-01-21",
+     "pendiente"
+    ],
+    [
+     "fijo",
+     "Internet y TV",
+     107000,
+     "2027-01-21",
+     "pendiente"
+    ],
+    [
+     "fijo",
+     "Google One",
+     19900,
+     "2027-01-22",
+     "automatico"
+    ],
+    [
+     "fijo",
+     "Suscripción de apps",
+     66000,
+     "2027-01-28",
+     "automatico"
+    ],
+    [
+     "credito",
+     "Credifin",
+     123590,
+     "2027-02-01",
+     "pendiente"
+    ],
+    [
+     "fijo",
+     "Cuota de manejo Nubank",
+     12000,
+     "2027-02-01",
+     "automatico"
+    ],
+    [
+     "credito",
+     "Credifin",
+     209309,
+     "2027-02-06",
+     "pendiente"
+    ]
+   ]
+  },
+  {
+   "hoy": "2027-01-10",
+   "patrimonio": 9276204,
+   "totalPlata": 17434426,
+   "totalDeudas": 7757832,
+   "totalMeDeben": 442510,
+   "totalLesDebo": 842900,
+   "ingresos": 0,
+   "gastos": 3281516,
+   "disponible": {
+    "tienes": 17434426,
+    "creditos": 2461977,
+    "fijos": 120000,
+    "valor": 14852449
+   },
+   "cuentas": [
+    [
+     "Nequi",
+     1579033
+    ],
+    [
+     "Daviplata",
+     5711251
+    ],
+    [
+     "Efectivo",
+     4648093
+    ],
+    [
+     "Bolsillo para la tarjeta",
+     5496049
+    ]
+   ],
+   "creditos": [
+    {
+     "n": "Addi",
+     "saldo": 534606,
+     "proximo": {
+      "fecha": "2027-02-01",
+      "monto": 239320
+     },
+     "sinFecha": 50000,
+     "intereses": 11511,
+     "interesesEst": 11511,
+     "calendario": [
+      [
+       "2027-02-01",
+       239320
+      ],
+      [
+       "2027-03-01",
+       145804
+      ],
+      [
+       "2027-04-01",
+       99482
+      ]
+     ],
+     "planes": [
+      [
+       "Compartido 267",
+       133200,
+       3,
+       2,
+       44399
+      ],
+      [
+       "Steam 14",
+       519700,
+       6,
+       4,
+       173233
+      ],
+      [
+       "Cinemark 348",
+       228600,
+       2,
+       2,
+       0
+      ],
+      [
+       "Éxito 181",
+       110000,
+       2,
+       2,
+       0
+      ],
+      [
+       "Farmacia 164",
+       470600,
+       2,
+       2,
+       0
+      ],
+      [
+       "Compartido 111",
+       107400,
+       2,
+       2,
+       0
+      ],
+      [
+       "Repuestos moto",
+       600000,
+       6,
+       6,
+       0
+      ],
+      [
+       "Tienda de ropa",
+       150000,
+       3,
+       3,
+       0
+      ]
+     ]
+    },
+    {
+     "n": "TC Nubank",
+     "saldo": 1318995,
+     "proximo": {
+      "fecha": "2027-01-21",
+      "monto": 488900
+     },
+     "sinFecha": 80000,
+     "intereses": 23863,
+     "interesesEst": 23863,
+     "calendario": [
+      [
+       "2027-01-21",
+       488900
+      ],
+      [
+       "2027-02-21",
+       272131
+      ],
+      [
+       "2027-03-21",
+       112530
+      ],
+      [
+       "2027-04-21",
+       110397
+      ],
+      [
+       "2027-05-21",
+       108265
+      ],
+      [
+       "2027-06-21",
+       72931
+      ],
+      [
+       "2027-07-21",
+       62023
+      ],
+      [
+       "2027-08-21",
+       60798
+      ],
+      [
+       "2027-09-21",
+       59574
+      ],
+      [
+       "2027-10-21",
+       42358
+      ]
+     ],
+     "planes": [
+      [
+       "Compartido 293",
+       75200,
+       2,
+       1,
+       37600
+      ],
+      [
+       "Tienda D1 286",
+       158700,
+       2,
+       1,
+       79350
+      ],
+      [
+       "Rappi 284",
+       56900,
+       6,
+       1,
+       47415
+      ],
+      [
+       "Rappi 196",
+       199200,
+       6,
+       2,
+       132799
+      ],
+      [
+       "Cinemark 191",
+       93500,
+       3,
+       2,
+       31167
+      ],
+      [
+       "Steam 41",
+       497700,
+       12,
+       3,
+       373275
+      ],
+      [
+       "Éxito 2",
+       191900,
+       12,
+       4,
+       127934
+      ],
+      [
+       "Uber 69",
+       445300,
+       2,
+       2,
+       0
+      ],
+      [
+       "Compartido 6",
+       190300,
+       3,
+       3,
+       0
+      ],
+      [
+       "Droguería",
+       82556,
+       2,
+       2,
+       0
+      ]
+     ]
+    },
+    {
+     "n": "TC Davibank",
+     "saldo": 3418605,
+     "proximo": {
+      "fecha": "2027-01-12",
+      "monto": 327622
+     },
+     "sinFecha": 0,
+     "intereses": 47171,
+     "interesesEst": 47171,
+     "calendario": [
+      [
+       "2027-01-12",
+       327622
+      ],
+      [
+       "2027-02-10",
+       1360349
+      ],
+      [
+       "2027-03-10",
+       637200
+      ],
+      [
+       "2027-04-07",
+       414573
+      ],
+      [
+       "2027-05-05",
+       262883
+      ],
+      [
+       "2027-06-09",
+       257786
+      ],
+      [
+       "2027-07-07",
+       181270
+      ],
+      [
+       "2027-08-04",
+       177692
+      ],
+      [
+       "2027-09-08",
+       84115
+      ],
+      [
+       "2027-10-06",
+       82454
+      ],
+      [
+       "2027-11-10",
+       80795
+      ],
+      [
+       "2027-12-08",
+       33851
+      ],
+      [
+       "2028-01-05",
+       23856
+      ]
+     ],
+     "planes": [
+      [
+       "Farmacia 346",
+       420000,
+       2,
+       0,
+       420000
+      ],
+      [
+       "Terpel 343",
+       430600,
+       3,
+       0,
+       430600
+      ],
+      [
+       "Farmacia 306",
+       280300,
+       12,
+       0,
+       280300
+      ],
+      [
+       "Steam 231",
+       111600,
+       12,
+       1,
+       102300
+      ],
+      [
+       "Steam 211",
+       428500,
+       6,
+       1,
+       357083
+      ],
+      [
+       "Farmacia 125",
+       89500,
+       3,
+       2,
+       29834
+      ],
+      [
+       "Rappi 157",
+       543400,
+       12,
+       2,
+       452833
+      ],
+      [
+       "Steam 81",
+       424900,
+       3,
+       2,
+       141633
+      ],
+      [
+       "Electrodoméstico",
+       1229526,
+       12,
+       5,
+       630000
+      ],
+      [
+       "Éxito 100",
+       170600,
+       2,
+       2,
+       0
+      ],
+      [
+       "Compartido 51",
+       141000,
+       3,
+       3,
+       0
+      ],
+      [
+       "Supermercado",
+       187668,
+       3,
+       3,
+       0
+      ]
+     ]
+    },
+    {
+     "n": "Credifin",
+     "saldo": 2051072,
+     "proximo": {
+      "fecha": "2027-01-06",
+      "monto": 209309
+     },
+     "sinFecha": 0,
+     "intereses": 43448,
+     "interesesEst": 43448,
+     "calendario": [
+      [
+       "2027-01-06",
+       209309
+      ],
+      [
+       "2027-01-10",
+       18135
+      ],
+      [
+       "2027-01-14",
+       405224
+      ],
+      [
+       "2027-01-18",
+       298878
+      ],
+      [
+       "2027-01-20",
+       141690
+      ],
+      [
+       "2027-02-01",
+       123590
+      ],
+      [
+       "2027-02-06",
+       209309
+      ],
+      [
+       "2027-02-10",
+       18135
+      ],
+      [
+       "2027-02-20",
+       15607
+      ],
+      [
+       "2027-03-01",
+       123590
+      ],
+      [
+       "2027-03-10",
+       18135
+      ],
+      [
+       "2027-03-20",
+       15607
+      ],
+      [
+       "2027-04-01",
+       123590
+      ],
+      [
+       "2027-04-10",
+       18135
+      ],
+      [
+       "2027-04-20",
+       15607
+      ],
+      [
+       "2027-05-01",
+       123590
+      ],
+      [
+       "2027-05-10",
+       18137
+      ],
+      [
+       "2027-05-20",
+       15607
+      ],
+      [
+       "2027-06-01",
+       123591
+      ],
+      [
+       "2027-06-20",
+       15606
+      ]
+     ],
+     "planes": [
+      [
+       "Tienda D1 274",
+       75300,
+       6,
+       0,
+       75300
+      ],
+      [
+       "Rappi 229",
+       393700,
+       2,
+       0,
+       393700
+      ],
+      [
+       "Terpel 214",
+       596300,
+       6,
+       1,
+       496917
+      ],
+      [
+       "Pan 160",
+       546300,
+       2,
+       1,
+       273150
+      ],
+      [
+       "Éxito 130",
+       87500,
+       6,
+       1,
+       72917
+      ],
+      [
+       "Tienda D1 65",
+       353900,
+       3,
+       2,
+       117967
+      ],
+      [
+       "Farmacia 33",
+       53300,
+       2,
+       2,
+       0
+      ]
+     ]
+    },
+    {
+     "n": "Mamá",
+     "saldo": 434554,
+     "proximo": null,
+     "sinFecha": 434554,
+     "intereses": 0,
+     "interesesEst": 0,
+     "calendario": [],
+     "planes": []
+    }
+   ],
+   "meDeben": [
+    [
+     "Pedro",
+     242269,
+     89369
+    ],
+    [
+     "Ana",
+     105741,
+     105741
+    ],
+    [
+     "mamá",
+     84500,
+     70200
+    ],
+    [
+     "Carlos",
+     6200,
+     -145600
+    ],
+    [
+     "Luisa",
+     3800,
+     4400
+    ]
+   ],
+   "presupuestos": [
+    [
+     "Ocio",
+     350000,
+     1233100
+    ]
+   ],
+   "proximos": [
+    [
+     "credito",
+     "Credifin",
+     209309,
+     "2027-01-06",
+     "pendiente"
+    ],
+    [
+     "fijo",
+     "Streaming familiar",
+     42000,
+     "2027-01-09",
+     "cobrado"
+    ],
+    [
+     "credito",
+     "Credifin",
+     18135,
+     "2027-01-10",
+     "pendiente"
+    ],
+    [
+     "credito",
+     "TC Davibank",
+     327622,
+     "2027-01-12",
+     "pendiente"
+    ],
+    [
+     "credito",
+     "Credifin",
+     405224,
+     "2027-01-14",
+     "pendiente"
+    ],
+    [
+     "credito",
+     "Credifin",
+     298878,
+     "2027-01-18",
+     "pendiente"
+    ],
+    [
+     "fijo",
+     "Gimnasio",
+     120000,
+     "2027-01-18",
+     "automatico"
+    ],
+    [
+     "credito",
+     "Credifin",
+     141690,
+     "2027-01-20",
+     "pendiente"
+    ],
+    [
+     "credito",
+     "TC Nubank",
+     488900,
+     "2027-01-21",
+     "pendiente"
+    ],
+    [
+     "fijo",
+     "Internet y TV",
+     107000,
+     "2027-01-21",
+     "pagado"
+    ],
+    [
+     "fijo",
+     "Google One",
+     19900,
+     "2027-01-22",
+     "automatico"
+    ],
+    [
+     "fijo",
+     "Suscripción de apps",
+     66000,
+     "2027-01-28",
+     "automatico"
+    ],
+    [
+     "credito",
+     "Addi",
+     239320,
+     "2027-02-01",
+     "pendiente"
+    ],
+    [
+     "credito",
+     "Credifin",
+     123590,
+     "2027-02-01",
+     "pendiente"
+    ],
+    [
+     "fijo",
+     "Cuota de manejo Nubank",
+     12000,
+     "2027-02-01",
+     "automatico"
+    ],
+    [
+     "credito",
+     "Credifin",
+     209309,
+     "2027-02-06",
+     "pendiente"
+    ],
+    [
+     "fijo",
+     "Streaming familiar",
+     42000,
+     "2027-02-09",
+     "automatico"
+    ],
+    [
+     "credito",
+     "TC Davibank",
+     1360349,
+     "2027-02-10",
+     "pendiente"
+    ],
+    [
+     "credito",
+     "Credifin",
+     18135,
+     "2027-02-10",
+     "pendiente"
+    ]
+   ]
+  },
+  {
+   "hoy": "2027-01-18",
+   "patrimonio": 11267181,
+   "totalPlata": 20633675,
+   "totalDeudas": 9012604,
+   "totalMeDeben": 415110,
+   "totalLesDebo": 769000,
+   "ingresos": 4587509,
+   "gastos": 5878048,
+   "disponible": {
+    "tienes": 20633675,
+    "creditos": 3300950,
+    "fijos": 0,
+    "valor": 17332725
+   },
+   "cuentas": [
+    [
+     "Nequi",
+     3305541
+    ],
+    [
+     "Daviplata",
+     5580451
+    ],
+    [
+     "Efectivo",
+     6287234
+    ],
+    [
+     "Bolsillo para la tarjeta",
+     5460449
+    ]
+   ],
+   "creditos": [
+    {
+     "n": "Addi",
+     "saldo": 647646,
+     "proximo": {
+      "fecha": "2027-03-01",
+      "monto": 216276
+     },
+     "sinFecha": 50000,
+     "intereses": 14917,
+     "interesesEst": 14917,
+     "calendario": [
+      [
+       "2027-03-01",
+       216276
+      ],
+      [
+       "2027-04-01",
+       169954
+      ],
+      [
+       "2027-05-01",
+       70472
+      ],
+      [
+       "2027-06-01",
+       70472
+      ],
+      [
+       "2027-07-01",
+       70472
+      ]
+     ],
+     "planes": [
+      [
+       "Tienda D1 356",
+       398600,
+       6,
+       1,
+       332167
+      ],
+      [
+       "Compartido 267",
+       133200,
+       3,
+       2,
+       44399
+      ],
+      [
+       "Steam 14",
+       519700,
+       6,
+       4,
+       173233
+      ],
+      [
+       "Cinemark 348",
+       228600,
+       2,
+       2,
+       0
+      ],
+      [
+       "Éxito 181",
+       110000,
+       2,
+       2,
+       0
+      ],
+      [
+       "Farmacia 164",
+       470600,
+       2,
+       2,
+       0
+      ],
+      [
+       "Compartido 111",
+       107400,
+       2,
+       2,
+       0
+      ],
+      [
+       "Repuestos moto",
+       600000,
+       6,
+       6,
+       0
+      ],
+      [
+       "Tienda de ropa",
+       150000,
+       3,
+       3,
+       0
+      ]
+     ]
+    },
+    {
+     "n": "TC Nubank",
+     "saldo": 1913295,
+     "proximo": {
+      "fecha": "2027-01-21",
+      "monto": 488900
+     },
+     "sinFecha": 80000,
+     "intereses": 23863,
+     "interesesEst": 23863,
+     "calendario": [
+      [
+       "2027-01-21",
+       488900
+      ],
+      [
+       "2027-02-21",
+       866431
+      ],
+      [
+       "2027-03-21",
+       112530
+      ],
+      [
+       "2027-04-21",
+       110397
+      ],
+      [
+       "2027-05-21",
+       108265
+      ],
+      [
+       "2027-06-21",
+       72931
+      ],
+      [
+       "2027-07-21",
+       62023
+      ],
+      [
+       "2027-08-21",
+       60798
+      ],
+      [
+       "2027-09-21",
+       59574
+      ],
+      [
+       "2027-10-21",
+       42358
+      ]
+     ],
+     "planes": [
+      [
+       "Compartido 293",
+       75200,
+       2,
+       1,
+       37600
+      ],
+      [
+       "Tienda D1 286",
+       158700,
+       2,
+       1,
+       79350
+      ],
+      [
+       "Rappi 284",
+       56900,
+       6,
+       1,
+       47415
+      ],
+      [
+       "Rappi 196",
+       199200,
+       6,
+       2,
+       132799
+      ],
+      [
+       "Cinemark 191",
+       93500,
+       3,
+       2,
+       31167
+      ],
+      [
+       "Steam 41",
+       497700,
+       12,
+       3,
+       373275
+      ],
+      [
+       "Éxito 2",
+       191900,
+       12,
+       4,
+       127934
+      ],
+      [
+       "Uber 69",
+       445300,
+       2,
+       2,
+       0
+      ],
+      [
+       "Compartido 6",
+       190300,
+       3,
+       3,
+       0
+      ],
+      [
+       "Droguería",
+       82556,
+       2,
+       2,
+       0
+      ]
+     ]
+    },
+    {
+     "n": "TC Davibank",
+     "saldo": 4598705,
+     "proximo": {
+      "fecha": "2027-01-12",
+      "monto": 327622
+     },
+     "sinFecha": 0,
+     "intereses": 72307,
+     "interesesEst": 72307,
+     "calendario": [
+      [
+       "2027-01-12",
+       327622
+      ],
+      [
+       "2027-02-10",
+       1692826
+      ],
+      [
+       "2027-03-10",
+       963131
+      ],
+      [
+       "2027-04-07",
+       483158
+      ],
+      [
+       "2027-05-05",
+       330263
+      ],
+      [
+       "2027-06-09",
+       323962
+      ],
+      [
+       "2027-07-07",
+       246242
+      ],
+      [
+       "2027-08-04",
+       241460
+      ],
+      [
+       "2027-09-08",
+       146679
+      ],
+      [
+       "2027-10-06",
+       143813
+      ],
+      [
+       "2027-11-10",
+       140950
+      ],
+      [
+       "2027-12-08",
+       92802
+      ],
+      [
+       "2028-01-05",
+       81602
+      ]
+     ],
+     "planes": [
+      [
+       "Terpel 374",
+       185900,
+       12,
+       0,
+       185900
+      ],
+      [
+       "Almuerzo 371",
+       492600,
+       12,
+       0,
+       492600
+      ],
+      [
+       "Pan 357",
+       501600,
+       2,
+       0,
+       501600
+      ],
+      [
+       "Farmacia 346",
+       420000,
+       2,
+       0,
+       420000
+      ],
+      [
+       "Terpel 343",
+       430600,
+       3,
+       0,
+       430600
+      ],
+      [
+       "Farmacia 306",
+       280300,
+       12,
+       0,
+       280300
+      ],
+      [
+       "Steam 231",
+       111600,
+       12,
+       1,
+       102300
+      ],
+      [
+       "Steam 211",
+       428500,
+       6,
+       1,
+       357083
+      ],
+      [
+       "Farmacia 125",
+       89500,
+       3,
+       2,
+       29834
+      ],
+      [
+       "Rappi 157",
+       543400,
+       12,
+       2,
+       452833
+      ],
+      [
+       "Steam 81",
+       424900,
+       3,
+       2,
+       141633
+      ],
+      [
+       "Electrodoméstico",
+       1229526,
+       12,
+       5,
+       630000
+      ],
+      [
+       "Éxito 100",
+       170600,
+       2,
+       2,
+       0
+      ],
+      [
+       "Compartido 51",
+       141000,
+       3,
+       3,
+       0
+      ],
+      [
+       "Supermercado",
+       187668,
+       3,
+       3,
+       0
+      ]
+     ]
+    },
+    {
+     "n": "Credifin",
+     "saldo": 1418404,
+     "proximo": {
+      "fecha": "2027-01-18",
+      "monto": 298878
+     },
+     "sinFecha": 0,
+     "intereses": 43072,
+     "interesesEst": 43072,
+     "calendario": [
+      [
+       "2027-01-18",
+       298878
+      ],
+      [
+       "2027-01-20",
+       141690
+      ],
+      [
+       "2027-02-01",
+       123590
+      ],
+      [
+       "2027-02-06",
+       209309
+      ],
+      [
+       "2027-02-10",
+       18135
+      ],
+      [
+       "2027-02-20",
+       15607
+      ],
+      [
+       "2027-03-01",
+       123590
+      ],
+      [
+       "2027-03-10",
+       18135
+      ],
+      [
+       "2027-03-20",
+       15607
+      ],
+      [
+       "2027-04-01",
+       123590
+      ],
+      [
+       "2027-04-10",
+       18135
+      ],
+      [
+       "2027-04-20",
+       15607
+      ],
+      [
+       "2027-05-01",
+       123590
+      ],
+      [
+       "2027-05-10",
+       18137
+      ],
+      [
+       "2027-05-20",
+       15607
+      ],
+      [
+       "2027-06-01",
+       123591
+      ],
+      [
+       "2027-06-20",
+       15606
+      ]
+     ],
+     "planes": [
+      [
+       "Tienda D1 274",
+       75300,
+       6,
+       0,
+       75300
+      ],
+      [
+       "Rappi 229",
+       393700,
+       2,
+       1,
+       196850
+      ],
+      [
+       "Terpel 214",
+       596300,
+       6,
+       1,
+       496917
+      ],
+      [
+       "Pan 160",
+       546300,
+       2,
+       1,
+       273150
+      ],
+      [
+       "Éxito 130",
+       87500,
+       6,
+       2,
+       58334
+      ],
+      [
+       "Tienda D1 65",
+       353900,
+       3,
+       2,
+       117967
+      ],
+      [
+       "Farmacia 33",
+       53300,
+       2,
+       2,
+       0
+      ]
+     ]
+    },
+    {
+     "n": "Mamá",
+     "saldo": 434554,
+     "proximo": null,
+     "sinFecha": 434554,
+     "intereses": 0,
+     "interesesEst": 0,
+     "calendario": [],
+     "planes": []
+    }
+   ],
+   "meDeben": [
+    [
+     "Pedro",
+     242269,
+     163269
+    ],
+    [
+     "Ana",
+     105741,
+     105741
+    ],
+    [
+     "Laura",
+     32100,
+     -178500
+    ],
+    [
+     "mamá",
+     28800,
+     14500
+    ],
+    [
+     "Carlos",
+     6200,
+     -145600
+    ]
+   ],
+   "presupuestos": [
+    [
+     "Ocio",
+     350000,
+     2343600
+    ]
+   ],
+   "proximos": [
+    [
+     "credito",
+     "TC Davibank",
+     327622,
+     "2027-01-12",
+     "pendiente"
+    ],
+    [
+     "credito",
+     "Credifin",
+     298878,
+     "2027-01-18",
+     "pendiente"
+    ],
+    [
+     "fijo",
+     "Gimnasio",
+     120000,
+     "2027-01-18",
+     "cobrado"
+    ],
+    [
+     "credito",
+     "Credifin",
+     141690,
+     "2027-01-20",
+     "pendiente"
+    ],
+    [
+     "credito",
+     "TC Nubank",
+     488900,
+     "2027-01-21",
+     "pendiente"
+    ],
+    [
+     "fijo",
+     "Internet y TV",
+     107000,
+     "2027-01-21",
+     "pagado"
+    ],
+    [
+     "fijo",
+     "Google One",
+     19900,
+     "2027-01-22",
+     "automatico"
+    ],
+    [
+     "fijo",
+     "Suscripción de apps",
+     66000,
+     "2027-01-28",
+     "automatico"
+    ],
+    [
+     "credito",
+     "Credifin",
+     123590,
+     "2027-02-01",
+     "pendiente"
+    ],
+    [
+     "fijo",
+     "Cuota de manejo Nubank",
+     12000,
+     "2027-02-01",
+     "automatico"
+    ],
+    [
+     "credito",
+     "Credifin",
+     209309,
+     "2027-02-06",
+     "pendiente"
+    ],
+    [
+     "fijo",
+     "Streaming familiar",
+     42000,
+     "2027-02-09",
+     "automatico"
+    ],
+    [
+     "credito",
+     "TC Davibank",
+     1692826,
+     "2027-02-10",
+     "pendiente"
+    ],
+    [
+     "credito",
+     "Credifin",
+     18135,
+     "2027-02-10",
+     "pendiente"
+    ],
+    [
+     "fijo",
+     "Gimnasio",
+     120000,
+     "2027-02-18",
+     "automatico"
+    ],
+    [
+     "credito",
+     "Credifin",
+     15607,
+     "2027-02-20",
+     "pendiente"
+    ],
+    [
+     "credito",
+     "TC Nubank",
+     866431,
+     "2027-02-21",
+     "pendiente"
+    ],
+    [
+     "fijo",
+     "Internet y TV",
+     107000,
+     "2027-02-21",
+     "pendiente"
+    ],
+    [
+     "fijo",
+     "Google One",
+     19900,
+     "2027-02-22",
+     "automatico"
+    ]
+   ]
+  },
+  {
+   "hoy": "2027-01-26",
+   "patrimonio": 9294967,
+   "totalPlata": 19951099,
+   "totalDeudas": 9907417,
+   "totalMeDeben": 239885,
+   "totalLesDebo": 988600,
+   "ingresos": 5779809,
+   "gastos": 8707261,
+   "disponible": {
+    "tienes": 19951099,
+    "creditos": 4261184,
+    "fijos": 227000,
+    "valor": 15462915
+   },
+   "cuentas": [
+    [
+     "Nequi",
+     2754241
+    ],
+    [
+     "Daviplata",
+     5869151
+    ],
+    [
+     "Efectivo",
+     6200158
+    ],
+    [
+     "Bolsillo para la tarjeta",
+     5127549
+    ]
+   ],
+   "creditos": [
+    {
+     "n": "Addi",
+     "saldo": 647646,
+     "proximo": {
+      "fecha": "2027-03-01",
+      "monto": 216276
+     },
+     "sinFecha": 50000,
+     "intereses": 12219,
+     "interesesEst": 12219,
+     "calendario": [
+      [
+       "2027-03-01",
+       216276
+      ],
+      [
+       "2027-04-01",
+       169954
+      ],
+      [
+       "2027-05-01",
+       70472
+      ],
+      [
+       "2027-06-01",
+       70472
+      ],
+      [
+       "2027-07-01",
+       70472
+      ]
+     ],
+     "planes": [
+      [
+       "Tienda D1 356",
+       398600,
+       6,
+       1,
+       332167
+      ],
+      [
+       "Compartido 267",
+       133200,
+       3,
+       2,
+       44399
+      ],
+      [
+       "Steam 14",
+       519700,
+       6,
+       4,
+       173233
+      ],
+      [
+       "Cinemark 348",
+       228600,
+       2,
+       2,
+       0
+      ],
+      [
+       "Éxito 181",
+       110000,
+       2,
+       2,
+       0
+      ],
+      [
+       "Farmacia 164",
+       470600,
+       2,
+       2,
+       0
+      ],
+      [
+       "Compartido 111",
+       107400,
+       2,
+       2,
+       0
+      ],
+      [
+       "Repuestos moto",
+       600000,
+       6,
+       6,
+       0
+      ],
+      [
+       "Tienda de ropa",
+       150000,
+       3,
+       3,
+       0
+      ]
+     ]
+    },
+    {
+     "n": "TC Nubank",
+     "saldo": 2238195,
+     "proximo": {
+      "fecha": "2027-01-21",
+      "monto": 18033
+     },
+     "sinFecha": 80000,
+     "intereses": 23863,
+     "interesesEst": 23863,
+     "calendario": [
+      [
+       "2027-01-21",
+       18033
+      ],
+      [
+       "2027-02-21",
+       1490699
+      ],
+      [
+       "2027-03-21",
+       134404
+      ],
+      [
+       "2027-04-21",
+       131887
+      ],
+      [
+       "2027-05-21",
+       129371
+      ],
+      [
+       "2027-06-21",
+       93653
+      ],
+      [
+       "2027-07-21",
+       82361
+      ],
+      [
+       "2027-08-21",
+       80752
+      ],
+      [
+       "2027-09-21",
+       79144
+      ],
+      [
+       "2027-10-21",
+       61544
+      ],
+      [
+       "2027-11-21",
+       18802
+      ],
+      [
+       "2027-12-21",
+       18417
+      ]
+     ],
+     "planes": [
+      [
+       "Éxito 386",
+       216400,
+       12,
+       0,
+       216399
+      ],
+      [
+       "Compartido 293",
+       75200,
+       2,
+       1,
+       37600
+      ],
+      [
+       "Tienda D1 286",
+       158700,
+       2,
+       1,
+       79350
+      ],
+      [
+       "Rappi 284",
+       56900,
+       6,
+       1,
+       47415
+      ],
+      [
+       "Rappi 196",
+       199200,
+       6,
+       2,
+       132799
+      ],
+      [
+       "Cinemark 191",
+       93500,
+       3,
+       2,
+       31167
+      ],
+      [
+       "Steam 41",
+       497700,
+       12,
+       3,
+       373275
+      ],
+      [
+       "Éxito 2",
+       191900,
+       12,
+       4,
+       127934
+      ],
+      [
+       "Uber 69",
+       445300,
+       2,
+       2,
+       0
+      ],
+      [
+       "Compartido 6",
+       190300,
+       3,
+       3,
+       0
+      ]
+     ]
+    },
+    {
+     "n": "TC Davibank",
+     "saldo": 4739005,
+     "proximo": {
+      "fecha": "2027-01-12",
+      "monto": 327622
+     },
+     "sinFecha": 0,
+     "intereses": 52679,
+     "interesesEst": 52679,
+     "calendario": [
+      [
+       "2027-01-12",
+       327622
+      ],
+      [
+       "2027-02-10",
+       1775491
+      ],
+      [
+       "2027-03-10",
+       1024613
+      ],
+      [
+       "2027-04-07",
+       483158
+      ],
+      [
+       "2027-05-05",
+       330263
+      ],
+      [
+       "2027-06-09",
+       323962
+      ],
+      [
+       "2027-07-07",
+       246242
+      ],
+      [
+       "2027-08-04",
+       241460
+      ],
+      [
+       "2027-09-08",
+       146679
+      ],
+      [
+       "2027-10-06",
+       143813
+      ],
+      [
+       "2027-11-10",
+       140950
+      ],
+      [
+       "2027-12-08",
+       92802
+      ],
+      [
+       "2028-01-05",
+       81602
+      ]
+     ],
+     "planes": [
+      [
+       "Compartido 384",
+       120400,
+       2,
+       0,
+       120400
+      ],
+      [
+       "Terpel 374",
+       185900,
+       12,
+       0,
+       185900
+      ],
+      [
+       "Almuerzo 371",
+       492600,
+       12,
+       0,
+       492600
+      ],
+      [
+       "Pan 357",
+       501600,
+       2,
+       0,
+       501600
+      ],
+      [
+       "Farmacia 346",
+       420000,
+       2,
+       0,
+       420000
+      ],
+      [
+       "Terpel 343",
+       430600,
+       3,
+       0,
+       430600
+      ],
+      [
+       "Farmacia 306",
+       280300,
+       12,
+       0,
+       280300
+      ],
+      [
+       "Steam 231",
+       111600,
+       12,
+       1,
+       102300
+      ],
+      [
+       "Steam 211",
+       428500,
+       6,
+       1,
+       357083
+      ],
+      [
+       "Farmacia 125",
+       89500,
+       3,
+       2,
+       29834
+      ],
+      [
+       "Rappi 157",
+       543400,
+       12,
+       2,
+       452833
+      ],
+      [
+       "Steam 81",
+       424900,
+       3,
+       2,
+       141633
+      ],
+      [
+       "Electrodoméstico",
+       1229526,
+       12,
+       5,
+       630000
+      ],
+      [
+       "Éxito 100",
+       170600,
+       2,
+       2,
+       0
+      ],
+      [
+       "Compartido 51",
+       141000,
+       3,
+       3,
+       0
+      ],
+      [
+       "Supermercado",
+       187668,
+       3,
+       3,
+       0
+      ]
+     ]
+    },
+    {
+     "n": "Credifin",
+     "saldo": 1848017,
+     "proximo": {
+      "fecha": "2027-01-20",
+      "monto": 89468
+     },
+     "sinFecha": 0,
+     "intereses": 123332,
+     "interesesEst": 123332,
+     "calendario": [
+      [
+       "2027-01-20",
+       89468
+      ],
+      [
+       "2027-02-01",
+       123590
+      ],
+      [
+       "2027-02-06",
+       209309
+      ],
+      [
+       "2027-02-10",
+       18135
+      ],
+      [
+       "2027-02-19",
+       117497
+      ],
+      [
+       "2027-02-20",
+       15607
+      ],
+      [
+       "2027-02-24",
+       75733
+      ],
+      [
+       "2027-03-01",
+       123590
+      ],
+      [
+       "2027-03-10",
+       18135
+      ],
+      [
+       "2027-03-19",
+       117497
+      ],
+      [
+       "2027-03-20",
+       15607
+      ],
+      [
+       "2027-04-01",
+       123590
+      ],
+      [
+       "2027-04-10",
+       18135
+      ],
+      [
+       "2027-04-19",
+       117497
+      ],
+      [
+       "2027-04-20",
+       15607
+      ],
+      [
+       "2027-05-01",
+       123590
+      ],
+      [
+       "2027-05-10",
+       18137
+      ],
+      [
+       "2027-05-19",
+       117497
+      ],
+      [
+       "2027-05-20",
+       15607
+      ],
+      [
+       "2027-06-01",
+       123591
+      ],
+      [
+       "2027-06-19",
+       117497
+      ],
+      [
+       "2027-06-20",
+       15606
+      ],
+      [
+       "2027-07-19",
+       117495
+      ]
+     ],
+     "planes": [
+      [
+       "Farmacia 379",
+       566900,
+       6,
+       0,
+       566900
+      ],
+      [
+       "Tienda D1 274",
+       75300,
+       6,
+       0,
+       75300
+      ],
+      [
+       "Rappi 229",
+       393700,
+       2,
+       1,
+       196850
+      ],
+      [
+       "Terpel 214",
+       596300,
+       6,
+       1,
+       496917
+      ],
+      [
+       "Éxito 130",
+       87500,
+       6,
+       2,
+       58334
+      ],
+      [
+       "Tienda D1 65",
+       353900,
+       3,
+       2,
+       69106
+      ],
+      [
+       "Pan 160",
+       546300,
+       2,
+       2,
+       0
+      ],
+      [
+       "Farmacia 33",
+       53300,
+       2,
+       2,
+       0
+      ]
+     ]
+    },
+    {
+     "n": "Mamá",
+     "saldo": 434554,
+     "proximo": null,
+     "sinFecha": 434554,
+     "intereses": 0,
+     "interesesEst": 0,
+     "calendario": [],
+     "planes": []
+    }
+   ],
+   "meDeben": [
+    [
+     "Ana",
+     105741,
+     -48359
+    ],
+    [
+     "Pedro",
+     92645,
+     13645
+    ],
+    [
+     "Laura",
+     32100,
+     -178500
+    ],
+    [
+     "Carlos",
+     6200,
+     -145600
+    ],
+    [
+     "mamá",
+     3199,
+     -76601
+    ]
+   ],
+   "presupuestos": [
+    [
+     "Ocio",
+     350000,
+     2603100
+    ]
+   ],
+   "proximos": [
+    [
+     "credito",
+     "TC Davibank",
+     327622,
+     "2027-01-12",
+     "pendiente"
+    ],
+    [
+     "credito",
+     "Credifin",
+     89468,
+     "2027-01-20",
+     "pendiente"
+    ],
+    [
+     "credito",
+     "TC Nubank",
+     18033,
+     "2027-01-21",
+     "pendiente"
+    ],
+    [
+     "fijo",
+     "Internet y TV",
+     107000,
+     "2027-01-21",
+     "pagado"
+    ],
+    [
+     "fijo",
+     "Google One",
+     19900,
+     "2027-01-22",
+     "cobrado"
+    ],
+    [
+     "fijo",
+     "Suscripción de apps",
+     66000,
+     "2027-01-28",
+     "automatico"
+    ],
+    [
+     "credito",
+     "Credifin",
+     123590,
+     "2027-02-01",
+     "pendiente"
+    ],
+    [
+     "fijo",
+     "Cuota de manejo Nubank",
+     12000,
+     "2027-02-01",
+     "automatico"
+    ],
+    [
+     "credito",
+     "Credifin",
+     209309,
+     "2027-02-06",
+     "pendiente"
+    ],
+    [
+     "fijo",
+     "Streaming familiar",
+     42000,
+     "2027-02-09",
+     "automatico"
+    ],
+    [
+     "credito",
+     "TC Davibank",
+     1775491,
+     "2027-02-10",
+     "pendiente"
+    ],
+    [
+     "credito",
+     "Credifin",
+     18135,
+     "2027-02-10",
+     "pendiente"
+    ],
+    [
+     "fijo",
+     "Gimnasio",
+     120000,
+     "2027-02-18",
+     "automatico"
+    ],
+    [
+     "credito",
+     "Credifin",
+     117497,
+     "2027-02-19",
+     "pendiente"
+    ],
+    [
+     "credito",
+     "Credifin",
+     15607,
+     "2027-02-20",
+     "pendiente"
+    ],
+    [
+     "credito",
+     "TC Nubank",
+     1490699,
+     "2027-02-21",
+     "pendiente"
+    ],
+    [
+     "fijo",
+     "Internet y TV",
+     107000,
+     "2027-02-21",
+     "pendiente"
+    ],
+    [
+     "fijo",
+     "Google One",
+     19900,
+     "2027-02-22",
+     "automatico"
+    ],
+    [
+     "credito",
+     "Credifin",
+     75733,
+     "2027-02-24",
+     "pendiente"
+    ],
+    [
+     "fijo",
+     "Suscripción de apps",
+     66000,
+     "2027-02-28",
+     "automatico"
+    ],
+    [
+     "credito",
+     "Addi",
+     216276,
+     "2027-03-01",
+     "pendiente"
+    ],
+    [
+     "credito",
+     "Credifin",
+     123590,
+     "2027-03-01",
+     "pendiente"
+    ],
+    [
+     "fijo",
+     "Cuota de manejo Nubank",
+     12000,
+     "2027-03-01",
+     "automatico"
+    ]
+   ]
+  }
+ ],
+ "meses": [
+  {
+   "mes": "2027-01",
+   "ingresos": 5779809,
+   "gastos": 8707261,
+   "categorias": [
+    [
+     "Otros",
+     2627400
+    ],
+    [
+     "Gasolina",
+     1588000
+    ],
+    [
+     "Entretenimiento y videojuegos",
+     1387500
+    ],
+    [
+     "Comida rápida y restaurantes",
+     1215600
+    ],
+    [
+     "Mercado",
+     1123200
+    ],
+    [
+     "Ropa",
+     276900
+    ],
+    [
+     "Intereses y cargos",
+     201761
+    ],
+    [
+     "Gimnasio y suplementos",
+     120000
+    ],
+    [
+     "Servicios y hogar",
+     107000
+    ],
+    [
+     "Suscripciones",
+     40900
+    ],
+    [
+     "Sin identificar",
+     18700
+    ],
+    [
+     "Monedas",
+     300
+    ]
+   ],
+   "presupuestos": [
+    [
+     "Ocio",
+     2603100
+    ]
+   ]
+  },
+  {
+   "mes": "2026-12",
+   "ingresos": 9615262,
+   "gastos": 8915007,
+   "categorias": [
+    [
+     "Mercado",
+     2191200
+    ],
+    [
+     "Otros",
+     1733700
+    ],
+    [
+     "Comida rápida y restaurantes",
+     1425400
+    ],
+    [
+     "Entretenimiento y videojuegos",
+     1208000
+    ],
+    [
+     "Gasolina",
+     962400
+    ],
+    [
+     "Ropa",
+     809500
+    ],
+    [
+     "Intereses y cargos",
+     338907
+    ],
+    [
+     "Gimnasio y suplementos",
+     120000
+    ],
+    [
+     "Suscripciones",
+     106900
+    ],
+    [
+     "Sin identificar",
+     19000
+    ]
+   ],
+   "presupuestos": [
+    [
+     "Ocio",
+     2633400
+    ]
+   ]
+  },
+  {
+   "mes": "2026-11",
+   "ingresos": 12725000,
+   "gastos": 8161788,
+   "categorias": [
+    [
+     "Mercado",
+     2454400
+    ],
+    [
+     "Otros",
+     1783700
+    ],
+    [
+     "Entretenimiento y videojuegos",
+     1274900
+    ],
+    [
+     "Comida rápida y restaurantes",
+     1050000
+    ],
+    [
+     "Ropa",
+     679000
+    ],
+    [
+     "Servicios y hogar",
+     321000
+    ],
+    [
+     "Gasolina",
+     198400
+    ],
+    [
+     "Intereses y cargos",
+     159288
+    ],
+    [
+     "Gimnasio y suplementos",
+     120000
+    ],
+    [
+     "Suscripciones",
+     106900
+    ],
+    [
+     "Sin identificar",
+     12600
+    ],
+    [
+     "Monedas",
+     1600
+    ]
+   ],
+   "presupuestos": [
+    [
+     "Ocio",
+     2324900
+    ]
+   ]
+  },
+  {
+   "mes": "2026-10",
+   "ingresos": 15408885,
+   "gastos": 7247334,
+   "categorias": [
+    [
+     "Mercado",
+     1872800
+    ],
+    [
+     "Entretenimiento y videojuegos",
+     1746000
+    ],
+    [
+     "Otros",
+     1375700
+    ],
+    [
+     "Comida rápida y restaurantes",
+     1043000
+    ],
+    [
+     "Ropa",
+     455700
+    ],
+    [
+     "Gasolina",
+     322100
+    ],
+    [
+     "Intereses y cargos",
+     163444
+    ],
+    [
+     "Suscripciones",
+     131390
+    ],
+    [
+     "Gimnasio y suplementos",
+     120000
+    ],
+    [
+     "Sin identificar",
+     11900
+    ],
+    [
+     "Monedas",
+     5300
+    ]
+   ],
+   "presupuestos": [
+    [
+     "Ocio",
+     2789000
+    ]
+   ]
+  },
+  {
+   "mes": "2026-09",
+   "ingresos": 1009700,
+   "gastos": 661800,
+   "categorias": [
+    [
+     "Mercado",
+     266100
+    ],
+    [
+     "Gasolina",
+     220300
+    ],
+    [
+     "Otros",
+     175400
+    ]
+   ],
+   "presupuestos": [
+    [
+     "Ocio",
+     0
+    ]
+   ]
+  },
+  {
+   "mes": "2026-08",
+   "ingresos": 0,
+   "gastos": 107500,
+   "categorias": [
+    [
+     "Entretenimiento y videojuegos",
+     107500
+    ]
+   ],
+   "presupuestos": [
+    [
+     "Ocio",
+     107500
+    ]
+   ]
+  }
+ ],
+ "historico": [
+  {
+   "mes": "2026-08",
+   "ingresos": 0,
+   "gastos": 107500
+  },
+  {
+   "mes": "2026-09",
+   "ingresos": 1009700,
+   "gastos": 661800
+  },
+  {
+   "mes": "2026-10",
+   "ingresos": 15408885,
+   "gastos": 7247334
+  },
+  {
+   "mes": "2026-11",
+   "ingresos": 12725000,
+   "gastos": 8161788
+  },
+  {
+   "mes": "2026-12",
+   "ingresos": 9615262,
+   "gastos": 8915007
+  },
+  {
+   "mes": "2027-01",
+   "ingresos": 5779809,
+   "gastos": 8707261
+  }
+ ]
+}

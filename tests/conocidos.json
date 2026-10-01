@@ -1,0 +1,146 @@
+[
+  {
+    "suite": "admin",
+    "falla": "editar TC Davibank desde la app reemplaza \"Tabla\" por un día fijo y mueve todo su calendario",
+    "estado": "mitigado",
+    "nota": "La sonda simula la app vieja enviando un número. Desde la v41, admin.js acepta \"Tabla\"/\"Último\" y el backend conserva el valor si no se envía."
+  },
+  {
+    "suite": "admin",
+    "falla": "fijo con \":\" en el nombre no queda enlazado en el historial (fijo=\"\")",
+    "estado": "pendiente",
+    "nota": "Bajo. El id del cobro usa \":\" como separador. Falta prohibir \":\" en nombres de fijos o escaparlo."
+  },
+  {
+    "suite": "doble",
+    "falla": "el mismo envío repetido (mismo id de cliente) creó 2 movimientos: no hay idempotencia",
+    "estado": "mitigado",
+    "nota": "El backend es idempotente cuando llega el parámetro rid (la app lo envía desde v17). La sonda envía sin rid, como el atajo del celular actual. Pendiente: atajo con rid."
+  },
+  {
+    "suite": "doble",
+    "falla": "pago de crédito enviado 2 veces quedó 2 veces (2 filas) — sin protección de doble envío",
+    "estado": "mitigado",
+    "nota": "Igual que el anterior: protegido con rid desde la app; el atajo aún no lo envía."
+  },
+  {
+    "suite": "entradas",
+    "falla": "monto \"1e6\" leído como 16 (no como 1.000.000 ni rechazado)",
+    "estado": "pendiente",
+    "nota": "Bajo. aNumero no reconoce notación científica; nadie la escribe, pero debería rechazarse."
+  },
+  {
+    "suite": "entradas",
+    "falla": "valorCuota absurdo debería aceptarse: ❌ 3 cuotas de $1.000.000 suman $3.000.000, que no cuadra con una compra de $100.000. Revisa el valor de la cuota.",
+    "estado": "intencional",
+    "nota": "Desde v17 se rechaza un total de cuotas fuera de 0,98–2 veces el monto (error de digitación)."
+  },
+  {
+    "suite": "entradas",
+    "falla": "valorCuota chico debería aceptarse: ❌ 3 cuotas de $10.000 suman $30.000, que no cuadra con una compra de $300.000. Revisa el valor de la cuota.",
+    "estado": "intencional",
+    "nota": "Misma regla que el anterior."
+  },
+  {
+    "suite": "entradas",
+    "falla": "plan con cuota chica no suma el monto",
+    "estado": "intencional",
+    "nota": "Consecuencia del rechazo anterior: no se crea el plan."
+  },
+  {
+    "suite": "entradas",
+    "falla": "para \"Juan:150.000\" (con punto de miles) quedó en 150 en vez de 150.000; el gasto \"mío\" quedó en 299850",
+    "estado": "pendiente",
+    "nota": "Medio. Lectura del campo \"para\" con separador de miles."
+  },
+  {
+    "suite": "entradas",
+    "falla": "\"para\" que suma más que el gasto: te deben 220000 por un gasto de 100.000",
+    "estado": "pendiente",
+    "nota": "Medio. Falta validar que lo asignado a otros no supere el gasto."
+  },
+  {
+    "suite": "entradas",
+    "falla": "\"Luis;Marta:30000\": Luis desaparece (sin monto no se le asigna nada)",
+    "estado": "pendiente",
+    "nota": "Bajo. Formato mixto en \"para\"."
+  },
+  {
+    "suite": "entradas",
+    "falla": "aplica ajeno no cayó a lo más antiguo",
+    "estado": "pendiente",
+    "nota": "Por revisar: orden en que un pago de un tercero se aplica a sus deudas."
+  },
+  {
+    "suite": "entradas",
+    "falla": "transferencia mayor al saldo debería aceptarse: ❌ El monto no es válido.",
+    "estado": "intencional",
+    "nota": "La sonda usa un monto gigante que supera el tope de monto válido."
+  },
+  {
+    "suite": "entradas",
+    "falla": "transferencia mayor al saldo deja Efectivo en -1000000000000 (no se valida saldo)",
+    "estado": "intencional",
+    "nota": "No se bloquea por saldo a propósito: los saldos de la app pueden ir atrasados respecto al banco."
+  },
+  {
+    "suite": "entradas",
+    "falla": "pagar de más deja Credifin en -500000 (deuda negativa sin aviso)",
+    "estado": "pendiente",
+    "nota": "Aviso de sobrepago: se hará después de la Opción A de intereses."
+  },
+  {
+    "suite": "entradas",
+    "falla": "me prestaron hacia una deuda baja el saldo (50000) pero no el calendario de pagos",
+    "estado": "pendiente",
+    "nota": "Por revisar."
+  },
+  {
+    "suite": "extra",
+    "falla": "un fijo \"Una vez\" reprogramado aparece como ya pagado (el id \"unica\" del cobro anterior lo tapa)",
+    "estado": "pendiente",
+    "nota": "Medio. Conocido."
+  },
+  {
+    "suite": "extra",
+    "falla": "carrera recordatorioDiario/doPost duplica el fijo automático (2 filas): recordatorioDiario no toma el LockService",
+    "estado": "mitigado",
+    "nota": "Desde v17 recordatorioDiario() toma el lock; la sonda llama registrarFijosAutomaticos() directo, sin pasar por él."
+  },
+  {
+    "suite": "extra",
+    "falla": "un movimiento con \"Registrado el\" igual a \"Saldo a la fecha\" no cuenta (comparación estricta >): saldo 100000",
+    "estado": "pendiente",
+    "nota": "Bajo. En la práctica no ocurre (milisegundos distintos); solo pasa en el simulador."
+  },
+  {
+    "suite": "tarjeta",
+    "falla": "A: al pagar todas las cuotas la deuda queda en -12000 (debería ser 0; intereses pagados 12000)",
+    "estado": "decidido",
+    "nota": "Intereses de tarjeta: se decidió la Opción A (la app suma el interés estimado en cada corte y el extracto solo cuadra). Pendiente de implementar."
+  },
+  {
+    "suite": "tarjeta",
+    "falla": "B: al pagar todas las cuotas la deuda queda en -12000 (debería ser 0; intereses pagados 12000)",
+    "estado": "decidido",
+    "nota": "Igual que el anterior (Opción A)."
+  },
+  {
+    "suite": "tarjeta",
+    "falla": "B: pagaste 334000 siguiendo el tablero vs 312000 que dice el plan",
+    "estado": "decidido",
+    "nota": "Doble conteo de intereses al cuadrar con el extracto; lo resuelve la Opción A."
+  },
+  {
+    "suite": "tarjeta",
+    "falla": "A/desde1: al pagar todas las cuotas la deuda queda en -12000 (debería ser 0; intereses pagados 12000)",
+    "estado": "decidido",
+    "nota": "Igual que el anterior (Opción A)."
+  },
+  {
+    "suite": "fuzz",
+    "falla": "invariante [deudaNegativa:Credifin]",
+    "estado": "pendiente",
+    "nota": "Pagar o transferir más de lo que se debe deja la deuda en negativo sin aviso. Es el mismo caso del aviso de sobrepago (después de la Opción A)."
+  }
+]

@@ -1,0 +1,17 @@
+const A = require('../base'); const { P, D, ok } = A;
+A.fresco(); A.reloj(2026, 8, 30, 11);
+const n0 = A.movs().length;
+const g = { accion: 'gasto', descripcion: 'Doble', monto: '25000', cuenta: 'Nequi', rid: 'r8k2m9x1q' };
+const r1 = P(g); A.tic(); const r2 = P(g);
+console.log('rid:', A.movs().length - n0, r2.mensaje);
+const pc = { accion: 'pagocredito', credito: 'Addi', monto: '10000', origen: 'cuenta', cuenta: 'Nequi', rid: 'p1a2b3c4d5' };
+P(pc); A.tic(); P(pc); console.log('pago rid filas:', A.movs().length - n0);
+P({ accion: 'cuentaadmin', op: 'guardar', nombre: 'TC Davibank', tipo: 'Deuda', cupo: '5000000', tasa: '2.13', modo: 'Corte mensual', pideValor: 'no', diaCorte: 'Tabla', diaPago: '7', interesDesde1: 'si', unaSinInteres: 'si' }); A.tic();
+console.log('diaCorte:', leerConfig().cuentas.find(c => c.nombre === 'TC Davibank').diaCorte);
+for (const nom of ['Crédito', 'persona', 'NEQUI', '▸ x']) console.log(nom, P({ accion: 'cuentaadmin', op: 'guardar', nombre: nom, tipo: 'Plata', saldo: '0' }).mensaje);
+console.log('fecha mala', P({ accion: 'gasto', descripcion: 'x', monto: '1000', cuenta: 'Nequi', fecha: '2026-02-30' }).mensaje);
+console.log('fecha futura', P({ accion: 'gasto', descripcion: 'x', monto: '1000', cuenta: 'Nequi', fecha: '2027-01-01' }).mensaje);
+console.log('formula', P({ accion: 'gasto', descripcion: '=HYPERLINK("x")', monto: '1000', cuenta: 'Nequi' }).ok, A.movs().slice(-1)[0]);
+console.log('persona', P({ accion: 'meprestaron', persona: 'laura', monto: '1000', cuenta: 'Nequi' }).mensaje);
+console.log('periodo', P({ accion: 'fijo', fijo: 'Streaming familiar', periodo: 'xx', cuenta: 'Nequi' }).mensaje);
+console.log('archivar con fijo', P({ accion: 'cuentaadmin', op: 'archivar', nombre: 'TC Nubank' }).mensaje);
