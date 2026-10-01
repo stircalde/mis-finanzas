@@ -366,7 +366,7 @@ body { min-height: 100vh; min-height: 100dvh; overscroll-behavior-y: contain; }
 @media (min-width: 900px) { :root[data-theme="light"] .nav { background: #fff; } }
 :root[data-theme="light"] .nav a.on { color: var(--accent); }
 :root[data-theme="light"] .nav a.on svg { filter: none; }
-:root[data-theme="light"] .hero { background: radial-gradient(70% 90% at 90% 0%, color-mix(in srgb, color-mix(in srgb, var(--c3) 60%, #ffffff) 55%, transparent) 0%, transparent 60%), linear-gradient(135deg, color-mix(in srgb, var(--ch) 83%, #010101) 0%, color-mix(in srgb, var(--ch) 84%, #b0b0b0) 50%, color-mix(in srgb, var(--ch) 72%, #f9f9f9) 100%); }
+:root[data-theme="light"] .hero { background: radial-gradient(70% 90% at 90% 0%, color-mix(in srgb, color-mix(in srgb, var(--c3) 60%, #ffffff) 55%, transparent) 0%, transparent 60%), linear-gradient(135deg, color-mix(in srgb, var(--ch) 83%, #010101) 0%, color-mix(in srgb, var(--ch) 90%, #5a5a5a) 50%, var(--ch) 100%); }
 :root[data-theme="light"] .acct.brand-card { background: linear-gradient(145deg, var(--bc) 0%, color-mix(in srgb, var(--bc) 72%, #1b2040) 100%); border-color: transparent; color: var(--bt, #fff); }
 :root[data-theme="light"] .acct.brand-card .bal { color: var(--bt, #fff); }
 :root[data-theme="light"] .acct.brand-card .name { color: color-mix(in srgb, var(--bt, #fff) 86%, transparent); }
@@ -541,7 +541,7 @@ body { min-height: 100vh; min-height: 100dvh; overscroll-behavior-y: contain; }
 .cal-glass .cal-d.vacio { background: none; border-color: transparent; box-shadow: none; backdrop-filter: none; }
 .cal-glass .cal-d.hoy { background: linear-gradient(170deg, color-mix(in srgb, color-mix(in srgb, var(--c1) 84%, #ffffff) 62%, transparent), color-mix(in srgb, color-mix(in srgb, var(--c4) 89%, #000000) 28%, transparent)); border-color: color-mix(in srgb, color-mix(in srgb, var(--c1) 52%, #ffffff) 60%, transparent);
   box-shadow: 0 0 26px -6px color-mix(in srgb, color-mix(in srgb, var(--c1) 90%, #fcfcfc) 80%, transparent), inset 0 1px 0 rgba(255, 255, 255, 0.35); }
-.cal-glass .cal-d.hoy .dn { color: #fff; }
+.cal-glass .cal-d.hoy .dn { color: var(--on); }
 .cal-glass .cal-d.sel { outline: 2px solid rgba(255, 255, 255, 0.7); outline-offset: 1px; }
 .cal-glass .cal-d.t-pendiente { background: linear-gradient(170deg, rgba(255, 92, 108, 0.30), rgba(255, 255, 255, 0.04) 70%); border-color: rgba(255, 120, 135, 0.38); }
 .cal-glass .cal-d.t-vencido { background: linear-gradient(170deg, rgba(255, 70, 90, 0.55), rgba(255, 70, 90, 0.10) 80%); border-color: rgba(255, 110, 125, 0.75); }
@@ -568,7 +568,7 @@ body { min-height: 100vh; min-height: 100dvh; overscroll-behavior-y: contain; }
   box-shadow: inset 0 1px 0 #fff, 0 10px 22px -16px color-mix(in srgb, color-mix(in srgb, var(--c4) 49%, #414141) 45%, transparent); }
 :root[data-theme="light"] .cal-glass .cal-d.vacio { background: none; box-shadow: none; }
 :root[data-theme="light"] .cal-glass .cal-d.hoy { background: linear-gradient(170deg, color-mix(in srgb, var(--c4) 70%, #fcfcfc), color-mix(in srgb, var(--c4) 79%, #aaaaaa)); border-color: color-mix(in srgb, var(--c4) 62%, #fdfdfd); color: var(--on); }
-:root[data-theme="light"] .cal-glass .cal-d.hoy .labels span { color: color-mix(in srgb, var(--c4) 10%, #ffffff); }
+:root[data-theme="light"] .cal-glass .cal-d.hoy .labels span { color: color-mix(in srgb, var(--on) 85%, transparent); }
 :root[data-theme="light"] .cal-glass .cal-d.t-pendiente { background: linear-gradient(170deg, rgba(255, 92, 108, 0.22), rgba(255, 255, 255, 0.6) 70%); border-color: rgba(226, 58, 78, 0.35); }
 :root[data-theme="light"] .cal-glass .cal-d.t-vencido { background: linear-gradient(170deg, rgba(226, 58, 78, 0.38), rgba(255, 255, 255, 0.6) 85%); border-color: rgba(226, 58, 78, 0.7); }
 :root[data-theme="light"] .cal-glass .cal-d.t-pagado { background: linear-gradient(170deg, rgba(16, 163, 88, 0.2), rgba(255, 255, 255, 0.6) 70%); border-color: rgba(16, 163, 88, 0.35); }
@@ -581,7 +581,7 @@ body { min-height: 100vh; min-height: 100dvh; overscroll-behavior-y: contain; }
 :root[data-theme="light"] .gasto { --ev: #2f7bff; } :root[data-theme="light"] .credito { --ev: #8a4dff; }
 .cal-glass .cal-d.hoy.det, .cal-glass .cal-d.hoy.con { background: linear-gradient(170deg, color-mix(in srgb, color-mix(in srgb, var(--c1) 84%, #ffffff) 62%, transparent), color-mix(in srgb, color-mix(in srgb, var(--c4) 89%, #000000) 28%, transparent)); border-color: color-mix(in srgb, color-mix(in srgb, var(--c1) 52%, #ffffff) 60%, transparent); }
 :root[data-theme="light"] .cal-glass .cal-d.hoy.det, :root[data-theme="light"] .cal-glass .cal-d.hoy.con { background: linear-gradient(170deg, color-mix(in srgb, var(--c4) 70%, #fcfcfc), color-mix(in srgb, var(--c4) 79%, #aaaaaa)); color: var(--on); }
-:root[data-theme="light"] .cal-glass .cal-d.hoy .gv { color: color-mix(in srgb, var(--c4) 10%, #ffffff); }
+:root[data-theme="light"] .cal-glass .cal-d.hoy .gv { color: color-mix(in srgb, var(--on) 85%, transparent); }
 .cal-glass .cal-d .labels { overflow: hidden; }
 /* puntos de colores siempre visibles en el celular: arriba a la derecha de cada día */
 @media (max-width: 759px) {
@@ -713,7 +713,7 @@ body.con-hoja .fab-wrap, body.con-reg .fab-wrap, .shell:has(#nav[hidden]) ~ .fab
 .op { border: 1px solid var(--line-strong); background: var(--surface-2); color: var(--ink-2); border-radius: 999px; padding: 8px 13px; font: inherit; font-size: .86rem; font-weight: 600; cursor: pointer; text-align: left; max-width: 100%; }
 .op b { color: var(--ink); }
 .op[aria-pressed="true"] { background: var(--accent); border-color: var(--accent); color: var(--on-accent); }
-.op[aria-pressed="true"] b { color: #fff; }
+.op[aria-pressed="true"] b { color: inherit; }
 .reg-err { background: color-mix(in srgb, var(--crit) 14%, transparent); border: 1px solid color-mix(in srgb, var(--crit) 45%, transparent); color: var(--ink); padding: 10px 12px; border-radius: 12px; font-size: .88rem; }
 .reg-pie { position: sticky; bottom: calc(-20px - env(safe-area-inset-bottom)); margin: 4px -18px calc(-20px - env(safe-area-inset-bottom)); padding: 12px 18px calc(16px + env(safe-area-inset-bottom));
   background: linear-gradient(180deg, transparent, var(--surface) 30%); }
@@ -1148,8 +1148,8 @@ html, body { overscroll-behavior-y: contain; }
 :root[data-estilo="cristal"] .hero { box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.35), inset 0 -1px 0 rgba(255, 255, 255, 0.06), 0 30px 60px -32px color-mix(in srgb, var(--ch) 70%, transparent); }
 :root[data-estilo="cristal"] .sheet, :root[data-estilo="cristal"] .glass-sheet { background: color-mix(in srgb, var(--surface) 94%, transparent); box-shadow: inset 0 1px 0 color-mix(in srgb, #fff 12%, transparent); }
 :root[data-estilo="cristal"][data-theme="light"] .sheet, :root[data-estilo="cristal"][data-theme="light"] .glass-sheet { background: rgba(255, 255, 255, 0.95); }
-:root[data-estilo="cristal"] .nav { background: color-mix(in srgb, var(--surface) 78%, transparent); }
-:root[data-estilo="cristal"][data-theme="light"] .nav { background: rgba(255, 255, 255, 0.78); }
+:root[data-estilo="cristal"] .nav { background: color-mix(in srgb, var(--surface) 90%, transparent); backdrop-filter: none; -webkit-backdrop-filter: none; }
+:root[data-estilo="cristal"][data-theme="light"] .nav { background: rgba(255, 255, 255, 0.92); }
 :root[data-estilo="cristal"] .btn, :root[data-estilo="cristal"] .select { background: color-mix(in srgb, var(--surface) 60%, transparent); }
 @media (prefers-reduced-transparency: reduce) {
   :root[data-estilo="cristal"] body::before { background: var(--bg); }
@@ -1172,6 +1172,7 @@ html, body { overscroll-behavior-y: contain; }
 :root[data-oled][data-theme="dark"] .cal-glass, :root[data-oled][data-theme="dark"] .glass-card { background: var(--surface); }
 :root[data-oled][data-theme="dark"] .cal-glass .glow { opacity: 0.25; }
 :root[data-oled][data-theme="dark"] .hero { box-shadow: none; }
+:root[data-oled][data-theme="dark"][data-estilo="cristal"] body::before { background: #000; }
 
 /* ============ Hoja de Apariencia ============ */
 .ap-hoja { display: flex; flex-direction: column; }

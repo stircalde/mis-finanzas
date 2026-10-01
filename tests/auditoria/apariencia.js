@@ -43,6 +43,22 @@ for (const [n, P] of Object.entries(pal)) {
   for (const [k, v] of Object.entries(SEM_CLA)) ok(dE(hx(P.c1c), hx(v)) >= MIN_SEM, n + ' (tema claro) se confunde con el ' + k + ' (distancia ' + dE(hx(P.c1c), hx(v)).toFixed(3) + ')');
   for (const [k, v] of Object.entries(BANCOS)) ok(dE(c1, hx(v)) >= MIN_BANCO, n + ' se confunde con ' + k + ' (distancia ' + dE(c1, hx(v)).toFixed(3) + ')');
 }
+// Tarjeta de balance en tema claro: cada parada del degradado debe dejar legible el texto blanco.
+const heroClaro = (css.match(/:root\[data-theme="light"\] \.hero \{[^}]*linear-gradient\(135deg,([^;]*)\);/) || ['', ''])[1];
+const paradas = [...heroClaro.matchAll(/color-mix\(in srgb, var\(--ch\) (\d+)%, (#[0-9a-fA-F]{6})\)|var\(--ch\)/g)].map((m) => m[1] ? [Number(m[1]) / 100, m[2]] : [1, '#000000']);
+ok(paradas.length >= 2, 'no encontré el degradado de la tarjeta de balance en tema claro');
+for (const [n, P] of Object.entries(pal)) for (const [q, otro] of paradas) {
+  const c = mix(hx(P.ch), q, hx(otro)); ok(cr(hx('#ffffff'), c) >= 4.4, n + ' (claro): texto blanco sobre la tarjeta de balance con contraste ' + cr(hx('#ffffff'), c).toFixed(2));
+}
+// Texto sobre fondos del color elegido: no puede quedar fijo en blanco (se usa --on / --on-accent).
+for (const sel of ['.cal-glass .cal-d.hoy .dn', '.op[aria-pressed="true"] b']) {
+  const m = css.match(new RegExp(sel.replace(/[.*+?^${}()|[\]\\]/g, '\\$&') + ' \\{([^}]*)\\}'));
+  ok(m && !/color:\s*#fff/i.test(m[1]), sel + ' tiene texto blanco fijo sobre el color elegido');
+}
+// Negro puro: Cristal no puede dejar su fondo de manchas de color.
+ok(/:root\[data-oled\]\[data-theme="dark"\]\[data-estilo="cristal"\] body::before \{ background: #000; \}/.test(css), 'OLED + Cristal no deja el fondo en negro puro');
+// Cristal no usa desenfoque en la barra inferior.
+ok(/:root\[data-estilo="cristal"\] \.nav \{[^}]*backdrop-filter: none/.test(css), 'Cristal sigue usando backdrop-filter en la barra inferior');
 const ns = Object.keys(pal);
 for (let i = 0; i < ns.length; i++) for (let j = i + 1; j < ns.length; j++) {
   const d = dE(hx(pal[ns[i]].c1), hx(pal[ns[j]].c1)); ok(d >= 0.08, ns[i] + ' y ' + ns[j] + ' se parecen demasiado (distancia ' + d.toFixed(3) + ')');
