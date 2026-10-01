@@ -76,8 +76,10 @@
     if (btn.disabled) return;
     var txt = btn.innerHTML;
     btn.disabled = true; btn.innerHTML = '<span class="spin-mini"></span> Guardando…';
+    var img = datos._img; delete datos._img;
     MF.enviar(datos).then(function (r) {
       if (!r.ok) throw new Error(String(r.mensaje || 'No se pudo guardar.').replace(/^❌\s*/, ''));
+      if (img) guardarImagen(img.nombre, img.url);   // la imagen se guarda solo si la hoja aceptó el cambio
       var sh = cont.closest('.sheet');
       sh.innerHTML = '<div class="reg-ok"><div class="reg-ok-ico">✓</div><h3>Listo</h3><p>' + esc(r.mensaje || '').replace(/\n/g, '<br>') + '</p>' +
         '<div class="reg-ok-acc"><button class="btn primary" type="button" data-cerrar>Cerrar</button></div></div>';
@@ -86,7 +88,7 @@
       btn.disabled = false; btn.innerHTML = txt;
       var form = cont.closest('form') || cont;
       var err = form.querySelector('.reg-err');
-      if (err) { err.textContent = e instanceof TypeError ? 'No pude conectarme. Revisa tu internet: no se guardó nada.' : e.message; err.hidden = false; }
+      if (err) { err.textContent = e instanceof TypeError ? 'No pude conectarme. Revisa tu internet e intenta de nuevo.' : e.message; err.hidden = false; }
     });
   }
 
@@ -271,10 +273,10 @@
       if (!nombre) throw new Error('Escribe el nombre.');
       var d = MF.datos();
       if (nuevo && (d.cuentasCfg || []).some(function (x) { return x.nombre.toLowerCase() === nombre.toLowerCase(); })) throw new Error('Ya tienes una cuenta con ese nombre (revisa también las archivadas).');
-      guardarImagen(nombre, st.imagen);
       var datos = { accion: 'cuentaadmin', op: 'guardar', nombre: nombre, tipo: st.tipo === 'plata' ? 'Plata' : 'Deuda', color: st.color, saldo: st.saldo > 0 ? st.saldo : 0 };
       if (st.tipo !== 'plata') {
-        var dia = function (x, q) { var n = parseInt(x, 10); if (!(n >= 1 && n <= 31)) throw new Error('Escribe el ' + q + ' (1 a 31).'); return n; };
+        // "Tabla" (fechas de corte del banco) y "Último" se respetan tal cual.
+        var dia = function (x, q) { if (/^(tabla|[uú]ltimo)$/i.test(String(x || '').trim())) return String(x).trim(); var n = parseInt(x, 10); if (!(n >= 1 && n <= 31)) throw new Error('Escribe el ' + q + ' (1 a 31).'); return n; };
         datos.cupo = st.cupo > 0 ? st.cupo : 0;
         datos.maxCuotas = parseInt(st.maxCuotas, 10) || (st.tipo === 'tarjeta' ? 36 : 24);
         datos.tasa = String(st.tasa || '0').replace(',', '.');
@@ -288,6 +290,7 @@
           if (st.modo === 'Corte mensual') { datos.diaCorte = dia(st.diaCorte, 'día de corte'); datos.diaPago = dia(st.diaPago, 'día de pago'); datos.mesPago = 'Siguiente'; }
         }
       }
+      datos._img = { nombre: nombre, url: st.imagen || '' };
       return datos;
     }, function (st) {
       if (nuevo) return '';

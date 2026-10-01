@@ -457,6 +457,10 @@
     var err = form.querySelector('.reg-err'), btn = form.querySelector('.guardar'), datos;
     try { datos = armar(); } catch (e) { err.textContent = e.message; err.hidden = false; err.scrollIntoView({ block: 'nearest' }); return; }
     err.hidden = true;
+    // Identificador del envío: si se reintenta lo mismo (doble toque o corte de internet), la hoja no lo duplica.
+    var firma = JSON.stringify(datos);
+    if (st._firma !== firma) { st._firma = firma; st._rid = Date.now().toString(36) + Math.random().toString(36).slice(2, 8); }
+    datos.rid = st._rid;
     guardando = true; btn.disabled = true; btn.innerHTML = '<span class="spin-mini"></span> Guardando…';
     if (datos.cuenta && tipo === 'gasto') MF.guardarLocal('regCuenta', datos.cuenta);
     enviar(datos).then(function (r) {
@@ -468,7 +472,7 @@
       guardando = false;
       if (!hoja) return;
       btn.disabled = false; btn.textContent = 'Guardar';
-      err.textContent = (e instanceof TypeError ? 'No pude conectarme. Revisa tu internet: no se registró nada.' : e.message || String(e));
+      err.textContent = (e instanceof TypeError ? 'No pude confirmar con tu hoja (¿sin internet?). Toca Guardar de nuevo: si ya había quedado, no se duplica.' : e.message || String(e));
       err.hidden = false;
     });
   }

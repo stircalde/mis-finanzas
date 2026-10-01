@@ -155,7 +155,7 @@
       })
       .catch(function (e) {
         sync = 'off';
-        if (datos) { pintar(); return; }
+        if (datos) { marcarSync(); return; }
         app.innerHTML = '<div class="state"><p><b>No pude cargar tus datos.</b></p><p>' + esc(e && e.message || e) +
           '</p><p><button class="btn" id="reint" type="button">Reintentar</button></p></div>';
         document.getElementById('reint').onclick = function () { cargar(mes); };
@@ -230,6 +230,20 @@
   var repintarAlCerrar = false;
   function pintarSuave() {
     if (hojaAbierta) { repintarAlCerrar = true; marcarSync(); return; }
+    // Si estás escribiendo (por ejemplo en el buscador), espera a que termines para no borrarte el texto ni cerrar el teclado.
+    var foco = document.activeElement;
+    if (foco && app.contains(foco) && /^(INPUT|TEXTAREA|SELECT)$/.test(foco.tagName)) {
+      if (!esperandoFoco) {
+        esperandoFoco = true;
+        foco.addEventListener('blur', function () { setTimeout(function () { esperandoFoco = false; pintarSuave(); }, 250); }, { once: true });
+      }
+      marcarSync(); return;
+    }
+    repintar();
+  }
+  var esperandoFoco = false;
+  // Repinta la misma pantalla sin la animación de entrada de cada bloque y en el mismo punto (tema, ocultar saldos, "Ver todos"…).
+  function repintar() {
     var y = window.scrollY, w = document.querySelector('.wallet'), wx = w ? w.scrollLeft : 0;
     pintar();
     for (var i = 0; i < app.children.length; i++) app.children[i].style.animation = 'none';
@@ -237,6 +251,23 @@
     var w2 = document.querySelector('.wallet'); if (w2) w2.scrollLeft = wx;
   }
   function pintar() {
+    var r = pintarVista();
+    encajarTextos();
+    return r;
+  }
+  // Las cifras grandes se achican lo justo para caber en su casilla (saldos de 9 o más dígitos, pantallas angostas).
+  function encajarTextos() {
+    [['.hero .big', '.hero-left'], ['.hero .tile .v', '.tile'], ['.detail-head .big', '.detail-head']].forEach(function (par) {
+      app.querySelectorAll(par[0]).forEach(function (t) {
+        t.style.fontSize = '';
+        var caja = t.closest(par[1]); if (!caja) return;
+        var cs = getComputedStyle(caja), disp = caja.clientWidth - parseFloat(cs.paddingLeft) - parseFloat(cs.paddingRight);
+        var ancho = t.scrollWidth;
+        if (disp > 0 && ancho > disp) t.style.fontSize = Math.max(parseFloat(getComputedStyle(t).fontSize) * disp / ancho * 0.97, 14) + 'px';
+      });
+    });
+  }
+  function pintarVista() {
     if (!datos) return;
     repintarAlCerrar = false;
     ocultarTip();
@@ -289,10 +320,10 @@
       '<button class="icon-btn" id="recargar" type="button" aria-label="Actualizar">' + ICON.refresh + '</button>' +
       '<button class="icon-btn" id="miscuentas" type="button" aria-label="Mis cuentas y créditos" title="Mis cuentas">' + ICON.gear + '</button></div></div>');
     n.querySelector('#miscuentas').addEventListener('click', function () { if (window.MFAdmin) MFAdmin.cuentas(); });
-    n.querySelector('#tema').addEventListener('click', function () { temaGuardado = temaActual() === 'claro' ? 'oscuro' : 'claro'; guardarLocal('tema', temaGuardado); aplicarTema(); pintar(); });
+    n.querySelector('#tema').addEventListener('click', function () { temaGuardado = temaActual() === 'claro' ? 'oscuro' : 'claro'; guardarLocal('tema', temaGuardado); aplicarTema(); repintar(); });
     var m = n.querySelector('#mes');
     if (m) m.addEventListener('change', function (e) { cargar(e.target.value); });
-    n.querySelector('#ojo').addEventListener('click', function () { oculto = !oculto; guardarLocal('ocultar', oculto ? '1' : '0'); pintar(); });
+    n.querySelector('#ojo').addEventListener('click', function () { oculto = !oculto; guardarLocal('ocultar', oculto ? '1' : '0'); repintar(); });
     n.querySelector('#recargar').addEventListener('click', function () { cargar(mesSel === datos.meses[0] ? '' : mesSel); });
     setTimeout(marcarSync, 0);
     return n;
@@ -383,7 +414,7 @@
     var abierto = !!abiertos[clave];
     var b = el('<button type="button" class="ver-todo" aria-expanded="' + abierto + '">' +
       (abierto ? textoAbierto : textoCerrado.replace('{n}', total)) + '<span style="display:inline-flex;transform:rotate(' + (abierto ? 180 : 0) + 'deg)">' + ICON.chevron + '</span></button>');
-    b.addEventListener('click', function () { abiertos[clave] = !abierto; var y = window.scrollY; pintar(); window.scrollTo(0, y); });
+    b.addEventListener('click', function () { abiertos[clave] = !abierto; repintar(); });
     return b;
   }
 
@@ -537,7 +568,8 @@
   function anchoGrafico() { var w = app.clientWidth || window.innerWidth; return window.innerWidth >= 1100 ? (w - 22) / 2 - 46 : w - 38; }
   var ultimoAncho = window.innerWidth;
   window.addEventListener('resize', function () {
-    if (!datos || Math.abs(window.innerWidth - ultimoAncho) < 40) return;
+    var cruza = [560, 760, 900, 1000, 1280].some(function (bp) { return (window.innerWidth >= bp) !== (ultimoAncho >= bp); });
+    if (!datos || (Math.abs(window.innerWidth - ultimoAncho) < 40 && !cruza)) return;
     ultimoAncho = window.innerWidth; clearTimeout(window.__rz); window.__rz = setTimeout(pintarSuave, 200);
   });
   function graficoBarras(opts) {
@@ -723,8 +755,14 @@
       '<div class="tx"></div></section>');
     app.appendChild(n);
     var cont = n.querySelector('.tx'), total = n.querySelector('.total-filtro');
+    var limite = 50;
     function filtrar(animar) {
-      if (animar) { animarAltura(cont, function () { filtrar(); }); entrada(cont, 'cambia', ':scope > *'); return; }
+      if (animar) {
+        limite = 50;
+        // Con listas largas se cambia sin animar la altura (medir cientos de filas en cada cuadro es lo que se sentía lento).
+        if (cont.childElementCount > 60) { filtrar(); entrada(cont, 'cambia', ':scope > :nth-child(-n+16)'); return; }
+        animarAltura(cont, function () { filtrar(); }); entrada(cont, 'cambia', ':scope > :nth-child(-n+16)'); return;
+      }
       var q = norm(busq.q);
       var items = d.movimientos.filter(function (m) {
         if (busq.tipo === 'Gasto' && m.tipo !== 'Gasto') return false;
@@ -738,16 +776,23 @@
       });
       var suma = items.filter(function (m) { return m.tipo === 'Gasto'; }).reduce(function (s, m) { return s + (m.mio || m.monto); }, 0);
       total.innerHTML = items.length + ' movimiento' + (items.length === 1 ? '' : 's') + (suma ? ' · gastos <b>' + pesos(suma) + '</b>' : '');
-      var ver = abiertos.movs ? items : items.slice(0, 40);
+      var ver = items.slice(0, limite);
       cont.innerHTML = listaAgrupada(ver) || '<div class="empty">No hay movimientos con ese filtro.</div>';
       var viejo = n.querySelector('.ver-todo'); if (viejo) viejo.remove();
-      if (items.length > 40 && !abiertos.movs) {
-        var b = el('<button type="button" class="ver-todo">Ver los ' + items.length + ' movimientos</button>');
-        b.addEventListener('click', function () { abiertos.movs = true; filtrar(); });
+      if (items.length > limite) {
+        var faltan = items.length - limite;
+        var b = el('<button type="button" class="ver-todo ver-mas-movs">Ver ' + Math.min(50, faltan) + ' más · quedan ' + faltan + '</button>');
+        b.addEventListener('click', function () {
+          var desde = cont.childElementCount;
+          limite += 50; filtrar();
+          // solo las filas nuevas entran con animación
+          [].slice.call(cont.children, desde, desde + 16).forEach(function (x, i) { x.style.setProperty('--i', i); x.style.animation = 'txEntra .42s cubic-bezier(.2,.7,.2,1) both'; x.style.animationDelay = (i * 28) + 'ms'; });
+        });
         n.appendChild(b);
       }
     }
-    n.querySelector('input').addEventListener('input', function (e) { busq.q = e.target.value; filtrar(); });
+    var tBusq = null;
+    n.querySelector('input').addEventListener('input', function (e) { busq.q = e.target.value; limite = 50; clearTimeout(tBusq); tBusq = setTimeout(filtrar, 150); });
     n.querySelectorAll('.filters button').forEach(function (b) {
       b.addEventListener('click', function () {
         busq.tipo = b.dataset.f;
@@ -942,14 +987,16 @@
         if (x.credito) h2 += '<button type="button" class="btn link" data-mama>Ver los préstamos de mamá para tus créditos</button>';
         det = '<div class="plegable' + (abierto ? ' abierta' : '') + '"><div class="plegable-in">' + h2 + '</div></div></div>';
       }
-      return '<div class="owed-item' + (abierto ? ' open' : '') + '"><div class="owed-row les" role="button" tabindex="0" data-l="' + i + '"><div><div class="p">' + (x.mama ? '👩 ' : '') + esc(x.persona) +
+      return '<div class="owed-item' + (abierto ? ' open' : '') + '"><div class="owed-row les" role="button" tabindex="0" aria-expanded="' + !!abierto + '" data-l="' + i + '"><div><div class="p">' + (x.mama ? '👩 ' : '') + esc(x.persona) +
         ' <span class="chev">' + ICON.chevron + '</span></div><div class="s">' + sub.join(' · ') + '</div></div><div class="v">' + pesos(x.saldo) + '</div></div>' + det + '</div>';
     }).join('');
     var sl = el('<section class="card"><div class="card-h"><h2>Les debes</h2><span class="aside">Total <b>' + pesos(totLes) + '</b></span></div>' +
       '<div class="owed">' + (htmlL || '<div class="empty">No le debes plata a nadie. 🙌</div>') + '</div>' +
       '<p class="hint">Si alguien te presta: botón del celular → Ingreso → 🙋 Alguien me prestó plata. Para devolverle: 💳 Pagar → 🙋 Devolverle a…</p></section>');
     sl.querySelectorAll('.owed-row[data-l]').forEach(function (r) {
-      r.addEventListener('click', function () { plegar(r.parentNode, 'les:' + lesDebo[+r.dataset.l].persona, r); });
+      var tocarL = function () { plegar(r.parentNode, 'les:' + lesDebo[+r.dataset.l].persona, r); };
+      r.addEventListener('click', tocarL);
+      r.addEventListener('keydown', function (e) { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); tocarL(); } });
     });
     sl.querySelectorAll('[data-mama]').forEach(function (b) { b.addEventListener('click', function (e) { e.stopPropagation(); ir('#/credito/Mam%C3%A1'); }); });
     app.appendChild(sl);
@@ -1099,7 +1146,7 @@
     if (m) m.setAttribute('content', claro ? '#f3f5fb' : '#050912');
   }
   aplicarTema();
-  if (mqClaro && mqClaro.addEventListener) mqClaro.addEventListener('change', function () { if (!temaGuardado) { aplicarTema(); pintar(); } });
+  if (mqClaro && mqClaro.addEventListener) mqClaro.addEventListener('change', function () { if (!temaGuardado) { aplicarTema(); repintar(); } });
 
   /* =================== PLANES DE PAGO DE CADA COMPRA =================== */
   var PLANES = {};
@@ -1142,17 +1189,32 @@
   }
   var hojaAbierta = null;
   // Cierra el detalle. Con "animar" (cuando lo cierras tú) baja suavemente; al cambiar de pantalla se quita al instante.
+  var focoAntesHoja = null;
   function cerrarHoja(animar) {
     if (!hojaAbierta) return;
     var h = hojaAbierta; hojaAbierta = null; document.body.classList.remove('con-hoja');
+    // Si la cerraste tú (X, fondo, Esc), se quita también la entrada del botón Atrás.
+    if (animar === true) { try { if (history.state && history.state.hoja) history.back(); } catch (e) { /* sin historial */ } }
+    if (animar === 'atras') animar = true;
+    if (focoAntesHoja && focoAntesHoja.isConnected && animar === true) { try { focoAntesHoja.focus({ preventScroll: true }); } catch (e) { /* nada */ } }
+    focoAntesHoja = null;
     if (animar === true && !window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
       h.classList.add('cerrando'); h.style.pointerEvents = 'none';
       setTimeout(function () { h.remove(); }, 320);
     } else h.remove();
     if (repintarAlCerrar) setTimeout(pintarSuave, animar === true ? 330 : 0);
   }
+  // Abre una hoja: el botón Atrás del celular la cierra (en vez de salir de la pantalla).
+  function registrarHoja(hoja) {
+    var habia = !!(hojaAbierta && history.state && history.state.hoja);
+    if (!hojaAbierta) focoAntesHoja = document.activeElement;
+    var h0 = hojaAbierta; hojaAbierta = null;
+    if (h0) { h0.remove(); document.body.classList.remove('con-hoja'); }
+    try { if (habia) history.replaceState({ hoja: 1 }, ''); else history.pushState({ hoja: 1 }, ''); } catch (e) { /* sin historial */ }
+    document.body.appendChild(hoja); document.body.classList.add('con-hoja'); hojaAbierta = hoja;
+  }
+  window.addEventListener('popstate', function () { if (hojaAbierta) cerrarHoja('atras'); });
   function abrirPlan(p) {
-    cerrarHoja();
     var pct = pctPlan(p);
     var hoja = el('<div class="sheet-bg es-plan" role="dialog" aria-modal="true" aria-label="Plan de pagos de ' + esc(p.desc) + '"><div class="sheet glass-sheet">' +
       '<div class="sheet-h"><div class="who">' + icoPlan(p) + '<div><h2>' + esc(p.desc) + '</h2><div class="kind">' + etiqueta(p.cuenta) +
@@ -1172,8 +1234,8 @@
       if (e.target === hoja || e.target.closest('[data-cerrar]')) cerrarHoja(true);
       else if (e.target.closest('[data-ir]')) { var dest = '#/credito/' + encodeURIComponent(p.cuenta); cerrarHoja(); if (location.hash !== dest) ir(dest); }
     });
-    document.body.appendChild(hoja); document.body.classList.add('con-hoja'); hojaAbierta = hoja;
-    var b = hoja.querySelector('[data-cerrar]'); if (b) b.focus();
+    registrarHoja(hoja);
+    var b = hoja.querySelector('[data-cerrar]'); if (b) b.focus({ preventScroll: true });
   }
   document.addEventListener('keydown', function (e) {
     if (e.key === 'Escape') cerrarHoja(true);
@@ -1290,6 +1352,7 @@
       var bolsa = nodo.querySelector('.bol-bolsa'), y0 = bolsa.getBoundingClientRect().top, t0 = performance.now();
       document.documentElement.style.overflowAnchor = 'none';
       (function paso(t) {
+        if (!bolsa.isConnected) { document.documentElement.style.overflowAnchor = ''; return; }
         var dy = bolsa.getBoundingClientRect().top - y0;
         var ab = nodo.querySelector('.bol-item.abierta .bol-tira');
         if (dy > 0 && ab) dy = Math.min(dy, Math.max(0, ab.getBoundingClientRect().top - 72));   // que la tarjeta no se salga por arriba
@@ -1362,11 +1425,12 @@
   }
   function unicos(l) { return l.filter(function (x, i) { return l.indexOf(x) === i; }); }
   function abrirHoja(html, onReady) {
-    cerrarHoja();
     var hoja = el('<div class="sheet-bg" role="dialog" aria-modal="true"><div class="sheet glass-sheet">' + html + '</div></div>');
+    var tit = hoja.querySelector('.sheet-h h2'); if (tit) hoja.setAttribute('aria-label', tit.textContent);
     hoja.addEventListener('click', function (e) { if (e.target === hoja || e.target.closest('[data-cerrar]')) cerrarHoja(true); });
-    document.body.appendChild(hoja); document.body.classList.add('con-hoja'); hojaAbierta = hoja;
+    registrarHoja(hoja);
     if (onReady) onReady(hoja);
+    if (!hoja.contains(document.activeElement)) { var b = hoja.querySelector('[data-cerrar], button, input, select'); if (b) b.focus({ preventScroll: true }); }
   }
   function vistaCalendario() {
     var d = datos, hoyD = fecha(d.hoy);
@@ -1423,7 +1487,7 @@
     var wrap = el('<div class="cal-wrap"></div>');
     wrap.appendChild(sec); wrap.appendChild(lado);
     app.appendChild(wrap);
-    var ancho = window.innerWidth >= 1000;
+    var ancho = window.innerWidth >= 1280;   // de 1000 a 1279 el calendario ocupa todo el ancho: el día se abre en una hoja
 
     function contenidoDia(f) {
       var fd = fecha(f), titulo = cap(DIAS[fd.getDay()]) + ' ' + fechaCorta(f);
@@ -1490,9 +1554,9 @@
       });
     });
     sec.querySelectorAll('[data-m]').forEach(function (b) {
-      b.addEventListener('click', function () { var dt = new Date(y, mo + +b.dataset.m, 1); calMes = clave7(dt); calSel = null; pintar(); });
+      b.addEventListener('click', function () { var dt = new Date(y, mo + +b.dataset.m, 1); calMes = clave7(dt); calSel = null; repintar(); });
     });
-    sec.querySelectorAll('[data-modo]').forEach(function (b) { b.addEventListener('click', function () { calModo = b.dataset.modo; pintar(); }); });
+    sec.querySelectorAll('[data-modo]').forEach(function (b) { b.addEventListener('click', function () { calModo = b.dataset.modo; repintar(); }); });
   }
 
   /* ---------- lo que necesita el botón de registrar (registro.js) ---------- */

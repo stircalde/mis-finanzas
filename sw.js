@@ -1,6 +1,6 @@
-// Service worker: la app abre al instante y sin conexión; los datos siempre se piden en vivo.
-const VERSION = 'mf-v5-40';
-const ARCHIVOS = ['./', 'index.html', 'app.css', 'app.js', 'registro.js', 'admin.js', 'logos.js', 'cards.js', 'manifest.webmanifest', 'icons/icon-192.png', 'icons/icon-512.png'];
+// Service worker: la app abre rápido y sin conexión; los datos siempre se piden en vivo.
+const VERSION = 'mf-v5-41';
+const ARCHIVOS = ['./', 'index.html', 'app.css', 'app.js', 'registro.js', 'admin.js', 'logos.js', 'cards.js', 'manifest.webmanifest', 'icons/icon-180.png', 'icons/icon-192.png', 'icons/icon-512.png'];
 
 self.addEventListener('install', (e) => {
   e.waitUntil(caches.open(VERSION).then((c) => c.addAll(ARCHIVOS.map((u) => new Request(u, { cache: 'reload' })))).then(() => self.skipWaiting()));
@@ -18,9 +18,18 @@ self.addEventListener('fetch', (e) => {
     e.respondWith(caches.open(VERSION + '-ext').then((c) => c.match(e.request).then((hit) => hit || fetch(e.request).then((r) => { c.put(e.request, r.clone()); return r; }))));
     return;
   }
-  // Archivos de la app: red primero (para recibir mejoras), caché si no hay conexión.
+  // Archivos de la app: red primero (para recibir mejoras); si la red tarda más de 3 s o no hay conexión, la copia guardada.
   if (url.origin === self.location.origin) {
-    e.respondWith(fetch(e.request, { cache: 'no-cache' }).then((r) => { const copia = r.clone(); caches.open(VERSION).then((c) => c.put(e.request, copia)); return r; })
-      .catch(() => caches.match(e.request).then((hit) => hit || caches.match('index.html'))));
+    const deCache = () => caches.match(e.request).then((hit) => hit || (e.request.mode === 'navigate' ? caches.match('index.html') : undefined));
+    e.respondWith(new Promise((resolve) => {
+      let listo = false;
+      const dar = (r) => { if (!listo && r) { listo = true; resolve(r); } };
+      const t = setTimeout(() => deCache().then(dar), 3000);
+      fetch(e.request, { cache: 'no-cache' }).then((r) => {
+        clearTimeout(t);
+        if (r.ok) { const copia = r.clone(); caches.open(VERSION).then((c) => c.put(e.request, copia)); }
+        if (!listo) { listo = true; resolve(r); }
+      }).catch(() => { clearTimeout(t); deCache().then((hit) => { if (!listo) { listo = true; resolve(hit || Response.error()); } }); });
+    }));
   }
 });
