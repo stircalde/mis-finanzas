@@ -32,8 +32,9 @@ de *Propiedades de script → CLAVE*.
 5. Si algo falla: Gestionar implementaciones → Editar → elige la versión anterior.
 
 ## Estado
-- Backend desplegado: versión 19 (clave en Propiedades de script). App: ver `VERSION` en `sw.js`.
+- Backend desplegado: versión 20 (clave en Propiedades de script). App: ver `VERSION` en `sw.js`.
+- Apariencia (tema, 8 colores, Original/Cristal/Mate, OLED) publicada: ver DEVELOPMENT.md.
 - Pendientes conocidos: `tests/conocidos.json`. El más importante: intereses de tarjeta **Opción A**
   (ver DEVELOPMENT.md), que se hace con los extractos reales de Davibank y Nubank.
-- Ideas propuestas, sin empezar: personalizar apariencia (colores y 4 estilos, previsualización
-  primero), versión para otras personas (plantilla), registro automático desde notificaciones.
+- Ideas propuestas, sin empezar: versión para otras personas (plantilla), registro automático desde
+  notificaciones.

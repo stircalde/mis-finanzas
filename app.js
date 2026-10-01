@@ -77,7 +77,7 @@
   /** Color de marca para degradados (si la marca es negra, usa su color de texto). */
   function colorMarca(nombre, esFijo) {
     var e = ent(nombre, esFijo);
-    if (!e) return nombre === 'Mamá' ? '#F2994A' : '#3d8bff';
+    if (!e) return nombre === 'Mamá' ? '#F2994A' : '#1d5fd1';
     return lum(e.color) < 0.03 ? e.colorTexto : e.color;
   }
   function iniciales(n) {
@@ -359,7 +359,7 @@
     var neg = disp.valor < 0;
     // Inicio simple: tu balance (lo que tienes en tus cuentas) y los ingresos y gastos del mes.
     var nodo = el('<section class="hero hero-simple" aria-label="Resumen">' +
-      '<svg class="ribbon" viewBox="0 0 800 300" preserveAspectRatio="none" aria-hidden="true"><defs><linearGradient id="rb" x1="0" x2="1"><stop offset="0" stop-color="#63d4ff" stop-opacity="0"/><stop offset=".55" stop-color="#9fe6ff" stop-opacity=".9"/><stop offset="1" stop-color="#ffffff" stop-opacity=".2"/></linearGradient><filter id="bl"><feGaussianBlur stdDeviation="6"/></filter></defs>' +
+      '<svg class="ribbon" viewBox="0 0 800 300" preserveAspectRatio="none" aria-hidden="true"><defs><linearGradient id="rb" x1="0" x2="1"><stop offset="0" style="stop-color:var(--c2)" stop-opacity="0"/><stop offset=".55" style="stop-color:color-mix(in srgb, var(--c2) 60%, #fff)" stop-opacity=".9"/><stop offset="1" stop-color="#ffffff" stop-opacity=".2"/></linearGradient><filter id="bl"><feGaussianBlur stdDeviation="6"/></filter></defs>' +
       '<path d="M-20 250 C 180 120, 340 330, 520 150 S 760 40, 840 90" stroke="url(#rb)" stroke-width="46" fill="none" filter="url(#bl)" opacity=".45"/>' +
       '<path d="M-20 240 C 180 110, 340 320, 520 140 S 760 30, 840 80" stroke="url(#rb)" stroke-width="1.5" fill="none"/></svg>' +
       '<div class="hero-left"><div class="disp bal-caja"><div class="eyebrow">Tu balance</div>' +
@@ -382,9 +382,16 @@
   }
   var dispAbierta = false;
 
+  // Texto legible sobre el color de un banco: oscuro si el color es claro (p. ej. plateado), blanco si no.
+  function estiloMarca(c) {
+    var h = String(c || '').replace('#', ''); if (h.length === 3) h = h.replace(/./g, '$&$&');
+    var lin = function (i) { var v = parseInt(h.substr(i, 2), 16) / 255; return v <= 0.04045 ? v / 12.92 : Math.pow((v + 0.055) / 1.055, 2.4); };
+    var lum = h.length === 6 ? 0.2126 * lin(0) + 0.7152 * lin(2) + 0.0722 * lin(4) : 0;
+    return '--bc:' + c + ';--bt:' + (lum > 0.36 ? '#141a2b' : '#fff');
+  }
   function tarjetaMarca(nombre, saldo, extra, onClick, serie) {
     var c = colorMarca(nombre);
-    var b = el('<button type="button" class="acct brand-card' + (saldo < 0 ? ' neg' : '') + '" style="--bc:' + c + '">' +
+    var b = el('<button type="button" class="acct brand-card' + (saldo < 0 ? ' neg' : '') + '" style="' + estiloMarca(c) + '">' +
       sparkline(serie, '#ffffff') +
       '<div class="row1">' + logo(nombre) + '<span class="name">' + esc(nombre) + '</span></div>' +
       '<div class="bal num">' + pesos(saldo) + '</div>' + (extra || '') + '</button>');
@@ -954,7 +961,6 @@
       return '<button type="button" class="mas-fila" data-k="' + k + '"><span class="mas-ico">' + ico + '</span><span class="mas-tx"><b>' + t + '</b>' +
         (sub ? '<small>' + sub + '</small>' : '') + '</span>' + (extra || ICON.right) + '</button>';
     };
-    var claro = temaActual() === 'claro';
     var n = el('<div class="mas">' +
       '<section class="card"><div class="card-h"><h2>Secciones</h2></div><div class="mas-lista">' +
       fila('calendario', '📅', 'Calendario', 'Pagos y movimientos día a día') +
@@ -963,7 +969,7 @@
       '<section class="card"><div class="card-h"><h2>Configuración</h2></div><div class="mas-lista">' +
       fila('cuentas', '💳', 'Mis cuentas y tarjetas', 'Agregar, editar, imagen de la tarjeta, archivar') +
       fila('fijos', '📌', 'Gastos fijos y suscripciones', 'Agregar, pagar, cancelar') +
-      fila('tema', claro ? '🌙' : '☀️', 'Tema', claro ? 'Claro' : 'Oscuro', '<span class="mas-sw' + (claro ? '' : ' on') + '" aria-hidden="true"><i></i></span>') +
+      fila('apariencia', '🎨', 'Apariencia', resumenApariencia()) +
       '</div></section>' +
       '<p class="hint mas-pie">Próximamente aquí: metas de ahorro e inversiones.</p></div>');
     n.querySelectorAll('.mas-fila').forEach(function (b) {
@@ -972,7 +978,7 @@
         if (k === 'calendario' || k === 'medeben') ir('#/' + k);
         else if (k === 'cuentas' && window.MFAdmin) MFAdmin.cuentas();
         else if (k === 'fijos' && window.MFAdmin) MFAdmin.fijos();
-        else if (k === 'tema') { temaGuardado = temaActual() === 'claro' ? 'oscuro' : 'claro'; guardarLocal('tema', temaGuardado); aplicarTema(); repintar(); }
+        else if (k === 'apariencia') abrirApariencia();
       });
     });
     app.appendChild(n);
@@ -1309,15 +1315,81 @@
   }
 
 
-  /* =================== TEMA CLARO / OSCURO =================== */
+  /* =================== APARIENCIA: TEMA, COLOR, ESTILO Y OLED =================== */
+  // Se guarda en este dispositivo. Tema: 'claro' | 'oscuro' | null (automático, sigue al sistema).
   var temaGuardado = leerLocal('tema');
+  var AP = { color: leerLocal('apColor') || 'azul', estilo: leerLocal('apEstilo') || 'original', oled: leerLocal('apOled') === '1' };
+  var AP_COLORES = [['azul', 'Azul', '#3d8bff'], ['indigo', 'Índigo', '#7b6df0'], ['violeta', 'Violeta', '#ae7aed'], ['rosa', 'Rosa', '#f067a6'],
+    ['cian', 'Cian', '#37cbe8'], ['esmeralda', 'Esmeralda', '#0d906d'], ['oro', 'Oro', '#d3bd75'], ['grafito', 'Grafito', '#969fab']];
+  var AP_ESTILOS = [['original', 'Original', 'Brillos suaves y degradados'], ['cristal', 'Cristal', 'Transparencias, sin desenfoque'], ['mate', 'Mate', 'Sólido y sobrio; el más liviano']];
   var mqClaro = window.matchMedia ? window.matchMedia('(prefers-color-scheme: light)') : null;
   function temaActual() { return temaGuardado || (mqClaro && mqClaro.matches ? 'claro' : 'oscuro'); }
+  // Color real de un valor CSS (color-mix incluido), para la barra del navegador.
+  function colorPlano(css) {
+    try { var c = document.createElement('canvas'); c.width = c.height = 1; var x = c.getContext('2d'); x.fillStyle = '#000'; x.fillStyle = css; x.fillRect(0, 0, 1, 1);
+      var p = x.getImageData(0, 0, 1, 1).data; return '#' + [p[0], p[1], p[2]].map(function (v) { return ('0' + v.toString(16)).slice(-2); }).join(''); } catch (e) { return ''; }
+  }
   function aplicarTema() {
-    var claro = temaActual() === 'claro';
-    document.documentElement.setAttribute('data-theme', claro ? 'light' : 'dark');
+    var claro = temaActual() === 'claro', h = document.documentElement;
+    h.setAttribute('data-theme', claro ? 'light' : 'dark');
+    if (AP.color !== 'azul') h.setAttribute('data-color', AP.color); else h.removeAttribute('data-color');
+    if (AP.estilo !== 'original') h.setAttribute('data-estilo', AP.estilo); else h.removeAttribute('data-estilo');
+    if (AP.oled) h.setAttribute('data-oled', ''); else h.removeAttribute('data-oled');
     var m = document.querySelector('meta[name="theme-color"]');
-    if (m) m.setAttribute('content', claro ? '#f3f5fb' : '#050912');
+    if (m) m.setAttribute('content', colorPlano(getComputedStyle(h).backgroundColor) || (claro ? '#f3f5fb' : '#050912'));
+  }
+  function resumenApariencia() {
+    var col = AP_COLORES.filter(function (c) { return c[0] === AP.color; })[0] || AP_COLORES[0];
+    var est = AP_ESTILOS.filter(function (e) { return e[0] === AP.estilo; })[0] || AP_ESTILOS[0];
+    return (temaGuardado === 'claro' ? 'Claro' : temaGuardado === 'oscuro' ? 'Oscuro' : 'Automático') + ' · ' + col[1] + ' · ' + est[1] + (AP.oled && temaGuardado !== 'claro' ? ' · OLED' : '');
+  }
+  function abrirApariencia() {
+    var panel = function () {
+      var t = temaGuardado || 'auto', claro = temaGuardado === 'claro';
+      var seg = [['auto', 'Automático'], ['oscuro', 'Oscuro'], ['claro', 'Claro']].map(function (o) {
+        return '<button type="button" data-ap="tema" data-v="' + o[0] + '" aria-pressed="' + (t === o[0]) + '">' + o[1] + '</button>'; }).join('');
+      var notaOled = claro ? 'Solo en tema oscuro. Elige Oscuro o Automático para usarlo.' :
+        t === 'auto' ? 'Fondo negro puro cuando tu equipo esté en modo oscuro. Ahorra batería en pantallas OLED/AMOLED.' :
+        'Fondo negro puro. Ahorra batería en pantallas OLED/AMOLED (la mayoría de celulares de gama media y alta).';
+      return '<div class="ap-prev" aria-hidden="true">' +
+          '<div class="hero ap-hero"><small>TU BALANCE</small><b>$670.000</b><span class="ap-pill">Este mes · gastos $412.000</span></div>' +
+          '<div class="card ap-card"><div class="ap-mov"><i style="--c:#CA0080">NE</i><span>Mercado<small>Nequi · hoy</small></span><b class="ap-neg">−$45.000</b></div>' +
+          '<div class="ap-mov"><i style="--c:#DD141D">DA</i><span>Salario<small>Daviplata · 30 sep</small></span><b class="ap-pos">+$2.750.000</b></div>' +
+          '<div class="ap-btns"><span class="ap-btn">Registrar</span><span class="ap-chip">Gastos</span><span class="ap-link">Ver todo</span></div></div>' +
+        '</div>' +
+        '<h3 class="ap-t">Tema</h3><div class="seg-mini ap-seg">' + seg + '</div>' +
+        '<button type="button" class="ap-oled mas-fila" data-ap="oled"' + (claro ? ' disabled' : '') + '><span class="mas-ico">🌑</span><span class="mas-tx"><b>Negro puro (OLED)</b><small>' + notaOled + '</small></span>' +
+          '<span class="mas-sw' + (AP.oled && !claro ? ' on' : '') + '" aria-hidden="true"><i></i></span></button>' +
+        '<h3 class="ap-t">Color</h3><div class="ap-colores">' + AP_COLORES.map(function (c) {
+          return '<button type="button" data-ap="color" data-v="' + c[0] + '" aria-pressed="' + (AP.color === c[0]) + '"><i style="--sw:' + c[2] + '"></i><span>' + c[1] + '</span></button>'; }).join('') + '</div>' +
+        '<h3 class="ap-t">Estilo</h3><div class="ap-estilos">' + AP_ESTILOS.map(function (e) {
+          return '<button type="button" data-ap="estilo" data-v="' + e[0] + '" aria-pressed="' + (AP.estilo === e[0]) + '"><span class="ap-mini ap-mini-' + e[0] + '"><i></i><i></i></span><b>' + e[1] + '</b><small>' + e[2] + '</small></button>'; }).join('') + '</div>';
+    };
+    var html = '<div class="sheet-h"><div><h2>Apariencia</h2><div class="kind">Se guarda en este dispositivo</div></div>' +
+      '<button type="button" class="icon-btn" data-cerrar aria-label="Cerrar">' + ICON.close + '</button></div>' +
+      '<div class="ap-panel">' + panel() + '</div><div class="ap-pie"><button type="button" class="btn ap-reset">Restablecer</button><button type="button" class="btn primary" data-cerrar>Listo</button></div>';
+    abrirHoja(html, function (h) {
+      h.querySelector('.sheet').classList.add('ap-hoja');
+      var cuerpoP = h.querySelector('.ap-panel');
+      var cambio = function () {
+        guardarLocal('tema', temaGuardado); guardarLocal('apColor', AP.color === 'azul' ? null : AP.color);
+        guardarLocal('apEstilo', AP.estilo === 'original' ? null : AP.estilo); guardarLocal('apOled', AP.oled ? '1' : null);
+        aplicarTema();
+        var y = cuerpoP.scrollTop; cuerpoP.innerHTML = panel(); cuerpoP.scrollTop = y;
+        var fila = document.querySelector('.mas-fila[data-k="apariencia"] small'); if (fila) fila.textContent = resumenApariencia();
+      };
+      cuerpoP.addEventListener('click', function (e) {
+        var b = e.target.closest('[data-ap]'); if (!b || b.disabled) return;
+        var k = b.dataset.ap, v = b.dataset.v;
+        if (k === 'tema') temaGuardado = v === 'auto' ? null : v;
+        else if (k === 'color') AP.color = v;
+        else if (k === 'estilo') AP.estilo = v;
+        else if (k === 'oled') AP.oled = !AP.oled;
+        cambio();
+        var otra = cuerpoP.querySelector('[data-ap="' + k + '"]' + (v ? '[data-v="' + v + '"]' : '')); if (otra) otra.focus({ preventScroll: true });
+      });
+      h.querySelector('.ap-reset').addEventListener('click', function () { temaGuardado = null; AP = { color: 'azul', estilo: 'original', oled: false }; cambio(); });
+    });
   }
   aplicarTema();
   if (mqClaro && mqClaro.addEventListener) mqClaro.addEventListener('change', function () { if (!temaGuardado) { aplicarTema(); repintar(); } });
@@ -1470,13 +1542,13 @@
     var t = PLASTICOS[nombre], foto = imgTarjeta(nombre);
     if (foto) {
       var e0 = ent(nombre) || {}, c0 = colorMarca(nombre);
-      return '<div class="plastic virtual foto" style="--bc:' + c0 + '"><div class="v-top">' + logo(nombre) + '<span>' + esc(nombre) + '</span></div><div class="v-name">' + esc(nombre) + '</div>' +
+      return '<div class="plastic virtual foto" style="' + estiloMarca(c0) + '"><div class="v-top">' + logo(nombre) + '<span>' + esc(nombre) + '</span></div><div class="v-name">' + esc(nombre) + '</div>' +
         fotoTarjeta(foto, nombre) + '</div>';
     }
     if (t) return '<div class="plastic"><img src="' + t.img + '" alt="' + esc(t.nombre) + '" loading="lazy" decoding="async"></div>';
     var e = ent(nombre) || {}, c = colorMarca(nombre);
     var tipo = nombre === 'Mamá' ? 'Préstamo familiar' : e.tipo === 'Deuda' ? 'Crédito' : /bolsillo/i.test(nombre) ? 'Bolsillo' : nombre === 'Efectivo' ? 'Efectivo' : 'Cuenta';
-    return '<div class="plastic virtual" style="--bc:' + c + '"><div class="v-top">' + logo(nombre) + '<span>' + tipo + '</span></div>' +
+    return '<div class="plastic virtual" style="' + estiloMarca(c) + '"><div class="v-top">' + logo(nombre) + '<span>' + tipo + '</span></div>' +
       '<div class="v-name">' + esc(nombre.replace(/^Bolsillo Daviplata /, 'Bolsillo · ')) + '</div><svg class="v-wave" viewBox="0 0 300 120" preserveAspectRatio="none" aria-hidden="true"><path d="M0 90 C 80 40, 150 130, 300 50 L300 120 L0 120Z"/></svg></div>';
   }
   // Billetera: "Deslizar" (carrusel) o "Apilar" (bolsillo con las tarjetas asomando). Se recuerda en este dispositivo.
