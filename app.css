@@ -1035,3 +1035,45 @@ html, body { overscroll-behavior-y: contain; }
 .ptr svg { width: 20px; height: 20px; fill: none; stroke: var(--muted); stroke-width: 2.2; stroke-linecap: round; stroke-linejoin: round; }
 .ptr.listo svg { stroke: var(--accent-glow); }
 .ptr.girando svg { stroke: var(--accent-glow); animation: spin .8s linear infinite; }
+
+/* ============ propuesta: filtros compactos en Movimientos ============ */
+.fbar { display: flex; gap: 8px; align-items: center; min-width: 0; }
+.seg-tipo { flex: 1; min-width: 0; display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 3px; padding: 3px; border-radius: 999px;
+  background: var(--surface-2); border: 1px solid var(--line-strong); }
+.seg-tipo button { border: 0; background: none; color: var(--ink-2); border-radius: 999px; padding: 8px 6px; min-height: 36px; font: inherit; font-size: .84rem; font-weight: 600; cursor: pointer; white-space: nowrap; transition: background .2s, color .2s, box-shadow .2s; }
+.seg-tipo button[aria-pressed="true"] { background: linear-gradient(180deg, #3d8bff, #2f6bff); color: #fff; box-shadow: 0 6px 16px -8px rgba(60, 120, 255, .9), inset 0 1px 0 rgba(255, 255, 255, .25); }
+.btn-filtros { flex: none; display: inline-flex; align-items: center; gap: 7px; min-height: 42px; padding: 0 14px; border-radius: 999px; border: 1px solid var(--line-strong);
+  background: var(--surface-2); color: var(--ink); font: inherit; font-size: .86rem; font-weight: 600; cursor: pointer; transition: border-color .2s, box-shadow .2s; }
+.btn-filtros svg { width: 18px; height: 18px; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; }
+.btn-filtros.con { border-color: color-mix(in srgb, var(--accent) 70%, transparent); box-shadow: 0 0 0 1px color-mix(in srgb, var(--accent) 40%, transparent), 0 0 18px -6px rgba(60, 140, 255, .7); }
+.btn-filtros .cuenta-f { min-width: 20px; height: 20px; padding: 0 6px; border-radius: 999px; background: var(--accent); color: #fff; font-size: .74rem; display: inline-grid; place-items: center; }
+.f-activos { display: flex; gap: 6px; overflow-x: auto; scrollbar-width: none; padding-bottom: 2px; margin: 0 -2px; }
+.f-activos::-webkit-scrollbar { display: none; }
+.f-chip { flex: none; display: inline-flex; align-items: center; gap: 6px; padding: 6px 8px 6px 12px; min-height: 32px; border-radius: 999px; border: 1px solid color-mix(in srgb, var(--accent) 55%, transparent);
+  background: color-mix(in srgb, var(--accent) 16%, transparent); color: var(--ink); font: inherit; font-size: .8rem; cursor: pointer; white-space: nowrap; }
+.f-chip i { font-style: normal; width: 18px; height: 18px; border-radius: 50%; display: grid; place-items: center; background: rgba(255, 255, 255, .12); font-size: .9rem; line-height: 1; }
+.f-limpiar { flex: none; border: 0; background: none; color: var(--accent-glow); font: inherit; font-size: .8rem; font-weight: 600; padding: 6px 8px; cursor: pointer; white-space: nowrap; }
+.f-hoja { display: flex; flex-direction: column; max-height: min(86vh, 760px); }
+.f-panel { overflow-y: auto; overscroll-behavior: contain; display: grid; gap: 18px; padding: 4px 2px 14px; flex: 1; min-height: 0; }
+.f-sec h3 { font-size: .78rem; letter-spacing: .06em; text-transform: uppercase; color: var(--muted); margin: 0 0 8px; font-weight: 600; }
+.f-ops { display: flex; flex-wrap: wrap; gap: 7px; }
+.f-ops .op { min-height: 38px; }
+.f-ops .op[aria-pressed="true"] { background: linear-gradient(180deg, #3d8bff, #2f6bff); border-color: transparent; color: #fff; box-shadow: 0 6px 16px -8px rgba(60, 120, 255, .9); }
+.f-pie { display: grid; grid-template-columns: 1fr 1.4fr; gap: 10px; padding-top: 12px; border-top: 1px solid var(--line); }
+.f-pie .btn { min-height: 46px; border-radius: 14px; font-weight: 600; }
+@media (max-width: 360px) { .seg-tipo button { font-size: .78rem; } .btn-filtros span { display: none; } }
+.f-pie .btn.primary { background: linear-gradient(180deg, #3d8bff, #2f6bff); border-color: transparent; color: #fff; box-shadow: 0 10px 22px -10px rgba(60, 120, 255, .9); }
+
+.fbar .search { flex: 1; min-width: 0; }
+.btn-filtros .cuenta-f[hidden] { display: none; }
+.seg-tipo { flex: none; width: 100%; }
+.f-activos { flex-wrap: wrap; overflow: visible; }
+.f-pie .btn { white-space: nowrap; padding: 0 10px; }
+
+.f-ops .op small { margin-left: 4px; font-size: .72rem; opacity: .7; font-weight: 600; }
+.f-aviso { margin: 0; padding: 9px 12px; border-radius: 12px; font-size: .8rem; color: var(--ink-2); background: color-mix(in srgb, #f2b33d 14%, transparent); border: 1px solid color-mix(in srgb, #f2b33d 40%, transparent); }
+
+.f-ops .op:disabled { opacity: .35; cursor: not-allowed; }
+.f-mes { width: 100%; margin-top: 10px; border-radius: 14px; min-height: 44px; }
+
+.seg-tipo button:disabled { opacity: .35; cursor: not-allowed; }

@@ -58,6 +58,7 @@
     eyeOff: '<svg viewBox="0 0 24 24"><path d="M3 3l18 18M10.6 5.1A10.7 10.7 0 0 1 12 5c6.4 0 10 7 10 7a17 17 0 0 1-3.2 4.1M6.6 6.6C3.7 8.5 2 12 2 12s3.6 7 10 7c1.6 0 3-.4 4.3-1"/><path d="M9.9 9.9a3 3 0 0 0 4.2 4.2"/></svg>',
     chevron: '<svg viewBox="0 0 16 16"><path d="M4 6l4 4 4-4"/></svg>',
     search: '<svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="M20 20l-3.5-3.5"/></svg>',
+    filtro: '<svg viewBox="0 0 24 24"><path d="M4 6h10M18 6h2M4 12h4M12 12h8M4 18h12M20 18h0"/><circle cx="16" cy="6" r="2"/><circle cx="10" cy="12" r="2"/><circle cx="18" cy="18" r="2"/></svg>',
     sun: '<svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="4"/><path d="M12 2.5v2M12 19.5v2M4.6 4.6l1.4 1.4M18 18l1.4 1.4M2.5 12h2M19.5 12h2M4.6 19.4L6 18M18 6l1.4-1.4"/></svg>',
     moon: '<svg viewBox="0 0 24 24"><path d="M20 14.5A8 8 0 0 1 9.5 4a8 8 0 1 0 10.5 10.5z"/></svg>',
     close: '<svg viewBox="0 0 24 24"><path d="M6 6l12 12M18 6L6 18"/></svg>',
@@ -747,39 +748,65 @@
   function vistaMovimientos() {
     var d = datos;
     app.appendChild(barraSuperior(d, false));
-    var cats = {}, ctas = {};
-    d.movimientos.forEach(function (m) { cats[grupoMov(m)] = 1; if (m.cuenta && m.cuenta !== 'Mamá (regalo)') ctas[m.cuenta] = 1; if (m.destino) ctas[m.destino] = 1; });
-    var meses = {};
-    d.movimientos.forEach(function (m) { meses[m.fecha.slice(0, 7)] = 1; });
-    var opt = function (obj, sel, vacio) {
-      return '<option value="">' + vacio + '</option>' + Object.keys(obj).sort().map(function (k) {
-        return '<option value="' + esc(k) + '"' + (k === sel ? ' selected' : '') + '>' + esc(k.length === 7 && /^\d{4}-/.test(k) ? cap(nombreMes(k)) : k) + '</option>';
-      }).join('');
-    };
-    // Categorías de gastos e ingresos primero; luego los movimientos sin categoría (entre cuentas, retiros, pagos…).
-    var optCat = function (obj, sel) {
-      var o = function (k) { return '<option value="' + esc(k) + '"' + (k === sel ? ' selected' : '') + '>' + (EMOJI_GRUPO[k] ? EMOJI_GRUPO[k] + ' ' : '') + esc(k) + '</option>'; };
-      var ks = Object.keys(obj).sort(), otros = ks.filter(function (k) { return EMOJI_GRUPO[k]; }), cat = ks.filter(function (k) { return !EMOJI_GRUPO[k]; });
-      return '<option value="">Categoría: todas</option><optgroup label="Gastos e ingresos">' + cat.map(o).join('') + '</optgroup>' +
-        (otros.length ? '<optgroup label="Movimientos de plata">' + otros.map(o).join('') + '</optgroup>' : '');
-    };
+    var cats = {}, ctas = {}, meses = {};
+    d.movimientos.forEach(function (m) {
+      cats[grupoMov(m)] = 1; meses[m.fecha.slice(0, 7)] = 1;
+      if (m.cuenta && m.cuenta !== 'Mamá (regalo)') ctas[m.cuenta] = 1; if (m.destino) ctas[m.destino] = 1;
+    });
     ['Movimientos entre cuentas', 'Retiros en efectivo'].forEach(function (k) { cats[k] = 1; });
-    var n = el('<section class="card"><div class="card-h"><h2>Movimientos</h2><span class="aside total-filtro"></span></div>' +
-      '<div class="buscador"><label class="search">' + ICON.search + '<input type="search" placeholder="Buscar: Ara, Temu, gasolina…" value="' + esc(busq.q) + '" aria-label="Buscar movimientos"></label>' +
-      '<div class="filters" role="group" aria-label="Tipo">' + ['todos:Todos', 'Gasto:Gastos', 'Ingreso:Entradas', 'Transferencia:Pagos y transferencias'].map(function (x) {
-        var p = x.split(':'); return '<button type="button" data-f="' + p[0] + '" aria-pressed="' + (busq.tipo === p[0]) + '">' + p[1] + '</button>';
+    var emojiCat = {};
+    (d.listaCategorias || []).forEach(function (c) { emojiCat[c.nombre] = c.emoji; });
+    (d.categorias || []).forEach(function (c) { if (!emojiCat[c.nombre]) emojiCat[c.nombre] = c.emoji; });
+    (d.tiposIngreso || []).forEach(function (c) { if (!emojiCat[c.nombre]) emojiCat[c.nombre] = c.emoji; });
+    var icoCat = function (k) { return EMOJI_GRUPO[k] || emojiCat[k] || '🔖'; };
+    var listaCats = Object.keys(cats).sort(function (a, b) { return (EMOJI_GRUPO[a] ? 1 : 0) - (EMOJI_GRUPO[b] ? 1 : 0) || a.localeCompare(b); });
+    var listaCtas = Object.keys(ctas).sort(), listaMeses = Object.keys(meses).sort().reverse();
+    var TIPOS_RAP = [['todos', 'Todos'], ['Gasto', 'Gastos'], ['Ingreso', 'Ingresos']];
+    var nombreFiltro = { cat: function (v) { return icoCat(v) + ' ' + v; }, cuenta: function (v) { return v; }, mes: function (v) { return cap(nombreMes(v)); }, tipo: function () { return '🔄 Pagos y transferencias'; } };
+    var activos = function () {
+      var a = [];
+      if (busq.cat) a.push(['cat', busq.cat]);
+      if (busq.cuenta) a.push(['cuenta', busq.cuenta]);
+      if (busq.mes) a.push(['mes', busq.mes]);
+      if (busq.tipo === 'Transferencia') a.push(['tipo', 'Transferencia']);
+      return a;
+    };
+    var n = el('<section class="card movs"><div class="card-h"><h2>Movimientos</h2><span class="aside total-filtro"></span></div>' +
+      '<div class="buscador"><div class="fbar"><label class="search">' + ICON.search + '<input type="search" placeholder="Buscar…" value="' + esc(busq.q) + '" aria-label="Buscar movimientos"></label>' +
+      '<button type="button" class="btn-filtros" aria-haspopup="dialog">' + ICON.filtro + '<span>Filtros</span><b class="cuenta-f" hidden></b></button></div>' +
+      '<div class="seg-tipo" role="group" aria-label="Tipo">' + TIPOS_RAP.map(function (x) {
+        return '<button type="button" data-f="' + x[0] + '" aria-pressed="' + (busq.tipo === x[0]) + '">' + x[1] + '</button>';
       }).join('') + '</div>' +
-      '<div class="fil-row"><select class="select" data-k="cat" aria-label="Categoría">' + optCat(cats, busq.cat) + '</select>' +
-      '<select class="select" data-k="cuenta" aria-label="Cuenta">' + opt(ctas, busq.cuenta, 'Cuenta: todas') + '</select>' +
-      '<select class="select" data-k="mes" aria-label="Mes">' + opt(meses, busq.mes, 'Mes: todos') + '</select></div></div>' +
+      '<div class="f-activos" hidden></div></div>' +
       '<div class="tx"></div></section>');
     app.appendChild(n);
-    var cont = n.querySelector('.tx'), total = n.querySelector('.total-filtro');
+    var cont = n.querySelector('.tx'), total = n.querySelector('.total-filtro'), chipsAct = n.querySelector('.f-activos'), badge = n.querySelector('.cuenta-f');
     var limite = 50;
+    function pintarActivos() {
+      var a = activos();
+      badge.hidden = !a.length; badge.textContent = a.length;
+      n.querySelector('.btn-filtros').classList.toggle('con', a.length > 0);
+      // Selector rápido: se apagan los tipos que no tienen movimientos con los filtros aplicados (ej. Mercado → sin Ingresos).
+      var ct = conteos(busq, 'tipo');
+      n.querySelectorAll('.seg-tipo button').forEach(function (x) {
+        x.setAttribute('aria-pressed', String(x.dataset.f === busq.tipo));
+        var off = x.dataset.f !== 'todos' && x.dataset.f !== busq.tipo && !ct[x.dataset.f];
+        x.disabled = off; x.title = off ? 'Sin movimientos con los filtros que aplicaste' : '';
+      });
+      chipsAct.hidden = !a.length;
+      chipsAct.innerHTML = a.map(function (x) { return '<button type="button" class="f-chip" data-k="' + x[0] + '"><span>' + esc(nombreFiltro[x[0]](x[1])) + '</span><i aria-hidden="true">×</i></button>'; }).join('') +
+        (a.length > 1 ? '<button type="button" class="f-limpiar">Limpiar todo</button>' : '');
+    }
+    chipsAct.addEventListener('click', function (e) {
+      var c = e.target.closest('.f-chip'), l = e.target.closest('.f-limpiar');
+      if (c) { var k = c.dataset.k; if (k === 'tipo') busq.tipo = 'todos'; else busq[k] = ''; }
+      else if (l) { busq.cat = ''; busq.cuenta = ''; busq.mes = ''; if (busq.tipo === 'Transferencia') busq.tipo = 'todos'; }
+      else return;
+      pintarActivos(); filtrar(true);
+    });
     function filtrar(animar) {
       if (animar) {
         limite = 50;
-        // Con listas largas se cambia sin animar la altura (medir cientos de filas en cada cuadro es lo que se sentía lento).
         if (cont.childElementCount > 60) { filtrar(); entrada(cont, 'cambia', ':scope > :nth-child(-n+16)'); return; }
         animarAltura(cont, function () { filtrar(); }); entrada(cont, 'cambia', ':scope > :nth-child(-n+16)'); return;
       }
@@ -797,7 +824,7 @@
       var suma = items.filter(function (m) { return m.tipo === 'Gasto'; }).reduce(function (s, m) { return s + (m.mio || m.monto); }, 0);
       total.innerHTML = items.length + ' movimiento' + (items.length === 1 ? '' : 's') + (suma ? ' · gastos <b>' + pesos(suma) + '</b>' : '');
       var ver = items.slice(0, limite);
-      cont.innerHTML = listaAgrupada(ver) || '<div class="empty">No hay movimientos con ese filtro.</div>';
+      cont.innerHTML = listaAgrupada(ver) || '<div class="empty">No hay movimientos con estos filtros.</div>';
       var viejo = n.querySelector('.ver-todo'); if (viejo) viejo.remove();
       if (items.length > limite) {
         var faltan = items.length - limite;
@@ -805,22 +832,116 @@
         b.addEventListener('click', function () {
           var desde = cont.childElementCount;
           limite += 50; filtrar();
-          // solo las filas nuevas entran con animación
           [].slice.call(cont.children, desde, desde + 16).forEach(function (x, i) { x.style.setProperty('--i', i); x.style.animation = 'txEntra .42s cubic-bezier(.2,.7,.2,1) both'; x.style.animationDelay = (i * 28) + 'ms'; });
         });
         n.appendChild(b);
       }
     }
+    // Filtros que se combinan con lógica: cada opción solo aparece si hay movimientos con lo demás que elegiste
+    // (por ejemplo, con "Ingresos" no aparecen Mercado ni Compras en línea).
+    var tipoDe = function (m) {
+      return m.tipo === 'Gasto' ? 'Gasto' : (m.tipo === 'Ingreso' || m.tipo === 'Me pagaron' || m.tipo === 'Me prestaron') ? 'Ingreso' : 'Transferencia';
+    };
+    var cumple = function (m, f, excepto) {
+      if (excepto !== 'tipo' && f.tipo && f.tipo !== 'todos' && tipoDe(m) !== f.tipo) return false;
+      if (excepto !== 'cat' && f.cat && grupoMov(m) !== f.cat) return false;
+      if (excepto !== 'cuenta' && f.cuenta && m.cuenta !== f.cuenta && m.destino !== f.cuenta) return false;
+      if (excepto !== 'mes' && f.mes && m.fecha.slice(0, 7) !== f.mes) return false;
+      return true;
+    };
+    // Cuántos movimientos tendría cada opción de la sección k, con los demás filtros como están.
+    var conteos = function (f, k) {
+      var c = {};
+      d.movimientos.forEach(function (m) {
+        if (!cumple(m, f, k)) return;
+        var vs = k === 'tipo' ? [tipoDe(m)] : k === 'cat' ? [grupoMov(m)] : k === 'mes' ? [m.fecha.slice(0, 7)] : [m.cuenta, m.destino];
+        vs.forEach(function (v) { if (v) c[v] = (c[v] || 0) + 1; });
+      });
+      return c;
+    };
+    // Si una elección deja a otra sin sentido (Ingresos + Mercado), la otra vuelve a "Todas".
+    var ajustar = function (f, cambiado) {
+      var quitados = [];
+      ['cat', 'cuenta', 'mes', 'tipo'].forEach(function (k) {
+        if (k === cambiado) return;
+        var v = f[k]; if (!v || v === 'todos') return;
+        if (!conteos(f, k)[v]) { quitados.push(k === 'tipo' ? 'el tipo' : k === 'cat' ? 'la categoría' : k === 'cuenta' ? 'la cuenta' : 'el período'); f[k] = k === 'tipo' ? 'todos' : ''; }
+      });
+      return quitados;
+    };
+    // Panel de filtros (hoja inferior): los cambios se aplican al tocar "Aplicar".
+    function abrirFiltros() {
+      var tmp = { cat: busq.cat, cuenta: busq.cuenta, mes: busq.mes, tipo: busq.tipo }, aviso = '';
+      var seccion = function (k, titulo, ops) {
+        var c = conteos(tmp, k), total = 0; Object.keys(c).forEach(function (x) { total += c[x]; });
+        // El tipo muestra sus 4 opciones y deshabilita las que no tienen movimientos con lo ya elegido;
+        // categorías y cuentas solo muestran las que sí tienen. Así nunca se borra lo que ya escogiste.
+        var visibles = ops.filter(function (o) { return k === 'tipo' || o[0] === '' || o[0] === 'todos' || c[o[0]] || tmp[k] === o[0]; });
+        return '<div class="f-sec"><h3>' + titulo + '</h3><div class="f-ops" role="group">' + visibles.map(function (o) {
+          var todas = o[0] === '' || o[0] === 'todos', n = todas ? '' : (c[o[0]] || 0), off = !todas && !n && tmp[k] !== o[0];
+          return '<button type="button" class="op" data-k="' + k + '" data-v="' + esc(o[0]) + '" aria-pressed="' + (tmp[k] === o[0]) + '"' + (off ? ' disabled title="Sin movimientos con lo que elegiste"' : '') + '>' +
+            o[1] + (n ? ' <small>' + n + '</small>' : '') + '</button>';
+        }).join('') + '</div></div>';
+      };
+      // Período: "Todos los meses" por defecto, o "Elegir mes" que muestra una lista con los meses que tienen movimientos.
+      var periodo = function () {
+        var c = conteos(tmp, 'mes'), meses = listaMeses.filter(function (k) { return c[k] || tmp.mes === k; });
+        var elegir = !!tmp.mes || tmp._elegirMes;
+        return '<div class="f-sec"><h3>Período</h3><div class="f-ops" role="group">' +
+          '<button type="button" class="op" data-k="mes" data-v="" aria-pressed="' + !elegir + '">Todos los meses</button>' +
+          '<button type="button" class="op" data-k="_mes" data-v="1" aria-pressed="' + elegir + '"' + (meses.length ? '' : ' disabled') + '>📅 Elegir mes</button></div>' +
+          (elegir ? '<select class="select f-mes" aria-label="Mes">' + meses.map(function (k) {
+            return '<option value="' + k + '"' + (k === tmp.mes ? ' selected' : '') + '>' + cap(nombreMes(k)) + ' · ' + (c[k] || 0) + ' mov.</option>'; }).join('') + '</select>' : '') + '</div>';
+      };
+      var panel = function () {
+        return (aviso ? '<p class="f-aviso">' + aviso + '</p>' : '') +
+          seccion('tipo', 'Tipo de movimiento', [['todos', 'Todos'], ['Gasto', '💸 Gastos'], ['Ingreso', '💰 Ingresos'], ['Transferencia', '🔄 Pagos y transferencias']]) +
+          periodo() +
+          seccion('cat', 'Categoría', [['', 'Todas']].concat(listaCats.map(function (k) { return [k, icoCat(k) + ' ' + esc(k)]; }))) +
+          seccion('cuenta', 'Cuenta', [['', 'Todas']].concat(listaCtas.map(function (k) { return [k, esc(k)]; })));
+      };
+      var html = '<div class="sheet-h"><div><h2>Filtrar movimientos</h2><div class="kind">Solo ves opciones que tienen movimientos</div></div>' +
+        '<button type="button" class="icon-btn" data-cerrar aria-label="Cerrar">' + ICON.close + '</button></div>' +
+        '<div class="f-panel">' + panel() + '</div><div class="f-pie"><button type="button" class="btn f-limpiar-p">Limpiar filtros</button><button type="button" class="btn primary f-aplicar">Aplicar</button></div>';
+      abrirHoja(html, function (h) {
+        h.querySelector('.sheet').classList.add('f-hoja');
+        var cuerpoP = h.querySelector('.f-panel');
+        var repintarP = function () { var y = cuerpoP.scrollTop; cuerpoP.innerHTML = panel(); cuerpoP.scrollTop = y; contar(); };
+        var contar = function () {
+          var c = (tmp.cat ? 1 : 0) + (tmp.cuenta ? 1 : 0) + (tmp.mes ? 1 : 0) + (tmp.tipo === 'Transferencia' ? 1 : 0);
+          var n = d.movimientos.filter(function (m) { return cumple(m, tmp, ''); }).length;
+          h.querySelector('.f-aplicar').textContent = 'Ver ' + n + ' movimiento' + (n === 1 ? '' : 's') + (c ? ' (' + c + ')' : '');
+        };
+        cuerpoP.addEventListener('click', function (e) {
+          var b = e.target.closest('.op'); if (!b || b.disabled) return;
+          if (b.dataset.k === '_mes') {
+            tmp._elegirMes = true;
+            if (!tmp.mes) { var cm = conteos(tmp, 'mes'); tmp.mes = listaMeses.filter(function (k) { return cm[k]; })[0] || ''; }
+          } else {
+            tmp[b.dataset.k] = b.dataset.v;
+            if (b.dataset.k === 'mes') tmp._elegirMes = false;
+          }
+          repintarP();
+        });
+        cuerpoP.addEventListener('change', function (e) { if (e.target.classList.contains('f-mes')) { tmp.mes = e.target.value; repintarP(); } });
+        h.querySelector('.f-limpiar-p').addEventListener('click', function () {
+          tmp.cat = ''; tmp.cuenta = ''; tmp.mes = ''; tmp._elegirMes = false; if (tmp.tipo === 'Transferencia') tmp.tipo = 'todos'; aviso = '';
+          repintarP();
+        });
+        h.querySelector('.f-aplicar').addEventListener('click', function () {
+          busq.cat = tmp.cat; busq.cuenta = tmp.cuenta; busq.mes = tmp.mes; busq.tipo = tmp.tipo;
+          cerrarHoja(true); pintarActivos(); filtrar(true);
+        });
+        contar();
+      });
+    }
+    n.querySelector('.btn-filtros').addEventListener('click', abrirFiltros);
     var tBusq = null;
     n.querySelector('input').addEventListener('input', function (e) { busq.q = e.target.value; limite = 50; clearTimeout(tBusq); tBusq = setTimeout(filtrar, 150); });
-    n.querySelectorAll('.filters button').forEach(function (b) {
-      b.addEventListener('click', function () {
-        busq.tipo = b.dataset.f;
-        n.querySelectorAll('.filters button').forEach(function (x) { x.setAttribute('aria-pressed', String(x === b)); });
-        filtrar(true);
-      });
+    n.querySelectorAll('.seg-tipo button').forEach(function (b) {
+      b.addEventListener('click', function () { if (b.disabled) return; busq.tipo = b.dataset.f; pintarActivos(); filtrar(true); });
     });
-    n.querySelectorAll('select').forEach(function (s) { s.addEventListener('change', function () { busq[s.dataset.k] = s.value; filtrar(true); }); });
+    pintarActivos();
     filtrar();
   }
 
