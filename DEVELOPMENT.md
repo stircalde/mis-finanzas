@@ -148,6 +148,9 @@ A.fin('mi_caso');
   color se confunda con los semánticos ni con colores de bancos. Cristal **no usa `backdrop-filter`**.
   OLED solo aplica en tema oscuro (en Automático, cuando el sistema está en oscuro); no se puede detectar
   el tipo de pantalla desde el navegador, por eso es un interruptor visible para todos.
+  En **Automático** el interruptor OLED está disponible aunque el sistema esté en claro: queda guardado y se
+  aplica solo cuando el sistema pase a oscuro (el resumen dice "OLED en oscuro"). Al pasar a Claro no se
+  borra la elección; se ignora mientras el tema sea claro y vuelve al regresar a oscuro. Decidido.
 
 ## Cómo reportar un hallazgo (auditores)
 

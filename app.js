@@ -1341,7 +1341,7 @@
   function resumenApariencia() {
     var col = AP_COLORES.filter(function (c) { return c[0] === AP.color; })[0] || AP_COLORES[0];
     var est = AP_ESTILOS.filter(function (e) { return e[0] === AP.estilo; })[0] || AP_ESTILOS[0];
-    return (temaGuardado === 'claro' ? 'Claro' : temaGuardado === 'oscuro' ? 'Oscuro' : 'Automático') + ' · ' + col[1] + ' · ' + est[1] + (AP.oled && temaGuardado !== 'claro' ? ' · OLED' : '');
+    return (temaGuardado === 'claro' ? 'Claro' : temaGuardado === 'oscuro' ? 'Oscuro' : 'Automático') + ' · ' + col[1] + ' · ' + est[1] + (AP.oled && temaGuardado !== 'claro' ? (temaGuardado ? ' · OLED' : ' · OLED en oscuro') : '');
   }
   function abrirApariencia() {
     var panel = function () {
