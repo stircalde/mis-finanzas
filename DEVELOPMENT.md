@@ -94,6 +94,9 @@ A.fin('mi_caso');
   inicial); en los resúmenes mensuales solo cuentan desde `RESUMEN_DESDE`.
 - **Cuenta "Mamá" y "Mamá (regalo)".** "Mamá" es una deuda (lo que ella presta). "Mamá (regalo)" es una
   cuenta de paso que siempre queda en $0: registra lo que ella paga y regala, como ingreso y gasto a la vez.
+- **Pagarle a alguien más de lo que le debes** exige decir qué pasa con la diferencia (`exceso`):
+  `debe` (te la queda debiendo → pasa a *Me deben*) o `regalo` (gasto tuyo). Sin eso, el backend lo
+  rechaza, para que nunca desaparezca plata. Al revés (*Me pagaron* de más) existe `exceso=ingreso`.
 - **Bolsillos** (cuenta de plata con "Aparta para"): dinero separado para pagar una tarjeta; cuenta
   como plata y se muestra junto a la tarjeta que alimenta.
 - **"Disponible para gastar"** = plata total − cuotas de créditos que vencen en los próximos 30 días −
