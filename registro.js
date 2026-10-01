@@ -94,7 +94,19 @@
     return campo('Fecha', '<input class="in" data-k="fecha" type="date" max="' + hoyISO() + '" value="' + esc(st.fecha || hoyISO()) + '">', '', 'fecha');
   }
   function opsPlata(conSaldo) { return cfg.plata.map(function (c) { return [c.n, c.e + ' ' + c.n + (conSaldo ? ' · tiene ' + pesos(c.s) : '')]; }); }
-  function opsDeudas() { return deudasSinMama().map(function (c) { return [c.n, c.e + ' ' + c.n]; }); }
+  function opsDeudas() { return deudasSinMama().map(function (c) { var cp = cupoDe(c.n); return [c.n, c.e + ' ' + c.n + (cp ? ' · disponible ' + pesos(cp.disp) : '')]; }); }
+  // Cupo disponible de una tarjeta o crédito (cupo − lo que debes hoy), con los datos del dashboard.
+  function cupoDe(n) {
+    var d = MF.datos && MF.datos(), c = d && (d.creditos || []).filter(function (x) { return x.nombre === n; })[0];
+    return c && c.cupo > 0 ? { cupo: c.cupo, disp: Math.max(0, Math.round(c.cupo - c.saldo)) } : null;
+  }
+  function notaCupo() {
+    var cp = deuda(st.cuenta) && cupoDe(st.cuenta);
+    if (!cp) return '';
+    var pasa = st.monto > cp.disp;
+    return '<p class="nota cupo-nota' + (pasa ? ' pasa' : '') + '" data-cupo="' + cp.disp + '">' + (pasa ? '⚠️ La compra supera tu cupo disponible: ' : 'Cupo disponible: ') +
+      '<b>' + pesos(cp.disp) + '</b> de ' + pesos(cp.cupo) + '</p>';
+  }
 
   /* ---------- tipos de registro ---------- */
   var TIPOS = {
@@ -147,6 +159,7 @@
       h += fSelect('cat', 'Categoría', cfg.categorias.map(function (c) { return [c.n, (c.e ? c.e + ' ' : '') + c.n]; }), 'Elige una (o la adivino)',
         '<span data-sug>' + (st.cat && !st._catManual ? '✨ Sugerida por la descripción. Puedes cambiarla.' : st._catManual ? '' : 'Si no eliges, la adivino por la descripción.') + '</span>');
       h += fSelect('cuenta', '¿Con qué pagaste?', [{ grupo: 'Tu plata' }].concat(opsPlata(true), [{ fin: 1 }, { grupo: 'Tarjetas y créditos' }], opsDeudas(), [{ fin: 1 }]), 'Elige la cuenta');
+      h += notaCupo();
       if (d && d.cuotas) {
         var posibles = (d.max <= 6 ? [1, 2, 3, 4, 5, 6] : [1, 2, 3, 6, 12, 24, 36]).filter(function (n) { return n <= d.max; });
         if (st.cuotas == null) st.cuotas = 1;
@@ -431,6 +444,10 @@
           var n = aNum(i.value);
           i.value = miles(n);
           st[k] = n;
+          if (k === 'monto') {
+            var nc = form.querySelector('[data-cupo]');
+            if (nc) { var pasa = n > Number(nc.dataset.cupo); nc.classList.toggle('pasa', pasa); nc.firstChild.textContent = pasa ? '⚠️ La compra supera tu cupo disponible: ' : 'Cupo disponible: '; }
+          }
           if (k === 'monto') { st._montoAuto = false; form.querySelectorAll('[data-llenar]').forEach(function (b) { b.setAttribute('aria-pressed', String(Number(b.dataset.llenar) === n)); }); }
         } else st[k] = i.value;
         if (k === 'desc' && tipo === 'gasto' && !st._catManual) {

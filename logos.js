@@ -15,7 +15,7 @@ window.LOGOS = (function () {
     claude: P + 'YeFCFSW5LkBVdsEAL_fjzxDxTbhKz31j1uZUfDbSaCeM0t4Bi3SqyHTWzWsUsZnbwjofXhYajitG_gr2_B2xil8=s128',
     hevy: P + 'bLlRnwjt0tKva6ob0ZrtxkUs-z4MhQ4cPIOnXeh_knD8QVAXSLFiMGyKo2kLF7PV2uSK1Wly1L4q-6Sv1k13=s128',
     rappi: P + 'od9rcMwok9kSOE1nFhLFKyG1daEuexpf5Rpox1VrFnWxI_fNnjC_CtP-eKC2OkgkcOTPPics_q31ssn_OLyk=s128',
-    credifin: 'https://icons.duckduckgo.com/ip3/credifin.com.co.ico',
+    credifin: 'logos/credifin.svg',
     movies: 'logos/movies.png',
     terpel: P + '7QCowhje4Qmu4cM5lKw5T95Q_Wv3_Bm2SShhehki_S80NzOe103LY3-F-wrV2iJC3B0cLgePraT6oq-HbyKPKA=s128',
     jumbo: P + 'gJGDzHGgk33fW5cB--voYZQe3TDrOfMLq8bCFwxtdzNJGcELJzzYse6LEZK6Q1Ste8d0nCoqm7K2H55631FW=s128',
