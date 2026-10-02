@@ -44,3 +44,4 @@ de *Propiedades de script → CLAVE*.
   5. Estudiar registro automático de cobros enlazando apps bancarias (p. ej. notificaciones/MacroDroid).
   6. Compartir la app con otra persona: uso independiente, pero que reciba mis actualizaciones y un resumen de cambios (plantilla multiusuario + versiones/changelog).
   7. Que funcione en iOS (el registro automático probablemente no).
+  8. Registro: error — si primero pongo la fecha y luego el resto de la info, la fecha se reinicia a hoy (corregir para que conserve la fecha elegida).
