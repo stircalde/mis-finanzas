@@ -1224,3 +1224,26 @@ html, body { overscroll-behavior-y: contain; }
 .ap-pie { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; padding-top: 14px; }
 .ap-pie .btn { padding: 12px; border-radius: 14px; font-weight: 600; text-align: center; }
 .ap-pie .btn.primary { background: var(--accent); border-color: var(--accent); color: var(--on-accent); }
+
+/* ---------- Crédito: tarjetas que se tocan (próximo pago, apartado) y hoja del pago ---------- */
+.stat.tap, .util.tap { font: inherit; color: inherit; text-align: left; cursor: pointer; width: 100%; -webkit-tap-highlight-color: transparent; transition: border-color .15s, transform .1s; }
+.stat.tap:hover { border-color: var(--line-strong); }
+.stat.tap:active, .util.tap:active { transform: scale(.985); }
+.stat.tap .k { display: flex; justify-content: space-between; align-items: center; gap: 6px; }
+.flecha { display: inline-flex; width: 14px; height: 14px; transform: rotate(-90deg); color: var(--muted); flex: none; }
+.flecha svg { width: 14px; height: 14px; fill: none; stroke: currentColor; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }
+.util.mini { font-size: .85rem; color: var(--ink-2); gap: 6px; }
+button.util.mini { background: none; border: 0; padding: 4px 0; border-radius: 8px; }
+.mini-h { display: flex; justify-content: space-between; align-items: center; gap: 10px; }
+.mini-h b { color: var(--ink); font-weight: 600; display: inline-flex; align-items: center; gap: 4px; white-space: nowrap; }
+.mini-s { font-size: .78rem; color: var(--muted); }
+.mini-s.ok { color: var(--good); font-weight: 600; }
+.pago-top { display: flex; justify-content: space-between; align-items: flex-end; gap: 12px; padding: 14px; border-radius: var(--r-md); background: var(--surface-2); border: 1px solid var(--line); }
+.pago-top .k { font-size: .8rem; color: var(--muted); }
+.pago-top .big { font-family: var(--font-display); font-size: 1.7rem; font-weight: 600; margin-top: 2px; }
+.pago-t { font-size: .9rem; font-weight: 600; display: flex; justify-content: space-between; align-items: baseline; margin: 2px 0 -6px; }
+.pago-t span { font-size: .76rem; font-weight: 400; color: var(--muted); }
+.pago-lista { list-style: none; margin: 0; padding: 0; display: grid; }
+.pago-lista li { display: flex; justify-content: space-between; gap: 12px; padding: 10px 2px; border-top: 1px solid var(--line); font-size: .86rem; color: var(--ink-2); }
+.pago-lista li:first-child { border-top: 0; }
+.pago-lista li b { color: var(--ink); font-weight: 600; white-space: nowrap; }
