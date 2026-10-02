@@ -111,11 +111,21 @@ A.fin('mi_caso');
 - Tres modos: **Corte mensual** (tarjetas: día de corte y de pago, "Mismo" o "Siguiente" mes, o
   "Tabla" con las fechas publicadas por el banco), **Por compra** (cada compra con su propio plazo
   mensual desde la fecha de compra, como Credifin) y **Sin cuotas**.
-- **Intereses de tarjeta (decisión tomada, pendiente de implementar):** hoy el saldo de la tarjeta es
-  solo capital y el interés estimado se muestra aparte (`interesesEst`); por eso pagar todas las cuotas
-  deja la deuda en negativo por el valor de los intereses. Se decidió la **Opción A**: en cada corte la
-  app sumará el interés estimado a la deuda y el extracto real solo servirá para cuadrar con un ajuste.
-  Hasta entonces las sondas de `tarjeta` lo registran como `decidido`.
+- **Intereses de tarjeta (Opción A, implementada):** en cada corte la app suma los intereses a la deuda; el
+  extracto solo sirve para cuadrar diferencias de pesos con un *ajuste*. Dos modelos:
+  - **Diario** (tarjetas con "interés desde la cuota 1", p. ej. Davibank; `motorDiario`): tasa diaria = tasa mensual / 30
+    sobre el **capital** (no sobre intereses ni cargos); compras a cuotas y avances desde el día de la compra (incluido);
+    compras a 1 cuota sin interés **solo si el extracto anterior se pagó completo** antes de la fecha límite; si no, se
+    cobran retroactivas desde la compra en el corte siguiente. Un pago reduce el capital desde el día siguiente y cubre
+    primero lo facturado que no es capital. Verificado con dos extractos reales: agosto exacto, septiembre con $18 de
+    diferencia sobre $57.258 (Davibank aplica luego un "reintegro" de pesos). Los cortes futuros se proyectan
+    suponiendo que pagas lo del calendario; `ahorroTotal` compara contra pagar el total.
+  - **Por cuota** (las demás, p. ej. Nubank): la 1.ª cuota sin interés y luego tasa mensual sobre lo que falta; el
+    interés de cada cuota entra a la deuda el día de su corte.
+  - Un interés registrado a mano (gasto de "Intereses y cargos" con "interés" en la descripción) reemplaza el cálculo
+    de ese corte, para no contarlo dos veces.
+  - Compras en el exterior con tarjeta: opción en el registro que agrega la comisión de la franquicia (0,45 %), que no
+    genera intereses.
 - **Total de cuotas entre 0,98 y 2 veces el monto.** Si el usuario escribe el valor de la cuota y el
   total queda fuera de ese rango, se rechaza: casi siempre es un error de digitación.
 - "1 cuota sin interés" e "interés desde la cuota 1" son ajustes por cuenta.

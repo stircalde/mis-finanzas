@@ -44,6 +44,8 @@ function mesRecalc(k, cfg) {
   return { g, ing };
 }
 function saldosDe(d) { const o = {}; d.cuentasCfg.forEach(c => o[c.nombre] = c.saldo); return o; }
+// Intereses que ya entraron a la deuda de cada tarjeta (cambian con el tiempo y con movimientos con fecha pasada).
+function cargadosDe(d) { const o = {}; d.creditos.forEach(c => o[c.nombre] = c.interesCargado || 0); return o; }
 const valida = x => /^\d{4}-\d{2}-\d{2}$/.test(x) && !isNaN(new Date(x));
 function invariantes(d, et) {
   const x = raro(d); if (x) nota('nan', et + ': ' + x);
@@ -90,7 +92,7 @@ const rechazos = {}; let hechos = 0;
 for (let i = 0; i < PASOS; i++) {
   ts += entre(20, 60 * 14) * 60000; A.M.ahora(ts); const hoyS = new Date(ts).toISOString().slice(0, 10);
   const cfgT = P({ accion: 'config' }).config;   // lo que ve el celular
-  const antesS = saldosDe(D()); const n0 = filas().length;
+  const d0 = D(), antesS = saldosDe(d0), antesI = cargadosDe(d0); const n0 = filas().length;
   const plata = cfgT.plata.map(c => c.n), deudas = cfgT.deudas.filter(c => !c.mama), per = cfgT.personas;
   const t = rnd(); let op;
   if (t < 0.25) op = { accion: 'gasto', descripcion: pick(DESC), monto: String(redondo(2000, 250000)), cuenta: pick(plata) };
@@ -121,8 +123,8 @@ for (let i = 0; i < PASOS; i++) {
   if (!r.ok) { const k = op.accion + ': ' + r.mensaje.slice(0, 70); rechazos[k] = (rechazos[k] || 0) + 1; }
   const x = raro(r); if (x) nota('nanRespuesta', op.accion + ': ' + x);
   const cfg = leerConfig(); const nuevas = filas().slice(n0); const exp = deltas(nuevas, cfg);
-  d = D(); const despS = saldosDe(d); const et = hoyS + ' #' + i + ' ' + op.accion;
-  Object.keys(despS).forEach(n => { const e = (antesS[n] || 0) + (exp[n] || 0); if (Math.abs(e - despS[n]) > 1) nota('deltaSaldo:' + n, et + ' ' + n + ': esperado ' + e + ' vs ' + despS[n] + ' (filas nuevas ' + nuevas.map(q => q[1] + ' ' + q[3]).join(', ') + ')'); });
+  d = D(); const despS = saldosDe(d), despI = cargadosDe(d); const et = hoyS + ' #' + i + ' ' + op.accion;
+  Object.keys(despS).forEach(n => { const e = (antesS[n] || 0) + (exp[n] || 0) + (despI[n] || 0) - (antesI[n] || 0); if (Math.abs(e - despS[n]) > 1) nota('deltaSaldo:' + n, et + ' ' + n + ': esperado ' + e + ' vs ' + despS[n] + ' (filas nuevas ' + nuevas.map(q => q[1] + ' ' + q[3]).join(', ') + ')'); });
   invariantes(d, et);
   if (i % 25 === 0) fotos.push(foto(d));
   const k = d.mes, rc = mesRecalc(k, cfg);

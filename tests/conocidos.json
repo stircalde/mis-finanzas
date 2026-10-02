@@ -114,30 +114,6 @@
     "nota": "Bajo. En la práctica no ocurre (milisegundos distintos); solo pasa en el simulador."
   },
   {
-    "suite": "tarjeta",
-    "falla": "A: al pagar todas las cuotas la deuda queda en -12000 (debería ser 0; intereses pagados 12000)",
-    "estado": "decidido",
-    "nota": "Intereses de tarjeta: se decidió la Opción A (la app suma el interés estimado en cada corte y el extracto solo cuadra). Pendiente de implementar."
-  },
-  {
-    "suite": "tarjeta",
-    "falla": "B: al pagar todas las cuotas la deuda queda en -12000 (debería ser 0; intereses pagados 12000)",
-    "estado": "decidido",
-    "nota": "Igual que el anterior (Opción A)."
-  },
-  {
-    "suite": "tarjeta",
-    "falla": "B: pagaste 334000 siguiendo el tablero vs 312000 que dice el plan",
-    "estado": "decidido",
-    "nota": "Doble conteo de intereses al cuadrar con el extracto; lo resuelve la Opción A."
-  },
-  {
-    "suite": "tarjeta",
-    "falla": "A/desde1: al pagar todas las cuotas la deuda queda en -12000 (debería ser 0; intereses pagados 12000)",
-    "estado": "decidido",
-    "nota": "Igual que el anterior (Opción A)."
-  },
-  {
     "suite": "fuzz",
     "falla": "invariante [deudaNegativa:Credifin]",
     "estado": "pendiente",

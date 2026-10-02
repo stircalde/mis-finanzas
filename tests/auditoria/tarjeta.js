@@ -38,6 +38,8 @@ const fmt = d => d.toISOString().slice(0, 10);
   const intereses = x.esperadas.reduce((a, b) => a + b, 0) - 300000;
   ok(Math.abs(x.fin.saldo) <= 2, (aj ? 'B' : 'A') + (d1 ? '/desde1' : '') + ': al pagar todas las cuotas la deuda queda en ' + x.fin.saldo + ' (debería ser 0; intereses pagados ' + intereses + ')');
   ok(x.fin.calendario.length === 0, (aj ? 'B' : 'A') + (d1 ? '/desde1' : '') + ': quedan cuotas pendientes en el calendario: ' + JSON.stringify(x.fin.calendario.map(g => [g.fecha, g.monto])));
-  ok(x.pagado === x.esperadas.reduce((a, b) => a + b, 0), (aj ? 'B' : 'A') + (d1 ? '/desde1' : '') + ': pagaste ' + x.pagado + ' siguiendo el tablero vs ' + x.esperadas.reduce((a, b) => a + b, 0) + ' que dice el plan');
+  if (!d1) ok(x.pagado === x.esperadas.reduce((a, b) => a + b, 0), (aj ? 'B' : 'A') + ': pagaste ' + x.pagado + ' siguiendo el tablero vs ' + x.esperadas.reduce((a, b) => a + b, 0) + ' que dice el plan');
+  // Interés diario: el plan muestra el capital; los intereses llegan en cada corte. Deben estar entre 0 y ~4 meses de tasa sobre el capital.
+  else ok(x.pagado - 300000 > 0 && x.pagado - 300000 < 300000 * 0.02 * 4, (aj ? 'B' : 'A') + '/desde1: intereses pagados ' + (x.pagado - 300000) + ' fuera de lo razonable');
 });
 A.fin('audit_tarjeta');

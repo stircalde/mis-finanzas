@@ -121,7 +121,7 @@
   var tipo = 'gasto', st = {};
   // Qué se borra cuando cambia un dato del que depende.
   var DEPENDE = {
-    cuenta: ['cuotas', 'cuotasOtro', 'valorCuota', 'apartar', 'mama'],
+    cuenta: ['cuotas', 'cuotasOtro', 'valorCuota', 'apartar', 'mama', 'exterior'],
     tipoIng: ['persona', 'personaNueva', 'aplica', 'compra', 'exceso', 'monto', '_montoAuto'],
     persona: ['aplica', 'compra', 'exceso'],
     aplica: ['compra'],
@@ -168,6 +168,10 @@
         h += fChips('cuotas', '¿A cuántas cuotas?', ops);
         if (st.cuotas === 'otro') h += fMonto('cuotasOtro', '¿Cuántas cuotas? (máximo ' + d.max + ')');
         if (d.valor) h += fMonto('valorCuota', 'Valor de cada cuota', 'El que te muestra ' + esc(d.n) + '. Si lo dejas vacío, lo estimo.');
+        if (!d.valor) {
+          if (!st.exterior) st.exterior = 'no';
+          h += fChips('exterior', '¿Compra en el exterior?', [['no', 'No'], ['si', '🌎 Sí · +0,45 % de comisión']]);
+        }
       }
       if (d && d.bolsillo) {
         if (!st.apartar) st.apartar = 'no';
@@ -308,7 +312,8 @@
           if (!para) falta('Escribe el nombre de la persona.');
         }
         return { accion: 'gasto', fecha: f, descripcion: st.desc.trim(), monto: st.monto, categoria: st.cat || '', para: para, cuenta: st.cuenta,
-          cuotas: cuotas, valorCuota: d && d.valor && st.valorCuota > 0 ? st.valorCuota : '', apartar: d && d.bolsillo && st.apartar === 'si' ? 'si' : '' };
+          cuotas: cuotas, valorCuota: d && d.valor && st.valorCuota > 0 ? st.valorCuota : '', apartar: d && d.bolsillo && st.apartar === 'si' ? 'si' : '',
+          exterior: d && d.cuotas && !d.valor && st.exterior === 'si' ? 'si' : '' };
       }
       case 'ingreso': {
         if (!st.tipoIng) falta('Elige el tipo de ingreso.');

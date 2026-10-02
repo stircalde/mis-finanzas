@@ -23,6 +23,7 @@ const ENC_MOV = ['Fecha', 'Tipo', 'Descripción', 'Monto', 'Categoría', 'Cuenta
 
 const TIPO = { GASTO: 'Gasto', INGRESO: 'Ingreso', TRANSF: 'Transferencia', MEPAGARON: 'Me pagaron', AJUSTE: 'Ajuste', MEPRESTARON: 'Me prestaron', LEPAGUE: 'Le pagué' };
 const CAT_INTERESES = 'Intereses y cargos';
+const COMISION_EXTERIOR = 0.0045;   // comisión de la franquicia por compras en el exterior (verificada en un extracto de Nubank)
 const CAT_SIN_ID = 'Sin identificar';
 const CAT_MONEDAS = 'Monedas';
 const CAT_APORTE = 'Aporte de mamá';
@@ -107,6 +108,14 @@ function registrarGasto(p, cfg) {
   if (f.cuotas) linea1 += f.cuotas === 1 ? ' · 1 cuota' : esTarjeta(cta) ? ' · ' + f.cuotas + ' cuotas de ' + pesos(f.valorCuota) + ' + intereses (≈ ' + pesos(f.costo) + ' en total)'
     : ' · ' + f.cuotas + ' × ' + pesos(f.valorCuota);
   if (para) linea1 += ' · para ' + para;
+  // Compra en el exterior con tarjeta: la franquicia cobra una comisión única que no genera intereses (Mastercard/Nu: 0,45 %).
+  if (p.exterior === 'si' && esTarjeta(cta)) {
+    const com = Math.round(monto * COMISION_EXTERIOR);
+    if (com > 0) {
+      agregarMovimiento([fecha, TIPO.GASTO, 'Comisión por compra en el exterior', com, CAT_INTERESES, cta.nombre, '', '', '', '', '']);
+      linea1 += '\n🌎 + ' + pesos(com) + ' de comisión por compra en el exterior';
+    }
+  }
 
   let linea2 = '';
   if (p.apartar === 'si') {
@@ -614,6 +623,8 @@ function calcular(movs, cfg, hoyF) {
 
   const items = {};
   const pagos = {};
+  const intCuotas = [];   // intereses de cada cuota (tarjetas con interés mensual): se suman a la deuda al llegar su corte
+  const intCargado = {};  // intereses que ya entraron a la deuda de cada tarjeta (para auditar los saldos)
   const planInfo = {};
   const pagosMov = {};
   cfg.cuentas.filter(function (c) { return c.tipo === 'Deuda'; }).forEach(function (c) {
@@ -634,13 +645,14 @@ function calcular(movs, cfg, hoyF) {
         planInfo[igual].vc = Math.min(planInfo[igual].vc, p.valor);
       }
       const idPlan = igual || 'prev:' + idx;
-      const tarjeta = esTarjeta(c) && p.de > 1 && p.desde > 0;
+      const tarjeta = esTarjeta(c) && p.de > 1 && p.desde > 0 && !interesDiario(c);
       if (esPlan && !igual) planInfo['prev:' + idx] = { id: 'prev:' + idx, cuenta: c.nombre, desc: p.detalle, fecha: null, monto: 0, vc: p.valor,
         n: p.de || ((p.desde ? p.desde - 1 : 0) + p.cuotas), antes: p.desde ? p.desde - 1 : (p.de ? Math.max(0, p.de - p.cuotas) : 0), capital: p.capital || 0, mov: '',
         tarjeta: tarjeta ? { C: p.valor * p.de, r: c.tasa, d1: interesDesde1(c) } : null };
       for (let k = 0; k < p.cuotas; k++) {
         const etiqueta = p.desde && p.de ? ' (cuota ' + (p.desde + k) + ' de ' + p.de + ')' : p.cuotas > 1 ? ' (' + (k + 1) + ' de ' + p.cuotas + ')' : '';
         const intK = tarjeta ? interesCuotaTarjeta(p.valor * p.de, p.de, p.desde + k, c.tasa, interesDesde1(c)) : 0;
+        if (intK > 0 && fechas[k]) intCuotas.push({ cuenta: c, limite: fechas[k], monto: intK });
         items[c.nombre].push({ fecha: fechas[k] || null, monto: p.valor + intK, capital: tarjeta ? p.valor : 0, desc: p.detalle + etiqueta, plan: esPlan ? idPlan : '', k: k });
         calendario += p.valor;
       }
@@ -673,15 +685,18 @@ function calcular(movs, cfg, hoyF) {
       if (c.tipo === 'Deuda') {
         const n = m.cuotas || 1;
         const tarjeta = esTarjeta(c);
-        // En tarjeta la deuda es el capital; los intereses llegan en cada cuota. En Addi/Credifin, el total con costo.
+        const diario = interesDiario(c);
+        // En tarjeta la deuda es el capital; los intereses se suman en cada corte (diarios o por cuota). En Addi/Credifin, el total con costo.
         const total = tarjeta ? m.monto : m.monto + (m.costo || 0);
         saldos[m.cuenta] += total;
         const vc = tarjeta ? m.monto / n : (m.valorCuota || total / n);
         const fechas = fechasCuotas(c, m.fecha, n, cfg);
         if (n > 1) planInfo[m.id] = { id: m.id, cuenta: c.nombre, desc: m.desc, fecha: m.fecha, monto: m.monto, vc: vc, n: n, antes: 0, capital: 0, mov: m.id,
-          tarjeta: tarjeta ? { C: m.monto, r: c.tasa, d1: interesDesde1(c) } : null };
+          tarjeta: tarjeta && !diario ? { C: m.monto, r: c.tasa, d1: interesDesde1(c) } : null };
         for (let k = 0; k < n; k++) {
-          const montoK = tarjeta ? vc + interesCuotaTarjeta(m.monto, n, k + 1, c.tasa, interesDesde1(c)) : (k < n - 1 ? vc : total - vc * (n - 1));
+          const intK = tarjeta && !diario ? interesCuotaTarjeta(m.monto, n, k + 1, c.tasa, interesDesde1(c)) : 0;
+          if (intK > 0 && fechas[k]) intCuotas.push({ cuenta: c, limite: fechas[k], monto: intK });
+          const montoK = tarjeta ? vc + intK : (k < n - 1 ? vc : total - vc * (n - 1));
           item(c.nombre, { fecha: fechas[k], monto: montoK, capital: tarjeta ? vc : 0, desc: m.desc + (n > 1 ? ' (cuota ' + (k + 1) + ' de ' + n + ')' : ''), plan: n > 1 ? m.id : '', k: k });
         }
       } else {
@@ -726,6 +741,26 @@ function calcular(movs, cfg, hoyF) {
     }
   });
 
+  // ---- Intereses de tarjeta (Opción A): en cada corte se suman a la deuda; el extracto solo cuadra diferencias ----
+  // Interés mensual por cuota (p. ej. Nubank): el de cada cuota entra a la deuda el día de su corte.
+  intCuotas.forEach(function (x) {
+    const anc = x.cuenta.saldoFecha ? soloFecha(x.cuenta.saldoFecha) : null;
+    const corte = (ciclos(x.cuenta, addDias(x.limite, -70), 4, cfg).filter(function (q) { return q.limite.getTime() === x.limite.getTime(); })[0] || {}).corte;
+    if (corte && corte <= hoyF && (!anc || corte > anc)) { saldos[x.cuenta.nombre] += x.monto; intCargado[x.cuenta.nombre] = (intCargado[x.cuenta.nombre] || 0) + x.monto; }
+  });
+  // Interés diario (p. ej. Davibank): el motor calcula cada corte; los pasados entran a la deuda, el del corte en curso es un estimado.
+  const motorInt = {};
+  cfg.cuentas.filter(interesDiario).forEach(function (c) {
+    const r = interesesDeTarjeta(c, movs, cfg, hoyF, items[c.nombre] || [], cuenta_);
+    if (!r) return;
+    motorInt[c.nombre] = r;
+    r.cargos.forEach(function (cg) {
+      if (cg.manual || !(cg.monto > 0)) return;
+      if (!cg.futuro) { saldos[c.nombre] += cg.monto; intCargado[c.nombre] = (intCargado[c.nombre] || 0) + cg.monto; }
+      item(c.nombre, { fecha: cg.limite, monto: cg.monto, desc: (cg.futuro ? 'Intereses estimados · corte del ' : 'Intereses · corte del ') + fmtLargo(cg.corte) });
+    });
+  });
+
   const mesHoy = clavesMes(hoyF);
   const finMes = new Date(hoyF.getFullYear(), hoyF.getMonth() + 1, 0);
 
@@ -766,7 +801,7 @@ function calcular(movs, cfg, hoyF) {
       const tj = esTarjeta(c);
       estimados[m.cuenta].push({ info: { id: m.id, cuenta: m.cuenta, desc: m.desc, fecha: m.fecha, monto: m.monto, vc: vc, n: m.cuotas, antes: 0, capital: 0, mov: m.id, estimado: true },
         its: fechas.map(function (f, k) {
-          const mk = vc + (tj ? interesCuotaTarjeta(m.monto, m.cuotas, k + 1, c.tasa, interesDesde1(c)) : 0);
+          const mk = vc + (tj && !interesDiario(c) ? interesCuotaTarjeta(m.monto, m.cuotas, k + 1, c.tasa, interesDesde1(c)) : 0);
           return { fecha: f, monto: mk, capital: tj ? vc : 0, restante: f && f <= hoyF ? 0 : mk, k: k };
         }) });
     });
@@ -844,8 +879,10 @@ function calcular(movs, cfg, hoyF) {
       }
     });
     const tope = c.modo === 'Por compra' || c.modo === 'Sin cuotas' ? null : (ciclos(c, hoyF, 1, cfg)[0] || {}).corte || null;
-    const estimadosInt = propios.filter(function (m) { return m.tipo === TIPO.GASTO && m.cat !== CAT_INTERESES; })
-      .reduce(function (s, m) { return s + interesCompra(m, c, cfg, hoyF, ultimoReal); }, 0);
+    const mi = motorInt[c.nombre];
+    const estimadosInt = mi ? (mi.abierto && !mi.abierto.manual ? mi.abierto.monto : 0)
+      : propios.filter(function (m) { return m.tipo === TIPO.GASTO && m.cat !== CAT_INTERESES; })
+        .reduce(function (s, m) { return s + interesCompra(m, c, cfg, hoyF, ultimoReal); }, 0);
     const intereses = Math.round(reales + estimadosInt);
     return {
       nombre: c.nombre, emoji: c.emoji, activa: c.activa, modo: c.modo,
@@ -861,6 +898,10 @@ function calcular(movs, cfg, hoyF) {
       reto: reto,
       intereses: intereses,
       interesesEst: Math.round(estimadosInt),
+      interesesHoy: mi ? mi.hastaHoy : null,
+      ahorroTotal: mi ? mi.ahorro : 0,
+      interesDiario: !!mi,
+      interesCargado: Math.round(intCargado[c.nombre] || 0),
       planes: planes,
       pagosCal: Object.keys(pagosCal).sort().map(function (f) { const x = pagosCal[f]; return { fecha: f, monto: Math.round(x.monto), restante: Math.round(x.restante) }; }),
       corteEst: tope ? fmt(tope) : '',
@@ -975,6 +1016,136 @@ function interesCompra(m, c, cfg, hoyF, ultimoReal) {
   return Number(m.costo) > 0 ? Math.min(total, Number(m.costo)) : total;
 }
 
+/**
+ * Intereses diarios de una tarjeta. Modelo verificado con extractos reales de Davibank (agosto: exacto; septiembre: $18 de
+ * diferencia en $57.258):
+ * - tasa diaria = tasa mensual / 30; se causa cada día sobre el CAPITAL que se debe (no sobre intereses ni cargos);
+ * - compras a cuotas y avances: desde el día de la compra, incluido;
+ * - compras a 1 cuota: sin interés si el extracto se paga COMPLETO antes de la fecha límite; si no, se cobran desde la
+ *   fecha de compra hasta su corte (en el extracto siguiente) y siguen causando hasta pagarse;
+ * - un pago reduce el capital desde el día siguiente y cubre primero intereses y cargos ya facturados.
+ * o: { tasa: número (mensual) o función(fecha)→tasa mensual, inicio, cap0, nocap0, prev: {una:[{fecha,monto}], corte, limite, total} | null,
+ *      ciclos: [{corte, limite}] desde el primero ≥ inicio, eventos: [{fecha, tipo: compra|avance|cargo|pago, monto, n}],
+ *      hoy, escenario: 'minimo'|'total', cuotaEn: función(limite)→capital programado para esa fecha }
+ */
+function motorDiario(o) {
+  const tasa = typeof o.tasa === 'function' ? o.tasa : function () { return o.tasa; };
+  const suma = function (l) { return l.reduce(function (s, x) { return s + x.monto; }, 0); };
+  let cap = Math.max(0, o.cap0 || 0), nocap = Math.max(0, o.nocap0 || 0);
+  let prev = o.prev ? Object.assign({ pagado: 0, nocap: Math.max(0, o.nocap0 || 0) }, o.prev) : null;
+  let abiertos = [], iTodo = 0, iSin = 0, hastaHoy = null;
+  const cargos = [];
+  const evs = o.eventos.slice().sort(function (a, b) { return a.fecha - b.fecha; });
+  let e = 0, k = 0, guard = 0;
+  const retroDe = function (p) { return p ? p.una.reduce(function (s, x) { return s + x.monto * tasa(x.fecha) / 30 * (Math.round((p.corte - x.fecha) / 86400000) + 1); }, 0) : 0; };
+  for (let d = new Date(o.inicio); k < o.ciclos.length && guard++ < 2000; d = addDias(d, 1)) {
+    const ciclo = o.ciclos[k];
+    const pagos = [];
+    while (e < evs.length && evs[e].fecha <= d) {
+      const ev = evs[e++];
+      if (ev.tipo === 'compra') { cap += ev.monto; if ((ev.n || 1) <= 1) abiertos.push({ fecha: ev.fecha, monto: ev.monto }); }
+      else if (ev.tipo === 'avance') cap += ev.monto;
+      else if (ev.tipo === 'cargo') nocap += ev.monto;
+      else if (ev.tipo === 'pago') pagos.push(ev.monto);
+    }
+    // Pago proyectado (días futuros): el que vence en la fecha límite del extracto anterior.
+    if (d > o.hoy && prev && prev.limite && d.getTime() === prev.limite.getTime()) {
+      const objetivo = o.escenario === 'total' ? prev.total : Math.min(prev.total, (o.cuotaEn ? o.cuotaEn(prev.limite) : 0) + prev.nocap);
+      if (objetivo - prev.pagado > 0) pagos.push(objetivo - prev.pagado);
+    }
+    const r = tasa(d) / 30;
+    const exAb = suma(abiertos), exPrev = prev && prev.limite && d <= prev.limite ? suma(prev.una) : 0;
+    iTodo += r * Math.max(0, cap - exAb);
+    iSin += r * Math.max(0, cap - exAb - exPrev);
+    pagos.forEach(function (p) {
+      const aNo = Math.min(nocap, p); nocap -= aNo; cap = Math.max(0, cap - (p - aNo));
+      if (prev && d > prev.corte && (!prev.limite || d <= prev.limite)) prev.pagado += p;
+    });
+    if (d.getTime() === o.hoy.getTime()) {
+      const g = !prev || (prev.limite && prev.limite < o.hoy ? prev.pagado >= prev.total - 1 : o.escenario === 'total');
+      hastaHoy = Math.round(g ? iSin : iTodo + retroDe(prev));
+    }
+    if (d.getTime() === ciclo.corte.getTime()) {
+      const gracia = !prev || prev.pagado >= prev.total - 1;
+      const retro = gracia ? 0 : retroDe(prev);
+      const monto = Math.round((gracia ? iSin : iTodo) + retro);
+      nocap += monto;
+      cargos.push({ corte: ciclo.corte, limite: ciclo.limite, monto: monto, retro: Math.round(retro), gracia: gracia, futuro: ciclo.corte > o.hoy });
+      prev = { una: abiertos, corte: ciclo.corte, limite: ciclo.limite, total: cap + nocap, pagado: 0, nocap: nocap };
+      abiertos = []; iTodo = 0; iSin = 0; k++;
+    }
+  }
+  return { cargos: cargos, hastaHoy: hastaHoy };
+}
+
+/**
+ * Intereses de una tarjeta con el modelo diario: arma el estado al inicio del ciclo en que se tomó el saldo inicial
+ * (con los movimientos históricos de los extractos) y corre el motor hasta el corte en curso.
+ * Devuelve los cargos de cada corte (los pasados se suman a la deuda) y el estimado del corte en curso.
+ */
+function interesesDeTarjeta(c, movs, cfg, hoyF, its, cuentaOK) {
+  const propios = movs.filter(function (m) { return m.cuenta === c.nombre || m.destino === c.nombre; });
+  const anc = c.saldoFecha ? soloFecha(c.saldoFecha) : null;
+  if (!anc && !propios.length) return null;
+  const base = anc || propios.reduce(function (a, m) { return m.fecha < a ? m.fecha : a; }, propios[0].fecha);
+  const antes = ciclos(c, addDias(base, -80), 6, cfg).filter(function (x) { return x.corte < base; });
+  const pc = antes.length ? antes[antes.length - 1] : null, ppc = antes.length > 1 ? antes[antes.length - 2] : null;
+  const inicio = pc ? addDias(pc.corte, 1) : base;
+  const evento = function (m) {
+    if (m.tipo === TIPO.GASTO && m.cuenta === c.nombre) {
+      return m.cat === CAT_INTERESES ? { fecha: m.fecha, tipo: 'cargo', monto: m.monto, interes: /inter[eé]s/i.test(m.desc) }
+        : { fecha: m.fecha, tipo: 'compra', monto: m.monto, n: m.cuotas || 1 };
+    }
+    if (m.tipo === TIPO.TRANSF && m.cuenta === c.nombre) return { fecha: m.fecha, tipo: 'avance', monto: m.monto };
+    if ((m.tipo === TIPO.TRANSF || m.tipo === TIPO.INGRESO || m.tipo === TIPO.MEPAGARON) && (m.destino === c.nombre || (m.tipo !== TIPO.TRANSF && m.cuenta === c.nombre)))
+      return { fecha: m.fecha, tipo: 'pago', monto: m.monto };
+    if (m.tipo === TIPO.MEPRESTARON && m.cuenta === c.nombre) return { fecha: m.fecha, tipo: 'pago', monto: m.monto };
+    if (m.tipo === TIPO.AJUSTE && m.cuenta === c.nombre) return m.monto < 0 ? { fecha: m.fecha, tipo: 'pago', monto: -m.monto } : { fecha: m.fecha, tipo: 'cargo', monto: m.monto };
+    return null;
+  };
+  const efecto = function (x) { return x.tipo === 'pago' ? -x.monto : x.monto; };
+  const eventos = [], unaPrev = [];
+  let ventana = 0, nocap0 = 0;
+  propios.forEach(function (m) {
+    const x = evento(m); if (!x) return;
+    if (esHist(m)) {
+      if (anc && m.fecha >= inicio && m.fecha <= anc) { eventos.push(x); ventana += efecto(x); }
+      else if (pc && ppc && m.fecha > ppc.corte && m.fecha <= pc.corte) {
+        if (x.tipo === 'cargo') nocap0 += x.monto;
+        if (x.tipo === 'compra' && x.n <= 1) unaPrev.push({ fecha: m.fecha, monto: m.monto });
+      }
+    } else if (cuentaOK(m, c.nombre)) eventos.push(x);
+  });
+  const b0 = anc ? (c.saldoInicial || 0) - ventana : 0;
+  // Un interés registrado a mano (p. ej. copiado de un extracto) reemplaza el cálculo de ese corte.
+  const manuales = eventos.filter(function (x) { return x.tipo === 'cargo' && x.interes; });
+  const lista = ciclos(c, inicio, 60, cfg);
+  const fin = lista.findIndex(function (x) { return x.corte >= hoyF; });
+  // Hasta el corte en curso y 6 más: los futuros son estimados (suponiendo que pagas lo que dice el calendario) para ver las próximas cuotas con intereses.
+  const cs = fin >= 0 ? lista.slice(0, fin + 7) : lista;
+  if (!cs.length) return null;
+  const cuotaEn = function (lim) {
+    return its.filter(function (it) { return it.fecha && it.fecha.getTime() === lim.getTime(); }).reduce(function (s, it) { return s + it.monto; }, 0);
+  };
+  const correr = function (esc) {
+    return motorDiario({ tasa: c.tasa, inicio: inicio, cap0: Math.max(0, b0 - nocap0), nocap0: nocap0, eventos: eventos, ciclos: cs, hoy: hoyF,
+      escenario: esc, cuotaEn: cuotaEn, prev: pc && b0 > 0 ? { una: unaPrev, corte: pc.corte, limite: pc.limite, total: b0 } : null });
+  };
+  const r = correr('minimo');
+  r.cargos.forEach(function (cg) {
+    cg.manual = manuales.some(function (x) { return x.fecha > addDias(cg.corte, -6) && x.fecha <= cg.limite; });
+  });
+  const abierto = r.cargos.filter(function (cg) { return cg.futuro; })[0] || null;
+  let ahorro = 0;
+  if (abierto) {
+    const t = correr('total').cargos.filter(function (cg) { return cg.futuro; })[0];
+    ahorro = t ? Math.max(0, abierto.monto - t.monto) : 0;
+  }
+  return { cargos: r.cargos, hastaHoy: r.hastaHoy, abierto: abierto, ahorro: ahorro };
+}
+/** Tarjetas con intereses diarios desde el día de la compra (Davibank). Las demás: interés mensual por cuota (Nubank). */
+function interesDiario(c) { return esTarjeta(c) && interesDesde1(c) && c.tasa > 0; }
+
 /** Día en que empezó el ciclo de facturación en curso (el último corte antes de hoy). */
 function inicioCiclo(c, hoyF, cfg) {
   if (c.modo !== 'Corte mensual') return new Date(hoyF.getFullYear(), hoyF.getMonth(), 1);
@@ -1014,7 +1185,7 @@ function armarPlan(info, its, hoyF, fechasAntes) {
     id: info.id, mov: info.mov || '', cuenta: info.cuenta, desc: info.desc, fecha: info.fecha ? fmt(info.fecha) : '', monto: capTotal,
     cuotas: Math.max(info.n || 0, cuotas.length), valorCuota: Math.round(info.vc), total: Math.round(total),
     pagadas: cuotas.filter(function (x) { return x.estado === 'pagada'; }).length, pendiente: Math.round(pendiente),
-    capitalPendiente: Math.round(capPend), capitalApp: info.capital > 0, estimado: !!info.estimado,
+    capitalPendiente: Math.round(Math.min(capPend, capTotal)), capitalApp: info.capital > 0, estimado: !!info.estimado,
     proxima: prox ? { fecha: prox.fecha, monto: prox.monto - prox.pagado } : null,
     ultima: cuotas.length ? cuotas[cuotas.length - 1].fecha : '', detalle: cuotas
   };
@@ -1160,7 +1331,8 @@ function armarDashboard(est, movs, cfg, claveMes, hoyF) {
   const creditos = est.deudas.filter(function (d) { return (d.activa && d.nombre !== CUENTA_MAMA) || d.saldo !== 0; }).map(function (d) {
     return { nombre: d.nombre, emoji: d.emoji, saldo: d.saldo, cupo: d.cupo, proximo: g(d.proximo), siguiente: g(d.siguiente),
       calendario: d.calendario.map(g), sinFecha: d.sinFecha, bolsillo: d.bolsillo, apartado: d.apartado, reto: d.reto,
-      intereses: d.intereses, interesesEst: d.interesesEst, corteEst: d.corteEst, cicloDesde: d.cicloDesde, planes: d.planes, pagosCal: d.pagosCal, modo: d.modo, serie: d.serie, persona: d.nombre === CUENTA_MAMA };
+      intereses: d.intereses, interesesEst: d.interesesEst, interesesHoy: d.interesesHoy, ahorroTotal: d.ahorroTotal, interesDiario: d.interesDiario,
+      interesCargado: d.interesCargado, corteEst: d.corteEst, cicloDesde: d.cicloDesde, planes: d.planes, pagosCal: d.pagosCal, modo: d.modo, serie: d.serie, persona: d.nombre === CUENTA_MAMA };
   });
 
   // Próximos pagos: créditos + gastos fijos (35 días)

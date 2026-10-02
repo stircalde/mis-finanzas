@@ -1296,7 +1296,10 @@
       prox +
       '<div class="stat"><div class="k">Compras en ' + mesN + '</div><div class="v num">' + pesos(comprasMes) + '</div></div>' +
       '<div class="stat"><div class="k">Pagos en ' + mesN + '</div><div class="v num" style="color:var(--good)">' + pesos(pagosMes) + '</div></div>' +
-      (c.persona ? '' : '<div class="stat"><div class="k">Intereses y cargos' + (c.cicloDesde ? ' · ciclo actual' : '') + '</div><div class="v num">' + pesos(c.intereses) + '</div><div class="d">' +
+      (c.persona ? '' : c.interesDiario ? '<div class="stat"><div class="k">Intereses de este corte</div><div class="v num">' + pesos(c.interesesEst || 0) + '</div><div class="d">' +
+        'Estimado al corte' + (c.corteEst ? ' del ' + fechaCorta(c.corteEst) : '') + (c.interesesHoy != null ? ' · ' + pesos(c.interesesHoy) + ' hasta hoy' : '') +
+        (c.ahorroTotal > 0 ? '<br><b style="color:var(--good)">Si pagas el total del extracto te ahorras ≈ ' + pesos(c.ahorroTotal) + '</b>' : '') + '</div></div>' :
+      '<div class="stat"><div class="k">Intereses y cargos' + (c.cicloDesde ? ' · ciclo actual' : '') + '</div><div class="v num">' + pesos(c.intereses) + '</div><div class="d">' +
         (c.cicloDesde ? 'Del ' + fechaCorta(c.cicloDesde) + (c.corteEst ? ' al ' + fechaCorta(c.corteEst) : ' a hoy') + (c.interesesEst > 0 ? ' · ' + pesos(c.interesesEst) + ' estimados de compras a cuotas' : '') :
           c.interesesEst > 0 ? 'incluye ' + pesos(c.interesesEst) + ' estimados de compras a cuotas' + (c.corteEst ? ' al corte del ' + fechaCorta(c.corteEst) : ' a la próxima cuota') : 'intereses, seguros y comisiones') + '</div></div>')));
 
