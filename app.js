@@ -201,7 +201,10 @@
     var h = (location.hash || '#/inicio').slice(2).split('/');
     return { v: h[0] || 'inicio', nombre: h[1] ? decodeURIComponent(h[1]) : '' };
   }
-  function ir(hash) { location.hash = hash; }
+  // Marca la pantalla que dejas: al volver con Atrás, regresa al mismo punto (scroll y lo que tenías abierto).
+  function marcarVolver() { try { if (!(history.state && history.state.hoja)) history.replaceState({ volver: 1 }, ''); } catch (e) { /* sin historial */ } }
+  function ir(hash) { marcarVolver(); location.hash = hash; }
+  if (nav) nav.addEventListener('click', function (e) { if (e.target.closest('a[href^="#/"]')) marcarVolver(); });
   // Al volver de una cuenta o un crédito, regresa al mismo punto de la pantalla anterior (y con lo que tenías abierto).
   var rutaActual = location.hash || '#/inicio', posiciones = {}, abiertosPor = {};
   window.addEventListener('scroll', function () { posiciones[rutaActual] = window.scrollY; }, { passive: true });
@@ -211,7 +214,7 @@
     var anterior = rutaActual;
     abiertosPor[rutaActual] = abiertos;
     var w = document.querySelector('.wallet'); if (w) posiciones[rutaActual + '|wallet'] = w.scrollLeft;
-    // También al volver con Atrás a una pantalla marcada (p. ej. Inicio → gráfico → Movimientos → Atrás).
+    // También al volver con Atrás a una pantalla marcada al salir de ella (ver marcarVolver).
     var marcada = !!(history.state && history.state.volver);
     var volver = (desdeDetalle || marcada) && posiciones[nuevo] != null;
     rutaActual = nuevo;
@@ -341,11 +344,12 @@
     app.appendChild(g3);
   }
 
-  function barraSuperior(d, conMes) {
+  function barraSuperior(d, conMes, titulo) {
     var h = new Date().getHours();
-    var saludo = h < 12 ? 'Buenos días' : h < 19 ? 'Buenas tardes' : 'Buenas noches';
+    // El saludo solo en Inicio; en las demás pantallas, el nombre de la sección.
+    var saludo = titulo ? esc(titulo) : (h < 12 ? 'Buenos días' : h < 19 ? 'Buenas tardes' : 'Buenas noches') + (d.nombre ? ', ' + esc(d.nombre) : '');
     var opts = d.meses.map(function (k) { return '<option value="' + k + '"' + (k === d.mes ? ' selected' : '') + '>' + cap(nombreMes(k)) + '</option>'; }).join('');
-    var n = el('<div class="top"><div class="hello"><h1>' + saludo + (d.nombre ? ', ' + esc(d.nombre) : '') + '</h1>' +
+    var n = el('<div class="top"><div class="hello"><h1>' + saludo + '</h1>' +
       '<p>' + cap(DIAS[fecha(d.hoy).getDay()]) + ' ' + fechaCorta(d.hoy) + ' · <span class="sync ' + sync + '"><i class="dot"></i><span></span></span></p></div>' +
       '<div class="controls">' + (conMes ? '<select id="mes" class="select" aria-label="Mes">' + opts + '</select>' : '') +
       '<button class="icon-btn" id="ojo" type="button" aria-label="' + (oculto ? 'Mostrar montos' : 'Ocultar montos') + '" aria-pressed="' + oculto + '">' + (oculto ? ICON.eyeOff : ICON.eye) + '</button>' +
@@ -596,7 +600,7 @@
     });
     n.querySelectorAll('.cat-list button').forEach(function (b) {
       b.addEventListener('pointerenter', function () { activar(+b.dataset.i); }); b.addEventListener('pointerleave', soltar);
-      b.addEventListener('click', function () { try { history.replaceState({ volver: 1 }, ''); } catch (e) { /* sin historial */ } busq = { q: '', tipo: 'Gasto', cat: top[+b.dataset.i].detalle ? '' : top[+b.dataset.i].nombre, cuenta: '', mes: d.mes }; ir('#/movimientos'); });
+      b.addEventListener('click', function () { busq = { q: '', tipo: 'Gasto', cat: top[+b.dataset.i].detalle ? '' : top[+b.dataset.i].nombre, cuenta: '', mes: d.mes }; ir('#/movimientos'); });
     });
     return n;
   }
@@ -776,7 +780,7 @@
 
   function vistaMovimientos() {
     var d = datos;
-    app.appendChild(barraSuperior(d, false));
+    app.appendChild(barraSuperior(d, false, 'Movimientos'));
     var cats = {}, ctas = {}, meses = {};
     d.movimientos.forEach(function (m) {
       cats[grupoMov(m)] = 1; meses[m.fecha.slice(0, 7)] = 1;
@@ -977,7 +981,7 @@
   /* =================== MÁS: otras secciones y configuración =================== */
   function vistaMas() {
     var d = datos;
-    app.appendChild(barraSuperior(d, false));
+    app.appendChild(barraSuperior(d, false, 'Más'));
     var totalLes = (d.lesDebo || []).reduce(function (s, x) { return s + (x.saldo || 0); }, 0);
     var fila = function (k, ico, t, sub, extra) {
       return '<button type="button" class="mas-fila" data-k="' + k + '"><span class="mas-ico">' + ico + '</span><span class="mas-tx"><b>' + t + '</b>' +
@@ -1009,7 +1013,7 @@
   /* =================== CRÉDITOS =================== */
   function vistaCreditos() {
     var d = datos;
-    app.appendChild(barraSuperior(d, false));
+    app.appendChild(barraSuperior(d, false, 'Créditos'));
     app.appendChild(creditosCard(d));
     app.appendChild(cuentas(d));
     app.appendChild(agendaPlegable(d, d.proximos.filter(function (p) { return p.tipo === 'credito'; }), 'Calendario de pagos de tus créditos', 'agCred', 'pagos'));
@@ -1089,7 +1093,8 @@
         '<div class="deb-t"><span>' + esc(c.desc) + (abre ? ' <span class="chev">' + ICON.chevron + '</span>' : '') + '</span><b class="num">' + pesos(pagado ? c.total : c.pendiente) + '</b></div>' +
         '<div class="deb-s">' + (c.fecha ? fechaCorta(c.fecha) + ' · ' : '') + (c.cuenta ? etiqueta(c.cuenta) + ' · ' : '') + 'le tocó ' + pesos(c.total) + '</div>' +
         (c.cuotas > 1 && !pagado ? '<div class="plan-bar sm"><i style="width:' + pct + '%"></i></div>' : '') +
-        '<div class="deb-s">' + linea + '</div>';
+        '<div class="deb-s">' + linea + '</div>' +
+        (!pagado && c.key ? '<button type="button" class="btn link deb-reg" data-reg="mepagaron" data-persona="' + esc(p.persona) + '" data-key="' + esc(c.key) + '">🤝 Registrar que me pagó esto</button>' : '');
       if (abre) {
         h += '<div class="plegable' + (abierto ? ' abierta' : '') + '"><div class="plegable-in">';
         h += segmentos(c.detalle.map(function (u) { return { estado: u.pagado >= u.monto ? 'pagada' : u.fecha && u.fecha < datos.hoy ? 'vencida' : 'pendiente' }; }));
@@ -1102,7 +1107,8 @@
       }
       return h + '</div>';
     }
-    var h = '<div class="deb">' + (p.conceptos || []).map(function (c, i) { return concepto(c, false, i); }).join('');
+    var h = '<div class="deb">' + (p.conceptos || []).map(function (c, i) { return concepto(c, false, i); }).join('') +
+      ((p.conceptos || []).length > 1 ? '<button type="button" class="btn deb-reg-todo" data-reg="mepagaron" data-persona="' + esc(p.persona) + '">🤝 Registrar un pago de ' + esc(p.persona) + '</button>' : '');
     if (p.vencido > 0) h += '<div class="deb-nota">A hoy ya debería haberte pagado <b>' + pesos(p.vencido) + '</b>.</div>';
     if (p.abonos && p.abonos.length) h += '<div class="deb-sub">Pagos que te ha hecho</div>' + p.abonos.map(function (a) {
       return '<div class="deb-t deb-ab"><span>' + fechaCorta(a.fecha) + ' · ' + esc(a.desc || 'Abono') + '</span><b class="num">+' + pesos(a.monto) + '</b></div>'; }).join('');
@@ -1139,9 +1145,16 @@
     var p = item.querySelector(':scope > .plegable'); if (p) p.classList.toggle('abierta', v);
     if (cabeza) cabeza.setAttribute('aria-expanded', String(v));
   }
+  // Favores: registrar desde el concepto que te deben (me pagaron) o desde la persona a la que le debes (le pagué).
+  function registrarDesdeFavores(e) {
+    var b = e.target.closest('[data-reg]'); if (!b || !MF.registrarCon) return;
+    e.stopPropagation();
+    if (b.dataset.reg === 'mepagaron') MF.registrarCon('ingreso', b.dataset.key ? { tipoIng: '__mepagaron', persona: b.dataset.persona, aplica: '__compra', compra: b.dataset.key } : { tipoIng: '__mepagaron', persona: b.dataset.persona });
+    else MF.registrarCon('pagar', { credito: b.hasAttribute('data-mamacred') ? b.dataset.persona : 'p|' + b.dataset.persona });
+  }
   function vistaMeDeben() {
     var d = datos;
-    app.appendChild(barraSuperior(d, false));
+    app.appendChild(barraSuperior(d, false, 'Favores'));
     var html = d.meDeben.map(function (p, i) {
       var abierto = abiertos['deb:' + p.persona];
       return '<div class="owed-item' + (abierto ? ' open' : '') + '"><div class="owed-row" role="button" tabindex="0" aria-expanded="' + !!abierto + '" data-i="' + i + '"><div><div class="p">' + esc(p.persona) +
@@ -1158,14 +1171,15 @@
       '<div class="stat"><div class="k">Balance</div><div class="v num">' + (neto >= 0 ? '+' : '−') + pesos(Math.abs(neto)).replace('−', '') + '</div><div class="d">' + (neto >= 0 ? 'a tu favor' : 'en contra') + '</div></div></div></section>'));
     var sec = el('<section class="card"><div class="card-h"><h2>Te deben</h2><span class="aside">Total <b>' + pesos(d.totalMeDeben) + '</b></span></div>' +
       '<div class="owed">' + (html || '<div class="empty">Nadie te debe plata en este momento.</div>') + '</div>' +
-      '<p class="hint">Toca un nombre para ver por qué te debe. Cuando alguien te pague, regístralo en el botón del celular: Ingreso → 🤝 Me pagaron.</p></section>');
+      '<p class="hint">Toca un nombre para ver por qué te debe; desde ahí puedes registrar lo que te pague.</p></section>');
+    sec.addEventListener('click', registrarDesdeFavores);
     sec.querySelectorAll('.owed-row[data-i]').forEach(function (r) {
       function tocar() { var k = 'deb:' + d.meDeben[+r.dataset.i].persona; plegar(r.parentNode, k, r); }
       r.addEventListener('click', tocar);
       r.addEventListener('keydown', function (e) { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); tocar(); } });
     });
     sec.querySelectorAll('[data-debc]').forEach(function (r) {
-      function tocar(e) { var pl = e.target.closest('.plegable'); if (e.target.closest('[data-plan]') || (pl && r.contains(pl))) return; e.stopPropagation(); plegar(r, r.dataset.debc, r); }
+      function tocar(e) { var pl = e.target.closest('.plegable'); if (e.target.closest('[data-plan], [data-reg]') || (pl && r.contains(pl))) return; e.stopPropagation(); plegar(r, r.dataset.debc, r); }
       r.addEventListener('click', tocar);
       r.addEventListener('keydown', function (e) { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); tocar(e); } });
     });
@@ -1187,6 +1201,7 @@
         if (x.devoluciones.length) h2 += '<div class="deb-sub">Lo que le has devuelto</div>' + x.devoluciones.map(function (m) { return '<div class="deb-t deb-ab"><span>' + fechaCorta(m.fecha) + ' · desde ' + esc(m.cuenta) + '</span><b class="num">−' + pesos(m.monto) + '</b></div>'; }).join('');
         if (x.aFavor) h2 += '<div class="deb-nota">Te pagó ' + pesos(x.aFavor) + ' de más; quedó como saldo a su favor.</div>';
         if (x.credito) h2 += '<button type="button" class="btn link" data-mama>Ver los préstamos de mamá para tus créditos</button>';
+        h2 += '<button type="button" class="btn deb-reg-todo" data-reg="lepague" data-persona="' + esc(x.persona) + '"' + (x.mama && !x.prestado && !x.aFavor ? ' data-mamacred' : '') + '>💳 Registrar que le pagué a ' + esc(x.persona) + '</button>';
         det = '<div class="plegable' + (abierto ? ' abierta' : '') + '"><div class="plegable-in">' + h2 + '</div></div></div>';
       }
       return '<div class="owed-item' + (abierto ? ' open' : '') + '"><div class="owed-row les" role="button" tabindex="0" aria-expanded="' + !!abierto + '" data-l="' + i + '"><div><div class="p">' + (x.mama ? '👩 ' : '') + esc(x.persona) +
@@ -1194,7 +1209,8 @@
     }).join('');
     var sl = el('<section class="card"><div class="card-h"><h2>Les debes</h2><span class="aside">Total <b>' + pesos(totLes) + '</b></span></div>' +
       '<div class="owed">' + (htmlL || '<div class="empty">No le debes plata a nadie. 🙌</div>') + '</div>' +
-      '<p class="hint">Si alguien te presta: botón del celular → Ingreso → 🙋 Alguien me prestó plata. Para devolverle: 💳 Pagar → 🙋 Devolverle a…</p></section>');
+      '<p class="hint">Toca un nombre para ver el detalle y registrar lo que le pagues. Si alguien te presta: botón ➕ → Ingreso → 🙋 Alguien me prestó plata.</p></section>');
+    sl.addEventListener('click', registrarDesdeFavores);
     sl.querySelectorAll('.owed-row[data-l]').forEach(function (r) {
       var tocarL = function () { plegar(r.parentNode, 'les:' + lesDebo[+r.dataset.l].persona, r); };
       r.addEventListener('click', tocarL);
@@ -1834,7 +1850,7 @@
     var d = datos, hoyD = fecha(d.hoy);
     if (!calMes) calMes = clave7(hoyD);
     if (calModo !== 'pagos' && calModo !== 'detallado') calModo = 'pagos';
-    app.appendChild(barraSuperior(d, false));
+    app.appendChild(barraSuperior(d, false, 'Calendario'));
     var p = calMes.split('-'), y = +p[0], mo = +p[1] - 1;
     var primero = new Date(y, mo, 1), dias = new Date(y, mo + 1, 0).getDate(), off = (primero.getDay() + 6) % 7;
     var ev = eventosPagos(d);

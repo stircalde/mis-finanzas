@@ -166,8 +166,12 @@ A.fin('mi_caso');
   quitó. En Inicio, *Ver todos los pagos* y tocar un pago de crédito también abren hoja (con botón para ir al
   crédito). Atrás cierra la hoja sin mover el scroll. Para ir a otra pantalla desde una hoja se usa
   `irDesdeHoja()`, que reemplaza la entrada de la hoja en el historial: así un solo Atrás vuelve a donde estabas.
-- **Volver al mismo punto**: además de cuenta/crédito → lista, una entrada marcada con `history.state.volver`
-  (Inicio → gráfico "¿En qué se fue la plata?" → Movimientos) restaura el scroll al volver con Atrás.
+- **Volver al mismo punto**: `ir()` y la barra inferior marcan la pantalla que dejas (`history.state.volver`);
+  al volver con Atrás se restaura el scroll y lo abierto. Ir hacia adelante a una pantalla (barra inferior) la
+  abre desde arriba.
+- **Título de la pantalla**: el saludo ("Buenas noches, Hector") solo en Inicio; en las demás, el nombre de la sección.
+- **Favores**: cada compra que te deben tiene "Registrar que me pagó esto" (abre Ingreso → Me pagaron con la
+  persona y la compra elegidas) y cada persona a la que le debes, "Registrar que le pagué" (Pagar → Devolverle a…).
 - **Calendario → Lo que viene / día**: un gasto fijo o suscripción abre su detalle (`MFAdmin.fijo`); un crédito
   sigue llevando al crédito.
 - **Chips de marcas negras** (TC Davibank): fondo blanco con la letra de la marca (como Daviplata, invertido),

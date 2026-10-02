@@ -631,6 +631,13 @@
   // Botón central de la barra (celular): toque = Registrar; mantener presionado = elegir Gasto, Ingreso o Pagar.
   function abrirTipo(t) { if (t && TIPOS[t] && t !== tipo) { tipo = t; reiniciar(); } abrir(); }
   MF.abrirRegistro = abrirTipo;
+  // Abre el formulario ya llenado (p. ej. desde Favores: quién te pagó y qué compra).
+  MF.registrarCon = function (t, pre) {
+    if (!TIPOS[t]) return;
+    if (formularioConDatos()) { aviso('error', 'Primero guarda o cierra el registro que tienes abierto.', null, null, 4000); return; }
+    tipo = t; reiniciar(); Object.keys(pre || {}).forEach(function (k) { st[k] = pre[k]; });
+    if (hoja) pintar(); else abrir();
+  };
   var navReg = document.getElementById('navReg');
   if (navReg) {
     var abanico = el('<div class="reg-abanico" hidden>' + [['gasto', '💸', 'Gasto'], ['ingreso', '💰', 'Ingreso'], ['pagar', '💳', 'Pagar']].map(function (x, i) {
