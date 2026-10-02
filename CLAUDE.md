@@ -45,3 +45,4 @@ de *Propiedades de script → CLAVE*.
   6. Compartir la app con otra persona: uso independiente, pero que reciba mis actualizaciones y un resumen de cambios (plantilla multiusuario + versiones/changelog).
   7. Que funcione en iOS (el registro automático probablemente no).
   8. Registro: error — si primero pongo la fecha y luego el resto de la info, la fecha se reinicia a hoy (corregir para que conserve la fecha elegida).
+  9. Backend (Davibank): regla real del banco (2-oct-2026) — una compra a 1 cuota NO es sin interés si en el mismo extracto hay compras diferidas a más de 1 cuota, o si no se paga el total a tiempo: genera interés desde la fecha de compra hasta la fecha límite. Hoy `motorDiario` solo cobra ese interés retroactivo cuando el extracto anterior no se pagó completo. Además, compras internacionales = 36 cuotas automáticas con interés desde el día de compra. Requiere rama + PR + tests + aprobación de Hector.
