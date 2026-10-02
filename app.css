@@ -1150,10 +1150,10 @@ html, body { overscroll-behavior-y: contain; }
 :root[data-estilo="cristal"][data-theme="light"] .sheet, :root[data-estilo="cristal"][data-theme="light"] .glass-sheet { background: rgba(255, 255, 255, 0.95); }
 :root[data-estilo="cristal"] .nav { background: color-mix(in srgb, var(--surface) 90%, transparent); backdrop-filter: none; -webkit-backdrop-filter: none; }
 :root[data-estilo="cristal"][data-theme="light"] .nav { background: rgba(255, 255, 255, 0.92); }
-:root[data-estilo="cristal"] .btn, :root[data-estilo="cristal"] .select { background: color-mix(in srgb, var(--surface) 60%, transparent); }
+:root[data-estilo="cristal"] .btn:not(.primary), :root[data-estilo="cristal"] .select { background: color-mix(in srgb, var(--surface) 60%, transparent); }
 @media (prefers-reduced-transparency: reduce) {
   :root[data-estilo="cristal"] body::before { background: var(--bg); }
-  :root[data-estilo="cristal"] .card, :root[data-estilo="cristal"] .nav, :root[data-estilo="cristal"] .btn, :root[data-estilo="cristal"] .select { background: var(--surface); }
+  :root[data-estilo="cristal"] .card, :root[data-estilo="cristal"] .nav, :root[data-estilo="cristal"] .btn:not(.primary), :root[data-estilo="cristal"] .select { background: var(--surface); }
 }
 
 /* ============ Apariencia: OLED (negro puro; solo en tema oscuro) ============
@@ -1247,3 +1247,5 @@ button.util.mini { background: none; border: 0; padding: 4px 0; border-radius: 8
 .pago-lista li { display: flex; justify-content: space-between; gap: 12px; padding: 10px 2px; border-top: 1px solid var(--line); font-size: .86rem; color: var(--ink-2); }
 .pago-lista li:first-child { border-top: 0; }
 .pago-lista li b { color: var(--ink); font-weight: 600; white-space: nowrap; }
+.deb-reg { font-size: .82rem; padding: 4px 0 0; }
+.deb-reg-todo { width: 100%; margin-top: 10px; font-weight: 600; }
