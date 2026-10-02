@@ -36,5 +36,11 @@ de *Propiedades de script → CLAVE*.
 - Apariencia (tema, 8 colores, Original/Cristal/Mate, OLED) publicada: ver DEVELOPMENT.md.
 - Pendientes conocidos: `tests/conocidos.json`. Intereses de tarjeta Opción A ya en línea (v21); falta confirmar
   la fórmula de Nubank en cuotas siguientes con el extracto de noviembre.
-- Ideas propuestas, sin empezar: versión para otras personas (plantilla), registro automático desde
-  notificaciones.
+- Ideas propuestas, sin empezar (pedidas por Hector, 1-oct-2026; no implementar sin su visto bueno):
+  1. Inicio: que "Próximos pagos" muestre pagos suficientes para igualar el alto de las tarjetas vecinas (hoy muestra uno y queda vacío).
+  2. Más: editar límites de gasto (presupuestos): renombrar, cambiar el tope y agregar nuevos (hoy solo "Ocio", sin edición).
+  3. Revisar el logo dinámico (hablado con ChatGPT): que el logo cambie según el estilo de la app.
+  4. Incluir el módulo de Metas de ahorro dentro de "Más".
+  5. Estudiar registro automático de cobros enlazando apps bancarias (p. ej. notificaciones/MacroDroid).
+  6. Compartir la app con otra persona: uso independiente, pero que reciba mis actualizaciones y un resumen de cambios (plantilla multiusuario + versiones/changelog).
+  7. Que funcione en iOS (el registro automático probablemente no).
