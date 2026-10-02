@@ -161,6 +161,18 @@ A.fin('mi_caso');
   En **Automático** el interruptor OLED está disponible aunque el sistema esté en claro: queda guardado y se
   aplica solo cuando el sistema pase a oscuro (el resumen dice "OLED en oscuro"). Al pasar a Claro no se
   borra la elección; se ignora mientras el tema sea claro y vuelve al regresar a oscuro. Decidido.
+- **Hojas flotantes en vez de expandir** (decidido por Hector): en un crédito, tocar *Próximo pago* abre una hoja
+  con fecha, total, conceptos y cuotas, y desde ahí el calendario completo; el bloque de abajo que lo repetía se
+  quitó. En Inicio, *Ver todos los pagos* y tocar un pago de crédito también abren hoja (con botón para ir al
+  crédito). Atrás cierra la hoja sin mover el scroll. Para ir a otra pantalla desde una hoja se usa
+  `irDesdeHoja()`, que reemplaza la entrada de la hoja en el historial: así un solo Atrás vuelve a donde estabas.
+- **Volver al mismo punto**: además de cuenta/crédito → lista, una entrada marcada con `history.state.volver`
+  (Inicio → gráfico "¿En qué se fue la plata?" → Movimientos) restaura el scroll al volver con Atrás.
+- **Calendario → Lo que viene / día**: un gasto fijo o suscripción abre su detalle (`MFAdmin.fijo`); un crédito
+  sigue llevando al crédito.
+- **Chips de marcas negras** (TC Davibank): fondo blanco con la letra de la marca (como Daviplata, invertido),
+  porque negro con rojo sobre el fondo oscuro cansa la vista. Solo el chip; el logo y la tarjeta no cambian.
+- **Intereses del ciclo** en el crédito muestra solo el valor y las fechas del ciclo; el cálculo no cambia.
 
 ## Cómo reportar un hallazgo (auditores)
 

@@ -106,8 +106,13 @@
   function etiqueta(nombre) {
     var e = ent(nombre, false);
     if (!e) return '<span class="ent" style="background:var(--surface-2);color:var(--ink-2)">' + esc(nombre) + '</span>';
-    var borde = lum(e.color) < 0.03 ? ';box-shadow:inset 0 0 0 1px ' + e.colorTexto : '';
-    return '<span class="ent" style="background:' + e.color + ';color:' + e.colorTexto + borde + '">' + esc(nombre) + '</span>';
+    // Marcas negras (p. ej. TC Davibank: negro con letra roja): el chip se invierte a fondo blanco con la letra de la marca,
+    // como Daviplata pero al revés; el negro con rojo sobre el fondo oscuro cansa la vista.
+    if (lum(e.color) < 0.03) {
+      var tx = lum(e.colorTexto) < 0.5 ? e.colorTexto : '#141a2b';
+      return '<span class="ent" style="background:#fff;color:' + tx + ';box-shadow:inset 0 0 0 1px color-mix(in srgb, ' + tx + ' 30%, transparent)">' + esc(nombre) + '</span>';
+    }
+    return '<span class="ent" style="background:' + e.color + ';color:' + e.colorTexto + '">' + esc(nombre) + '</span>';
   }
 
   /* ---------- gráfica de línea para las tarjetas ---------- */
@@ -206,7 +211,9 @@
     var anterior = rutaActual;
     abiertosPor[rutaActual] = abiertos;
     var w = document.querySelector('.wallet'); if (w) posiciones[rutaActual + '|wallet'] = w.scrollLeft;
-    var volver = desdeDetalle && posiciones[nuevo] != null;
+    // También al volver con Atrás a una pantalla marcada (p. ej. Inicio → gráfico → Movimientos → Atrás).
+    var marcada = !!(history.state && history.state.volver);
+    var volver = (desdeDetalle || marcada) && posiciones[nuevo] != null;
     rutaActual = nuevo;
     abiertos = volver ? (abiertosPor[nuevo] || {}) : {};
     var y = volver ? posiciones[nuevo] : 0;
@@ -471,7 +478,12 @@
       row.addEventListener('click', abrirF);
       row.addEventListener('keydown', function (e) { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); abrirF(); } });
     } else {
-      var abrir = function () { ir('#/credito/' + encodeURIComponent(p.nombre)); };
+      // El detalle del pago se abre en una hoja (Atrás la cierra y vuelves al mismo punto); desde ahí puedes ir al crédito.
+      var abrir = function () {
+        var cr = d.creditos.find(function (x) { return x.nombre === p.nombre; });
+        if (cr && cr.calendario && cr.calendario.length) abrirPagoCredito(cr, p.fecha, true);
+        else irDesdeHoja('#/credito/' + encodeURIComponent(p.nombre));
+      };
       row.addEventListener('click', abrir);
       row.addEventListener('keydown', function (e) { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); abrir(); } });
     }
@@ -486,10 +498,23 @@
     n.querySelector('.aside').innerHTML = 'En 30 días <b>' + pesos(porPagar) + '</b>';
     var lista = d.proximos;
     var pendientes = lista.filter(function (p) { return p.estado === 'pendiente' || p.estado === 'automatico' || p.estado === 'cancelar'; });
-    var abierto = !comprimido || abiertos.proximos;
-    var mostrar = abierto ? lista : pendientes.slice(0, 1);
+    llenarAgenda(cont, comprimido ? pendientes.slice(0, 1) : lista, d);
+    if (!lista.length) cont.appendChild(el('<div class="empty">No tienes pagos en los próximos 35 días.</div>'));
+    // La lista completa se abre en una hoja flotante (no alarga Inicio); Atrás la cierra.
+    if (comprimido && lista.length > 1) {
+      var b = el('<button type="button" class="ver-todo">Ver todos los pagos (' + lista.length + ')<span style="display:inline-flex;transform:rotate(-90deg)">' + ICON.chevron + '</span></button>');
+      b.addEventListener('click', function () {
+        abrirHoja('<div class="sheet-h"><div><h2>Próximos pagos</h2><div class="kind">En 30 días ' + pesos(porPagar) + '</div></div>' +
+          '<button type="button" class="icon-btn" data-cerrar aria-label="Cerrar">' + ICON.close + '</button></div><div class="agenda"></div>',
+          function (h) { llenarAgenda(h.querySelector('.agenda'), lista, d); });
+      });
+      n.appendChild(b);
+    }
+    return n;
+  }
+  function llenarAgenda(cont, lista, d) {
     var dia = '';
-    mostrar.forEach(function (p) {
+    lista.forEach(function (p) {
       if (p.fecha !== dia) {
         dia = p.fecha;
         var f = fecha(p.fecha);
@@ -498,9 +523,6 @@
       }
       cont.appendChild(filaPago(p, d));
     });
-    if (!lista.length) cont.appendChild(el('<div class="empty">No tienes pagos en los próximos 35 días.</div>'));
-    if (comprimido && lista.length > 1) n.appendChild(botonVerTodo('proximos', lista.length, 'Ver menos', 'Ver todos los pagos ({n})'));
-    return n;
   }
 
   function presupuesto(d) {
@@ -574,7 +596,7 @@
     });
     n.querySelectorAll('.cat-list button').forEach(function (b) {
       b.addEventListener('pointerenter', function () { activar(+b.dataset.i); }); b.addEventListener('pointerleave', soltar);
-      b.addEventListener('click', function () { busq = { q: '', tipo: 'Gasto', cat: top[+b.dataset.i].detalle ? '' : top[+b.dataset.i].nombre, cuenta: '', mes: d.mes }; ir('#/movimientos'); });
+      b.addEventListener('click', function () { try { history.replaceState({ volver: 1 }, ''); } catch (e) { /* sin historial */ } busq = { q: '', tipo: 'Gasto', cat: top[+b.dataset.i].detalle ? '' : top[+b.dataset.i].nombre, cuenta: '', mes: d.mes }; ir('#/movimientos'); });
     });
     return n;
   }
@@ -1278,45 +1300,101 @@
     }
     if (c.reto) {
       var ok = c.reto.hechas >= c.reto.minimo, rp = Math.min(100, Math.round(c.reto.hechas / c.reto.minimo * 100));
-      extra += '<div class="util" style="font-size:.85rem;color:var(--ink-2)"><span>' + (ok ? 'Reto cumplido: ' : 'Reto del mes: ') + c.reto.hechas + ' de ' + c.reto.minimo + ' compras' +
-        (ok ? ' · sin cuota de manejo' : ' · faltan ' + (c.reto.minimo - c.reto.hechas) + ' en ' + c.reto.diasRestantes + ' día' + (c.reto.diasRestantes === 1 ? '' : 's')) + '</span>' +
-        '<div class="meter big ' + (ok ? 'ok' : c.reto.diasRestantes <= 3 ? 'crit' : 'warn') + '"><i style="width:' + rp + '%"></i></div></div>';
+      extra += '<div class="util mini"><div class="mini-h"><span>Reto del mes</span><b class="num">' + c.reto.hechas + ' / ' + c.reto.minimo + ' compras</b></div>' +
+        '<div class="meter big ' + (ok ? 'ok' : c.reto.diasRestantes <= 3 ? 'crit' : 'warn') + '"><i style="width:' + rp + '%"></i></div>' +
+        '<div class="mini-s' + (ok ? ' ok' : '') + '">' + (ok ? '✓ Meta cumplida' : 'Faltan ' + (c.reto.minimo - c.reto.hechas)) + '</div></div>';
     }
     if (c.bolsillo) {
       var meta = c.proximo ? c.proximo.monto : c.saldo, bp = meta > 0 ? Math.min(100, Math.round(c.apartado / meta * 100)) : 100;
-      extra += '<div class="util" style="font-size:.85rem;color:var(--ink-2)"><span>Apartado en ' + esc(c.bolsillo) + ': ' + pesos(c.apartado) + ' · cubre el ' + bp + ' % del próximo pago</span>' +
-        '<div class="meter big ' + (bp >= 100 ? 'ok' : bp >= 50 ? '' : 'warn') + '"><i style="width:' + bp + '%"></i></div></div>';
+      extra += '<button type="button" class="util mini tap" data-bolsillo aria-label="Ver el bolsillo ' + esc(c.bolsillo) + '"><div class="mini-h"><span>Apartado para el pago</span>' +
+        '<b class="num">' + pesos(c.apartado) + ' · ' + bp + ' %<span class="flecha">' + ICON.chevron + '</span></b></div>' +
+        '<div class="meter big ' + (bp >= 100 ? 'ok' : bp >= 50 ? '' : 'warn') + '"><i style="width:' + bp + '%"></i></div></button>';
     }
-    var prox = c.proximo ? '<div class="stat"><div class="k">Próximo pago · ' + fechaCorta(c.proximo.fecha) + '</div><div class="v num">' + pesos(c.proximo.monto) + '</div><div class="d">' + chipDias(c.proximo.dias) + '</div></div>'
-      : '<div class="stat"><div class="k">Próximo pago</div><div class="v num">$0</div><div class="d">' + (c.persona ? 'Sin fecha fija' : 'Al día') + '</div></div>';
+    var hayCal = c.calendario.length || c.sinFecha > 0;
+    var flecha = hayCal ? '<span class="flecha">' + ICON.chevron + '</span>' : '';
+    var prox = c.proximo ? '<button type="button" class="stat tap" data-prox><div class="k">Próximo pago · ' + fechaCorta(c.proximo.fecha) + flecha + '</div><div class="v num">' + pesos(c.proximo.monto) + '</div><div class="d">' + chipDias(c.proximo.dias) + '</div></button>'
+      : '<' + (hayCal ? 'button type="button" class="stat tap" data-prox' : 'div class="stat"') + '><div class="k">Próximo pago' + flecha + '</div><div class="v num">$0</div><div class="d">' + (c.persona ? 'Sin fecha fija' : 'Al día') + '</div></' + (hayCal ? 'button' : 'div') + '>';
     var mesN = MESES[+d.mes.split('-')[1] - 1];
-    app.appendChild(cabecera(nombre, c.persona ? 'Préstamos de tu mamá · sin intereses' : 'Crédito',
+    // Intereses: solo el valor y las fechas del ciclo (el cálculo no cambia).
+    var valInt = c.interesDiario ? (c.interesesEst || 0) : c.intereses;
+    var fechasInt = c.cicloDesde ? 'Del ' + fechaCorta(c.cicloDesde) + (c.corteEst ? ' al ' + fechaCorta(c.corteEst) : ' a hoy') : c.corteEst ? 'Corte del ' + fechaCorta(c.corteEst) : '';
+    var head = cabecera(nombre, c.persona ? 'Préstamos de tu mamá · sin intereses' : 'Crédito',
       '<div><div class="eyebrow" style="color:var(--muted)">' + (c.persona ? 'Le debes' : 'Debes') + '</div><div class="big num">' + pesos(c.saldo) + '</div></div>',
       c.serie, extra,
       prox +
       '<div class="stat"><div class="k">Compras en ' + mesN + '</div><div class="v num">' + pesos(comprasMes) + '</div></div>' +
       '<div class="stat"><div class="k">Pagos en ' + mesN + '</div><div class="v num" style="color:var(--good)">' + pesos(pagosMes) + '</div></div>' +
-      (c.persona ? '' : c.interesDiario ? '<div class="stat"><div class="k">Intereses de este corte</div><div class="v num">' + pesos(c.interesesEst || 0) + '</div><div class="d">' +
-        'Estimado al corte' + (c.corteEst ? ' del ' + fechaCorta(c.corteEst) : '') + (c.interesesHoy != null ? ' · ' + pesos(c.interesesHoy) + ' hasta hoy' : '') +
-        (c.ahorroTotal > 0 ? '<br><b style="color:var(--good)">Si pagas el total del extracto te ahorras ≈ ' + pesos(c.ahorroTotal) + '</b>' : '') + '</div></div>' :
-      '<div class="stat"><div class="k">Intereses y cargos' + (c.cicloDesde ? ' · ciclo actual' : '') + '</div><div class="v num">' + pesos(c.intereses) + '</div><div class="d">' +
-        (c.cicloDesde ? 'Del ' + fechaCorta(c.cicloDesde) + (c.corteEst ? ' al ' + fechaCorta(c.corteEst) : ' a hoy') + (c.interesesEst > 0 ? ' · ' + pesos(c.interesesEst) + ' estimados de compras a cuotas' : '') :
-          c.interesesEst > 0 ? 'incluye ' + pesos(c.interesesEst) + ' estimados de compras a cuotas' + (c.corteEst ? ' al corte del ' + fechaCorta(c.corteEst) : ' a la próxima cuota') : 'intereses, seguros y comisiones') + '</div></div>')));
-
-    // Calendario: comprimido
-    var vis = calendarioVisible(c, d.hoy);
-    var todos = abiertos.cal;
-    var sched = (todos ? c.calendario : vis).map(filaCuota).join('');
-    if (todos && c.sinFecha > 0) sched += '<div class="sched-row"><div class="date">—<small>sin fecha</small></div><div class="v">' + pesos(c.sinFecha) + '</div><ul><li><span>Saldo sin calendario</span></li></ul></div>';
-    var cal = el('<section class="card"><div class="card-h"><h2>' + (todos ? 'Calendario de pagos' : c.modo === 'Por compra' ? 'Cuotas por pagar pronto' : 'Próximo pago') + '</h2>' +
-      '<span class="aside">' + c.calendario.length + ' fecha' + (c.calendario.length === 1 ? '' : 's') + '</span></div>' +
-      '<div class="sched">' + (sched || '<div class="empty">' + (c.sinFecha > 0 ? 'Saldo sin fecha: ' + pesos(c.sinFecha) : 'No tienes cuotas pendientes.') + '</div>') + '</div></section>');
-    if (c.calendario.length > vis.length || (c.sinFecha > 0 && c.calendario.length)) cal.appendChild(botonVerTodo('cal', c.calendario.length, 'Ver menos', 'Ver calendario completo ({n} fechas)'));
-    app.appendChild(cal);
+      (c.persona ? '' : '<div class="stat"><div class="k">Intereses del ciclo</div><div class="v num">' + pesos(valInt) + '</div>' + (fechasInt ? '<div class="d">' + fechasInt + '</div>' : '') + '</div>'));
+    var bp0 = head.querySelector('[data-prox]');
+    if (bp0) bp0.addEventListener('click', function () { abrirPagoCredito(c, null, false); });
+    var bb = head.querySelector('[data-bolsillo]');
+    if (bb) bb.addEventListener('click', function () { ir('#/cuenta/' + encodeURIComponent(c.bolsillo)); });
+    app.appendChild(head);
+    // El detalle del próximo pago y el calendario completo se consultan tocando "Próximo pago" (ya no se repiten abajo).
     if (c.planes && c.planes.length) app.appendChild(seccionPlanes(c));
     app.appendChild(listaCorta('Compras y pagos', movs, nombre, 'movsCred', 10, 'Aún no hay compras ni pagos registrados con este crédito.'));
   }
 
+
+  /** Hoja con el detalle de un pago de un crédito: fecha, total, conceptos y cuotas; y el calendario completo.
+   *  fechaG: la fecha del pago (si no, el próximo). desdeInicio: agrega el botón para ir al crédito. */
+  function abrirPagoCredito(c, fechaG, desdeInicio) {
+    var cal = c.calendario || [];
+    var g = (fechaG && cal.find(function (x) { return x.fecha === fechaG; })) || c.proximo || cal[0] || null;
+    var esProx = g && c.proximo && g.fecha === c.proximo.fecha;
+    var otros = desdeInicio || !g ? [] : calendarioVisible(c, datos.hoy).filter(function (x) { return x.fecha !== g.fecha; });
+    var nFechas = cal.length, completo = false;
+    var cerrar = '<button type="button" class="icon-btn" data-cerrar aria-label="Cerrar">' + ICON.close + '</button>';
+    function cabeza(t) { return '<div class="sheet-h"><div class="who">' + logo(c.nombre) + '<div><h2>' + t + '</h2><div class="kind">' + esc(c.nombre) + '</div></div></div>' + cerrar + '</div>'; }
+    function resumen() {
+      var h = cabeza(g && !esProx ? 'Pago del ' + fechaCorta(g.fecha) : 'Próximo pago');
+      if (g) {
+        var f = fecha(g.fecha);
+        h += '<div class="pago-top"><div><div class="k">' + cap(DIAS[f.getDay()]) + ' ' + f.getDate() + ' de ' + MESES[f.getMonth()] + ' ' + f.getFullYear() + '</div>' +
+          '<div class="big num">' + pesos(g.monto) + '</div></div>' + chipDias(g.dias) + '</div>' +
+          '<h3 class="pago-t">Qué incluye <span>' + g.detalle.length + ' concepto' + (g.detalle.length === 1 ? '' : 's') + '</span></h3>' +
+          '<ul class="pago-lista">' + g.detalle.map(function (x) { return '<li><span>' + esc(x.desc) + '</span><b class="num">' + pesos(x.monto) + '</b></li>'; }).join('') + '</ul>';
+        if (otros.length) h += '<h3 class="pago-t">También este mes</h3><div class="sched">' + otros.map(filaCuota).join('') + '</div>';
+      } else h += '<div class="empty">' + (c.sinFecha > 0 ? 'Saldo sin fecha: ' + pesos(c.sinFecha) : 'No tienes cuotas pendientes.') + '</div>';
+      if (nFechas > 1 || (c.sinFecha > 0 && nFechas)) h += '<button type="button" class="btn" data-completo>Ver calendario completo (' + nFechas + ' fecha' + (nFechas === 1 ? '' : 's') + ')</button>';
+      if (desdeInicio) h += '<button type="button" class="btn" data-ir>Ver ' + esc(c.nombre) + '</button>';
+      return h;
+    }
+    function calendario() {
+      var h = cabeza('Calendario de pagos') + '<div class="sched">' + cal.map(filaCuota).join('') +
+        (c.sinFecha > 0 ? '<div class="sched-row"><div class="date">—<small>sin fecha</small></div><div class="v">' + pesos(c.sinFecha) + '</div><ul><li><span>Saldo sin calendario</span></li></ul></div>' : '') + '</div>' +
+        '<button type="button" class="btn" data-completo>' + ICON.back + (g && !esProx ? 'Volver al pago del ' + fechaCorta(g.fecha) : 'Volver al próximo pago') + '</button>';
+      if (desdeInicio) h += '<button type="button" class="btn" data-ir>Ver ' + esc(c.nombre) + '</button>';
+      return h;
+    }
+    abrirHoja(resumen(), function (hoja) {
+      var caja = hoja.querySelector('.sheet');
+      caja.addEventListener('click', function (e) {
+        if (e.target.closest('[data-completo]')) {
+          completo = !completo; caja.innerHTML = completo ? calendario() : resumen(); caja.scrollTop = 0;
+          var b = caja.querySelector('[data-completo]'); if (b) b.focus({ preventScroll: true });
+        } else if (e.target.closest('[data-ir]')) irDesdeHoja('#/credito/' + encodeURIComponent(c.nombre));
+      });
+    });
+  }
+  /** Ir a otra pantalla desde una hoja: la entrada de la hoja se reemplaza, así Atrás vuelve directo a donde estabas. */
+  function irDesdeHoja(dest) {
+    var conEntrada = !!(hojaAbierta && history.state && history.state.hoja);
+    cerrarHoja();
+    if (location.hash === dest) { if (conEntrada) history.back(); return; }
+    if (conEntrada) location.replace(dest); else ir(dest);
+  }
+  /** Un pago del calendario: crédito o ingreso → su pantalla; gasto fijo o suscripción → su detalle. */
+  function abrirEvento(e) {
+    if (e.tipo === 'fijo' && window.MFAdmin) {
+      var d = datos, p = d.proximos.find(function (x) { return x.tipo === 'fijo' && x.nombre === e.nombre && x.fecha === e.fecha; });
+      if (!p) p = { tipo: 'fijo', nombre: e.nombre, fecha: e.fecha, monto: e.minimo, cuenta: e.cuenta, cobro: e.auto ? 'Automático' : 'Manual',
+        dias: Math.round((fecha(e.fecha) - fecha(d.hoy)) / 86400000), estado: e.estado === 'pagado' ? 'pagado' : e.auto ? 'automatico' : 'pendiente' };
+      MFAdmin.fijo(p);
+      return;
+    }
+    irDesdeHoja(e.link);
+  }
 
   /* =================== APARIENCIA: TEMA, COLOR, ESTILO Y OLED =================== */
   // Se guarda en este dispositivo. Tema: 'claro' | 'oscuro' | null (automático, sigue al sistema).
@@ -1481,7 +1559,7 @@
       '<button type="button" class="btn" data-ir>Ver ' + esc(p.cuenta) + '</button></div></div>');
     hoja.addEventListener('click', function (e) {
       if (e.target === hoja || e.target.closest('[data-cerrar]')) cerrarHoja(true);
-      else if (e.target.closest('[data-ir]')) { var dest = '#/credito/' + encodeURIComponent(p.cuenta); cerrarHoja(); if (location.hash !== dest) ir(dest); }
+      else if (e.target.closest('[data-ir]')) irDesdeHoja('#/credito/' + encodeURIComponent(p.cuenta));
     });
     registrarHoja(hoja);
     var b = hoja.querySelector('[data-cerrar]'); if (b) b.focus({ preventScroll: true });
@@ -1832,7 +1910,7 @@
     }
     function conectar(cont, f) {
       var es = porDia[f] || [];
-      cont.querySelectorAll('.ev').forEach(function (b) { b.addEventListener('click', function () { cerrarHoja(); ir(es[+b.dataset.i].link); }); });
+      cont.querySelectorAll('.ev').forEach(function (b) { b.addEventListener('click', function () { abrirEvento(es[+b.dataset.i]); }); });
     }
     var diaBox = null;
     // En PC el panel del día se ajusta de alto con suavidad y su contenido entra de derecha a izquierda.
@@ -1855,15 +1933,15 @@
           var f = fecha(e.fecha);
           return '<button type="button" class="ev-s" data-i="' + i + '"><span class="dt"><b>' + f.getDate() + '</b>' + MES_C[f.getMonth()] + '</span>' + logo(e.nombre, e.tipo === 'fijo') +
             '<span class="nm">' + esc(e.nombre) + '</span><b class="num">' + pesos(e.minimo) + '</b></button>';
-        }).join('') || '<div class="empty">Nada pendiente.</div>') + '</div><p class="hint">Toca un pago para ir a su detalle.</p></section>');
-      box2.querySelectorAll('.ev-s').forEach(function (b) { b.addEventListener('click', function () { ir(prox[+b.dataset.i].link); }); });
+        }).join('') || '<div class="empty">Nada pendiente.</div>') + '</div><p class="hint">Toca un pago para ver su detalle.</p></section>');
+      box2.querySelectorAll('.ev-s').forEach(function (b) { b.addEventListener('click', function () { abrirEvento(prox[+b.dataset.i]); }); });
       lado.appendChild(box2);
     }
     pintarLado();
     sec.querySelectorAll('.cal-d[data-f]').forEach(function (b) {
       b.addEventListener('click', function () {
         var f = b.dataset.f, es = porDia[f] || [];
-        if (ancho && calModo === 'pagos' && calSel === f && es.length === 1) { ir(es[0].link); return; }
+        if (ancho && calModo === 'pagos' && calSel === f && es.length === 1) { abrirEvento(es[0]); return; }
         var mismo = calSel === f;
         calSel = f;
         sec.querySelectorAll('.cal-d.sel').forEach(function (x) { x.classList.remove('sel'); });
