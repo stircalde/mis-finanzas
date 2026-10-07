@@ -568,6 +568,27 @@
   }
   function err2(h, er) { var p = document.createElement('p'); p.className = 'adm-nota'; p.textContent = er.message; h.appendChild(p); }
 
+  /* =================== AÑADIR REGISTRO (Favores) =================== */
+  function anadirRegistro(sentido) {
+    var les = sentido === 'les', d = MF.datos();
+    var html = '<div class="sheet-h"><div><h2>Añadir registro</h2><div class="kind">' + (les ? 'Lo que le debes a alguien' : 'Lo que te deben') + '</div></div>' +
+      '<button class="icon-btn" type="button" data-cerrar aria-label="Cerrar">' + ICON.close + '</button></div>' +
+      '<div class="adm-lista">' +
+      '<button type="button" class="btn adm-btn verde" data-nuevo><span>🆕 Registrar nuevo favor</span><small>' + (les ? 'Alguien te prestó plata: entra a tu cuenta.' : 'Le prestaste plata a alguien: sale de tu cuenta.') + '</small></button>' +
+      '<button type="button" class="btn adm-btn" data-antiguo><span>🕰️ Registrar favor antiguo</span><small>Algo de antes que no anotaste. No mueve tus cuentas: solo suma a lo que ' + (les ? 'le debes.' : 'te deben.') + '</small></button></div>';
+    MF.abrirHoja(html, function (h) {
+      h.querySelector('[data-nuevo]').addEventListener('click', function () {
+        MF.cerrarHoja();
+        if (!MF.registrarCon) return;
+        var pre = les ? { tipoIng: '__meprestaron' } : { desc: 'Préstamo', para: '__otra' };
+        if (!les && (d.listaCategorias || []).some(function (c) { return c.nombre === 'Préstamos a personas'; })) { pre.cat = 'Préstamos a personas'; pre._catManual = true; }
+        // Espera a que termine de cerrarse esta hoja; si no, abrir el registro en el mismo instante lo arrastra.
+        setTimeout(function () { MF.registrarCon(les ? 'ingreso' : 'gasto', pre); }, 320);
+      });
+      h.querySelector('[data-antiguo]').addEventListener('click', function () { MF.cerrarHoja(); setTimeout(function () { deudaAntigua(sentido); }, 320); });
+    });
+  }
+
   /* =================== ALGO QUE ME DEBÍAN DESDE ANTES =================== */
   function deudaAntigua(sentido) {
     var d = MF.datos(), les = sentido === 'les';
@@ -575,7 +596,7 @@
     (d.meDeben || []).forEach(function (x) { nombres[x.persona] = 1; });
     (d.lesDebo || []).forEach(function (x) { nombres[x.persona] = 1; });
     var st = { persona: '', concepto: '', monto: NaN, fecha: hoyISO() };
-    hojaFormulario(les ? 'Algo que le debía desde antes' : 'Algo que me debían desde antes',
+    hojaFormulario(les ? 'Favor antiguo: lo que le debes' : 'Favor antiguo: lo que te deben',
       'Para lo que se te olvidó anotar al empezar. No mueve tus cuentas: solo suma a lo que ' + (les ? 'le debes.' : 'te deben.'), st, function (st) {
       var h = campo(les ? '¿A quién se lo debías?' : '¿Quién te lo debe?', '<input class="in" data-k="persona" list="dl-personas" type="text" autocomplete="off" placeholder="Nombre" value="' + esc(st.persona) + '">' +
           '<datalist id="dl-personas">' + Object.keys(nombres).map(function (n) { return '<option value="' + esc(n) + '">'; }).join('') + '</datalist>') +
@@ -594,5 +615,5 @@
     });
   }
 
-  window.MFAdmin = { fijo: fijo, fijos: fijos, cuentas: cuentas, movimiento: movimiento, deudaAntigua: deudaAntigua, limites: limites };
+  window.MFAdmin = { fijo: fijo, fijos: fijos, cuentas: cuentas, movimiento: movimiento, deudaAntigua: deudaAntigua, anadirRegistro: anadirRegistro, limites: limites };
 })();
