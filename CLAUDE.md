@@ -32,7 +32,7 @@ de *Propiedades de script → CLAVE*.
 5. Si algo falla: Gestionar implementaciones → Editar → elige la versión anterior.
 
 ## Estado
-- Backend desplegado: versión 21 (intereses de tarjeta Opción A; clave en Propiedades de script). App: ver `VERSION` en `sw.js`.
+- Backend desplegado: versión 22 (editar movimientos, deudas antiguas; hash a03f729f118a; clave en Propiedades de script). App: ver `VERSION` en `sw.js`.
 - Apariencia (tema, 8 colores, Original/Cristal/Mate, OLED) publicada: ver DEVELOPMENT.md.
 - Pendientes conocidos: `tests/conocidos.json`. Intereses de tarjeta Opción A ya en línea (v21); falta confirmar
   la fórmula de Nubank en cuotas siguientes con el extracto de noviembre.
@@ -44,11 +44,12 @@ de *Propiedades de script → CLAVE*.
   5. Estudiar registro automático de cobros enlazando apps bancarias (p. ej. notificaciones/MacroDroid).
   6. Compartir la app con otra persona: uso independiente, pero que reciba mis actualizaciones y un resumen de cambios (plantilla multiusuario + versiones/changelog).
   7. Que funcione en iOS (el registro automático probablemente no).
-  8. (HECHO en PR editar-movimientos-fecha) Registro: la fecha elegida ya no se reinicia a hoy.
+  8. (HECHO, PR #7) Registro: la fecha elegida ya no se reinicia a hoy.
   9. Backend (Davibank): regla real del banco (2-oct-2026) — una compra a 1 cuota NO es sin interés si en el mismo extracto hay compras diferidas a más de 1 cuota, o si no se paga el total a tiempo: genera interés desde la fecha de compra hasta la fecha límite. Hoy `motorDiario` solo cobra ese interés retroactivo cuando el extracto anterior no se pagó completo. Además, compras internacionales = 36 cuotas automáticas con interés desde el día de compra. Requiere rama + PR + tests + aprobación de Hector.
   Nota del 9: Hector quiere hacerlo la semana del 5-oct-2026 (con el extracto de Davibank del 16-oct a mano para validar). Corrige solo el interés estimado; no explica el ajuste de +$16.450 del 1-oct (queda por revisar con el extracto).
   Prioridad que fijó Hector (7-oct-2026), con sus apuntes; los números 1-9 de arriba siguen valiendo:
-  A. HECHO en el PR editar-movimientos-fecha (pendiente de desplegar el backend): (a) editar movimientos; (b) agregar desde Favores lo que me debían desde antes; (c) bug de fecha.
+  A. HECHO y publicado el 7-oct (PR #7, app mf-v5-59, backend v22): (a) editar movimientos; (b) agregar desde Favores lo que me debían desde antes; (c) bug de fecha.
   B. Después: límites de gasto editables (idea 2) y Metas de ahorro en Más (idea 4).
   C. Luego: "Próximos pagos" a la altura de las vecinas (idea 1) y logo dinámico coherente con color y estilo (idea 3).
   D. Al final, estudios: registro automático por notificaciones (notificación → transacción detectada → verificación → registro; incluye compras a cuotas y conciliar transferencias entre cuentas; Android), compartir la app (datos independientes, actualizaciones, novedades por versión) e iOS (limitaciones frente a Android).
+  E. En curso (7-oct, aprobado por Hector): editar "para quién" (varias personas) y borrar movimientos con doble confirmación; filas ligadas (apartado, comisión, aporte de mamá) se borran juntas y avisa si el bolsillo queda ≠ $0; los borrados pasan a una pestaña "Eliminados" (recuperables); los "hist:" de extractos prevalecen y no se tocan.
