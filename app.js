@@ -545,7 +545,7 @@
         '<div class="meter big ' + cls + '" role="img" aria-label="' + pct + ' % del presupuesto"><i style="width:' + Math.min(100, pct) + '%"></i></div>' +
         '<div class="rows">' + filas + '</div></div>';
     }).join('<hr style="border:0;border-top:1px solid var(--line);margin:6px 0">');
-    return el('<section class="card o3">' + (html || '<div class="empty">Define un tope en la pestaña Configuración.</div>') + '</section>');
+    return el('<section class="card o3">' + (html || '<div class="empty">Aún no tienes límites. Créalos en Más → Límites de gasto.</div>') + '</section>');
   }
 
   function ultimoMovimiento(d) {
@@ -996,6 +996,7 @@
       '<section class="card"><div class="card-h"><h2>Configuración</h2></div><div class="mas-lista">' +
       fila('cuentas', '💳', 'Mis cuentas y tarjetas', 'Agregar, editar, imagen de la tarjeta, archivar') +
       fila('fijos', '📌', 'Gastos fijos y suscripciones', 'Agregar, pagar, cancelar') +
+      fila('limites', '🎯', 'Límites de gasto', resumenLimites(d)) +
       fila('apariencia', '🎨', 'Apariencia', resumenApariencia()) +
       '</div></section>' +
       '<p class="hint mas-pie">Próximamente aquí: metas de ahorro e inversiones.</p></div>');
@@ -1005,6 +1006,7 @@
         if (k === 'calendario' || k === 'medeben') ir('#/' + k);
         else if (k === 'cuentas' && window.MFAdmin) MFAdmin.cuentas();
         else if (k === 'fijos' && window.MFAdmin) MFAdmin.fijos();
+        else if (k === 'limites' && window.MFAdmin) MFAdmin.limites();
         else if (k === 'apariencia') abrirApariencia();
       });
     });
@@ -1443,6 +1445,10 @@
     if (AP.oled) h.setAttribute('data-oled', ''); else h.removeAttribute('data-oled');
     var m = document.querySelector('meta[name="theme-color"]');
     if (m) m.setAttribute('content', colorPlano(getComputedStyle(h).backgroundColor) || (claro ? '#f3f5fb' : '#050912'));
+  }
+  function resumenLimites(d) {
+    var l = d.presupuestos || [];
+    return l.length ? l.length + (l.length === 1 ? ' límite' : ' límites') + ' · ' + l.map(function (b) { return esc(b.grupo); }).join(', ') : 'Crea un tope mensual por categorías';
   }
   function resumenApariencia() {
     var col = AP_COLORES.filter(function (c) { return c[0] === AP.color; })[0] || AP_COLORES[0];

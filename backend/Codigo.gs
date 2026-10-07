@@ -84,6 +84,7 @@ function doPost(e) {
       case 'ledebiaantes': mensaje = agregarLeDebiaAntes(p, cfg); break;
       case 'fijoadmin': mensaje = administrarFijo(p, cfg); break;
       case 'cuentaadmin': mensaje = administrarCuenta(p, cfg); break;
+      case 'limiteadmin': mensaje = administrarLimite(p, cfg); break;
       default: throw new Error('Acción desconocida: ' + p.accion);
     }
     guardarPendientes_();
@@ -1913,6 +1914,74 @@ function guardarFilaConfig(encabezado, clave, valores, crear) {
   }
   Object.keys(valores).forEach(function (k) { h.getRange(fila, enc.indexOf(k) + 1).setValue(valores[k]); });
   CACHE_CFG_ = null;
+}
+
+/**
+ * Límites de gasto (presupuestos mensuales): un nombre, un tope y las categorías que cuentan para él.
+ * Una categoría solo cuenta en un límite: asignarla a este la saca del otro. Quitar un límite no borra categorías ni movimientos.
+ * guardar: anterior (nombre actual, vacío si es nuevo), nombre, tope, categorias ("Mercado|Ropa"). quitar: nombre.
+ */
+function administrarLimite(p, cfg) {
+  const op = limpiar(p.op) || 'guardar';
+  const h = hojaConfig();
+  const grupos = Object.keys(cfg.presupuestos);
+  const catsDe = function (g) { return cfg.categorias.filter(function (c) { return c.grupo === g; }).map(function (c) { return c.nombre; }); };
+  if (op === 'quitar') {
+    const nombre = limpiar(p.nombre);
+    if (grupos.indexOf(nombre) < 0) throw new Error('El límite "' + nombre + '" no existe.');
+    catsDe(nombre).forEach(function (c) { guardarFilaConfig('Categoría', c, { 'Presupuesto': '' }, false); });
+    // La fila del límite se elimina al final: así no se corre ninguna fila que aún falte por editar.
+    const v = h.getDataRange().getValues();
+    const i = filaEncabezado(v, 'Presupuesto');
+    for (let j = i + 1; j < v.length && String(v[j][0]).trim().indexOf('▸') !== 0; j++) {
+      if (String(v[j][0]).trim() === nombre) { h.deleteRow(j + 1); break; }
+    }
+    CACHE_CFG_ = null;
+    return '🗂️ Quité el límite "' + nombre + '". Las categorías y tus movimientos siguen igual.';
+  }
+  if (op !== 'guardar') throw new Error('Acción de límite desconocida.');
+  const anterior = limpiar(p.anterior);
+  const nombre = limpiar(p.nombre);
+  if (!nombre) throw new Error('Escribe el nombre del límite.');
+  if (nombre.length > 40) throw new Error('El nombre es muy largo (máximo 40 letras).');
+  if (anterior && grupos.indexOf(anterior) < 0) throw new Error('El límite "' + anterior + '" ya no existe.');
+  if (nombre !== anterior) {
+    nombreValido(nombre);
+    const igual = grupos.find(function (g) { return normalizarTexto(g) === normalizarTexto(nombre); });
+    if (igual) throw new Error('Ya tienes un límite llamado "' + igual + '".');
+  }
+  const tope = aNumero(p.tope);
+  if (!(tope > 0)) throw new Error('El tope mensual no es válido.');
+  const elegidas = String(p.categorias || '').split('|').map(limpiar).filter(String);
+  if (!elegidas.length) throw new Error('Elige al menos una categoría para este límite.');
+  elegidas.forEach(function (c) { if (!cfg.categorias.some(function (x) { return x.nombre === c; })) throw new Error('La categoría "' + c + '" no existe.'); });
+  const movidas = [];
+  // 1) Categorías: las elegidas pasan a este límite; las que tenía y ya no elige, quedan sin límite.
+  cfg.categorias.forEach(function (c) {
+    const eligio = elegidas.indexOf(c.nombre) >= 0;
+    const era = anterior && c.grupo === anterior;
+    if (eligio && c.grupo !== nombre) {
+      if (c.grupo && c.grupo !== anterior) movidas.push(c.nombre + ' (antes en "' + c.grupo + '")');
+      guardarFilaConfig('Categoría', c.nombre, { 'Presupuesto': nombre }, false);
+    } else if (!eligio && era) guardarFilaConfig('Categoría', c.nombre, { 'Presupuesto': '' }, false);
+  });
+  // 2) El límite mismo (si cambia de nombre, se renombra su fila).
+  if (anterior && nombre !== anterior) {
+    const v = h.getDataRange().getValues();
+    const i = filaEncabezado(v, 'Presupuesto');
+    for (let j = i + 1; j < v.length && String(v[j][0]).trim().indexOf('▸') !== 0; j++) {
+      if (String(v[j][0]).trim() === anterior) { h.getRange(j + 1, 1).setValue(nombre); break; }
+    }
+  }
+  guardarFilaConfig('Presupuesto', nombre, { 'Tope mensual': tope }, !anterior);
+  try {
+    const v2 = h.getDataRange().getValues(), i2 = filaEncabezado(v2, 'Presupuesto');
+    for (let j = i2 + 1; j < v2.length && String(v2[j][0]).trim().indexOf('▸') !== 0; j++)
+      if (String(v2[j][0]).trim() === nombre) { h.getRange(j + 1, 2).setNumberFormat('$#,##0'); break; }
+  } catch (e) { /* cosmético */ }
+  CACHE_CFG_ = null;
+  return (anterior ? '✏️ Actualicé ' : '🎯 Creé ') + 'el límite "' + nombre + '": ' + pesos(tope) + ' al mes · ' + elegidas.join(', ') +
+    (movidas.length ? '\nPasaron a este límite: ' + movidas.join(', ') + '.' : '');
 }
 
 function administrarFijo(p, cfg) {

@@ -189,6 +189,10 @@ A.fin('mi_caso');
   borran solos (no hay forma segura de ligarlos).
 - **Ajuste de saldo en una tarjeta ya cortada**: un ajuste positivo se suma a la **siguiente** factura (como una compra
   de ese día), no al extracto ya emitido, cuyo mínimo y total fija el banco (`tests/auditoria/ajuste.js`).
+- **Límites de gasto** (Más → Límites de gasto; acción `limiteadmin`: `guardar` con `anterior`, `nombre`, `tope`, `categorias` separadas por `|`, y `quitar`):
+  escribe en las tablas "Presupuesto" y "Categoría" (columna Presupuesto) de Configuración. Una categoría cuenta en un solo
+  límite: asignarla a uno la saca del otro. Quitar un límite libera sus categorías y no toca movimientos
+  (`tests/auditoria/limites.js`).
 - **Registro**: la fecha elegida se conserva al cambiar de tipo de movimiento; solo "Registrar otro" vuelve a hoy.
 - **Calendario → Lo que viene / día**: un gasto fijo o suscripción abre su detalle (`MFAdmin.fijo`); un crédito
   sigue llevando al crédito.

@@ -57,6 +57,7 @@
       });
       form.querySelectorAll('select[data-k]').forEach(function (s) { s.addEventListener('change', function () { st[s.dataset.k] = s.value; pintar(); }); });
       form.querySelectorAll('[data-op]').forEach(function (b) { b.addEventListener('click', function () { st[b.dataset.op] = b.dataset.v; pintar(); }); });
+      form.querySelectorAll('[data-alt]').forEach(function (b) { b.addEventListener('click', function () { var m = st[b.dataset.alt] = st[b.dataset.alt] || {}; m[b.dataset.v] = !m[b.dataset.v]; pintar(); }); });
       form.querySelectorAll('[data-accion]').forEach(function (b) { b.addEventListener('click', function () { if (extraAccion) extraAccion(b, form); }); });
       form.addEventListener('submit', function (e) {
         e.preventDefault();
@@ -208,6 +209,69 @@
       h.querySelector('[data-nuevo]').addEventListener('click', function () { formFijo(null); });
       h.querySelectorAll('[data-ed]').forEach(function (b) { b.addEventListener('click', function () { formFijo(todos[+b.dataset.ed]); }); });
       h.querySelectorAll('[data-re]').forEach(function (b) { b.addEventListener('click', function () { ejecutar(h.querySelector('.sheet'), b, { accion: 'fijoadmin', op: 'reactivar', nombre: todos[+b.dataset.re].nombre }); }); });
+    });
+  }
+
+  /* =================== LÍMITES DE GASTO =================== */
+  // Cada límite: nombre, tope mensual y las categorías que cuentan. Una categoría solo cuenta en un límite.
+  function limiteDeCategoria(d) {
+    var m = {};
+    (d.presupuestos || []).forEach(function (b) { (b.categorias || []).forEach(function (c) { m[c] = b.grupo; }); });
+    return m;
+  }
+  function limites() {
+    var d = MF.datos(), lista = d.presupuestos || [];
+    var emoji = {}; (d.listaCategorias || []).forEach(function (c) { emoji[c.nombre] = c.emoji || ''; });
+    var fila = function (b, i) {
+      var pct = b.tope > 0 ? Math.round(b.gastado / b.tope * 100) : 0;
+      var cls = pct > 100 ? 'crit' : pct >= 80 ? 'warn' : '';
+      return '<div class="adm-item lim"><div class="adm-info"><b>' + esc(b.grupo) + '</b>' +
+        '<span>' + (b.categorias || []).map(function (c) { return (emoji[c] || '') + ' ' + esc(c); }).join(' · ') + '</span>' +
+        '<div class="meter ' + cls + '" role="img" aria-label="' + pct + ' % usado"><i style="width:' + Math.min(100, pct) + '%"></i></div></div>' +
+        '<span class="num adm-v">' + pesos(b.tope) + '<small>' + pct + ' % usado</small></span>' +
+        '<button type="button" class="btn-mini" data-ed="' + i + '" aria-label="Editar ' + esc(b.grupo) + '">✏️</button></div>';
+    };
+    var libres = (d.listaCategorias || []).filter(function (c) { return !limiteDeCategoria(d)[c.nombre]; });
+    var html = '<div class="sheet-h"><div><h2>Límites de gasto</h2><div class="kind">Un tope al mes para las categorías que elijas</div></div>' +
+      '<button class="icon-btn" type="button" data-cerrar aria-label="Cerrar">' + ICON.close + '</button></div>' +
+      '<button type="button" class="btn adm-btn verde" data-nuevo>➕ Nuevo límite</button>' +
+      '<div class="adm-lista">' + (lista.length ? lista.map(fila).join('') : '<p class="adm-nota">Todavía no tienes límites. Crea uno y elige qué categorías cuentan.</p>') + '</div>' +
+      (libres.length && lista.length ? '<p class="adm-nota">Sin límite: ' + libres.map(function (c) { return (c.emoji || '') + ' ' + esc(c.nombre); }).join(' · ') + '</p>' : '');
+    MF.abrirHoja(html, function (h) {
+      h.querySelector('[data-nuevo]').addEventListener('click', function () { formLimite(null); });
+      h.querySelectorAll('[data-ed]').forEach(function (b) { b.addEventListener('click', function () { formLimite(lista[+b.dataset.ed]); }); });
+    });
+  }
+  function formLimite(b) {
+    var d = MF.datos(), nuevo = !b, de = limiteDeCategoria(d);
+    var cats = {}; if (b) (b.categorias || []).forEach(function (c) { cats[c] = true; });
+    var st = { anterior: b ? b.grupo : '', nombre: b ? b.grupo : '', tope: b ? b.tope : NaN, cats: cats };
+    var ctl = hojaFormulario(nuevo ? 'Nuevo límite' : 'Editar ' + b.grupo, nuevo ? 'Elige un nombre, el tope del mes y qué categorías cuentan' : 'Cambia el nombre, el tope o las categorías', st, function (st) {
+      var h = fTexto(st, 'nombre', 'Nombre del límite', 'Ej: Ocio, Casa, Antojos') + fMonto(st, 'tope', 'Tope mensual', 'Se reinicia solo el primer día de cada mes.');
+      var lista = (d.listaCategorias || []).map(function (c) {
+        var on = !!st.cats[c.nombre], otro = de[c.nombre] && de[c.nombre] !== st.anterior ? de[c.nombre] : '';
+        return '<button type="button" class="op cat-op" data-alt="cats" data-v="' + esc(c.nombre) + '" aria-pressed="' + on + '">' + (c.emoji ? c.emoji + ' ' : '') + esc(c.nombre) +
+          (otro ? '<small>' + (on ? 'pasa de "' + esc(otro) + '"' : 'hoy en "' + esc(otro) + '"') + '</small>' : '') + '</button>';
+      }).join('');
+      var n = Object.keys(st.cats).filter(function (k) { return st.cats[k]; }).length;
+      return h + campo('¿Qué categorías cuentan?', '<div class="opciones cat-lista">' + lista + '</div>',
+        n ? n + (n === 1 ? ' categoría elegida' : ' categorías elegidas') + '. Una categoría cuenta en un solo límite: si la eliges aquí, sale del otro.' : 'Elige al menos una.');
+    }, function (st) {
+      var nombre = String(st.nombre || '').trim();
+      if (!nombre) throw new Error('Escribe el nombre del límite.');
+      if ((d.presupuestos || []).some(function (x) { return x.grupo !== st.anterior && x.grupo.toLowerCase() === nombre.toLowerCase(); })) throw new Error('Ya tienes un límite con ese nombre.');
+      if (!(st.tope > 0)) throw new Error('Escribe el tope mensual.');
+      var sel = Object.keys(st.cats).filter(function (k) { return st.cats[k]; });
+      if (!sel.length) throw new Error('Elige al menos una categoría.');
+      return { accion: 'limiteadmin', op: 'guardar', anterior: st.anterior, nombre: nombre, tope: st.tope, categorias: sel.join('|') };
+    }, nuevo ? null : function () { return '<button type="button" class="btn adm-btn rojo" data-accion="quitar">🗂️ Quitar este límite</button>'; });
+    if (!nuevo) ctl.alAccion(function (btn) {
+      if (btn.dataset.accion !== 'quitar') return;
+      MF.abrirHoja('<div class="sheet-h"><div><h2>¿Quitar "' + esc(b.grupo) + '"?</h2></div><button class="icon-btn" type="button" data-cerrar aria-label="Cerrar">' + ICON.close + '</button></div>' +
+        '<p class="adm-nota">Tus categorías y movimientos no se tocan: solo dejan de contar para este tope.</p>' +
+        '<div class="reg-err" hidden></div><button type="button" class="btn adm-btn rojo" data-quitar>Sí, quitar el límite</button><button type="button" class="btn adm-btn" data-cerrar>No, volver</button>', function (h) {
+          h.querySelector('[data-quitar]').addEventListener('click', function (e) { ejecutar(h.querySelector('.sheet'), e.currentTarget, { accion: 'limiteadmin', op: 'quitar', nombre: b.grupo }); });
+        });
     });
   }
 
@@ -530,5 +594,5 @@
     });
   }
 
-  window.MFAdmin = { fijo: fijo, fijos: fijos, cuentas: cuentas, movimiento: movimiento, deudaAntigua: deudaAntigua };
+  window.MFAdmin = { fijo: fijo, fijos: fijos, cuentas: cuentas, movimiento: movimiento, deudaAntigua: deudaAntigua, limites: limites };
 })();
