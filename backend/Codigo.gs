@@ -86,9 +86,13 @@ function doPost(e) {
       case 'cuentaadmin': mensaje = administrarCuenta(p, cfg); break;
       case 'limiteadmin': mensaje = administrarLimite(p, cfg); break;
       case 'metaadmin': mensaje = administrarMeta(p, cfg); break;
+      case 'aviso': mensaje = registrarAviso(p, cfg); break;
+      case 'avisoresolver': mensaje = resolverAviso(p, cfg); break;
+      case 'avisosmodo': mensaje = cambiarModoAvisos(p); break;
       default: throw new Error('Acción desconocida: ' + p.accion);
     }
     guardarPendientes_();
+    avEjecutarDiferidos_();
     return json({ ok: true, mensaje: mensaje, extra: EXTRA_, config: configTelefono(CACHE_CFG_ ? cfg : leerConfig()) });
   } catch (err) {
     return json({ ok: false, mensaje: '❌ ' + (conLock ? err.message : 'La hoja está ocupada. Intenta de nuevo en unos segundos.') });
@@ -96,6 +100,7 @@ function doPost(e) {
     RID_ = '';
     EXTRA_ = null;
     PEND_ = null;   // si hubo error, lo pendiente se descarta: nada quedó escrito
+    AV_POST_ = null;
     if (conLock) lock.releaseLock();
   }
 }
@@ -1733,6 +1738,7 @@ function armarDashboard(est, movs, cfg, claveMes, hoyF) {
     }),
     listaCategorias: cfg.categorias.map(function (c) { return { nombre: c.nombre, emoji: c.emoji }; }),
     metas: estadoMetas(cfg, est, hoyF),
+    avisos: resumenAvisos(cfg, movs),
     historico: meses,
     semanas: semanas,
     movimientos: historial,
@@ -3023,6 +3029,354 @@ function cuentaPorNombre(cfg, nombre) {
 
 function bolsilloDe(cfg, deuda) {
   return cfg.cuentas.find(function (c) { return c.tipo === 'Plata' && c.activa && c.apartaPara === deuda; }) || null;
+}
+
+/* =================================================================
+ * AVISOS DE NOTIFICACIONES
+ * Una macro del celular (MacroDroid/Tasker) reenvía cada notificación o SMS del banco con la acción "aviso".
+ * Aquí se leen, se unen los avisos repetidos (app + SMS + correo + Billetera) y quedan en la hoja "Avisos"
+ * como "Pendiente" hasta que Hector los resuelve en la app ("Por confirmar"). En modo "auto" los gastos
+ * simples (a 1 cuota) y las transferencias entre sus cuentas se registran solos.
+ * Credifin y Addi no se leen a propósito (cuotas especiales): siempre se registran a mano.
+ * ================================================================= */
+
+const HOJA_AV = 'Avisos';
+const ENC_AV = ['ID', 'Hora del aviso', 'Fuentes', 'Avisos', 'Banco', 'Cuenta', 'Tipo', 'Monto', 'Comercio / persona', 'Destino',
+  'Recurrente', 'Tarjeta', 'Estado', 'ID movimiento', 'Nota', 'Recibido el', 'Resolución', 'Texto', 'PSE'];
+const AV_MODOS = ['avisar', 'auto'];
+
+const AV = (function () {
+  const MS_MIN = 60000;
+  /** "8.749,21" "$42.850,00" "$440.000" "74,915" "COP12,480" "25000" -> número */
+  function num(s) {
+    s = String(s).replace(/[^\d.,]/g, '');
+    if (!s) return NaN;
+    const p = s.lastIndexOf('.'), c = s.lastIndexOf(',');
+    if (p >= 0 && c >= 0) {
+      const dec = Math.max(p, c);
+      return parseFloat(s.slice(0, dec).replace(/[.,]/g, '') + '.' + s.slice(dec + 1));
+    }
+    const sep = p >= 0 ? '.' : c >= 0 ? ',' : '';
+    if (!sep) return parseFloat(s);
+    const partes = s.split(sep);
+    const ultima = partes[partes.length - 1];
+    if (partes.length > 2 || (ultima.length === 3 && partes[0].length >= 1 && partes[0].length <= 3)) return parseFloat(partes.join(''));
+    return parseFloat(partes.join('.'));
+  }
+  const limpio = function (s) { return String(s || '').replace(/\s+/g, ' ').trim(); };
+  const norm = function (s) { return String(s || '').toUpperCase().normalize('NFD').replace(/[̀-ͯ]/g, '').replace(/[^A-Z0-9]/g, ''); };
+  const esMio = function (n, yo) { const x = norm(String(yo || '').split(/\s+/)[0]); return !!x && norm(n).indexOf(x) === 0; };
+
+  function fechaTexto(t, ts) {
+    const m = /(\d{4})[\/-](\d{2})[\/-](\d{2})[ .]+(\d{2}):(\d{2})(?::(\d{2}))?/.exec(t);
+    return m ? new Date(+m[1], +m[2] - 1, +m[3], +m[4], +m[5], +(m[6] || 0)).getTime() : ts;
+  }
+
+  /** n = { app, titulo, texto, ts } -> { banco, tc, tipo: gasto|entrada|salida|retiro, comercio, persona, monto, ts, recurrente, pse, correo, fuente } | null */
+  function parse(n) {
+    const t = limpio((n.titulo ? n.titulo + ' ' : '') + (n.texto || ''));
+    const ts = n.ts || Date.now();
+    let m;
+    const ev = function (o) { o.ts = o.ts || ts; o.fuente = n.app; o.crudo = t; return o; };
+
+    // Credifin y Addi: nunca automáticos (cuotas especiales)
+    if (/credifin|addi\b/i.test(t) && !/davibank|nequi|nubank|daviplata/i.test(t)) return null;
+
+    // Davibank (tarjeta de crédito) por SMS
+    if ((m = /DAVIbank\s*:?\s*(Compra recurrente|Realizaste\s+transaccion) en (.+?) por ([\d.,]+) con tu tarjeta/i.exec(t)))
+      return ev({ banco: 'davibank', tc: true, tipo: 'gasto', comercio: limpio(m[2]), monto: num(m[3]), recurrente: /recurrente/i.test(m[1]), ts: fechaTexto(t, ts) });
+    if (/DAVIbank/i.test(t)) return null;
+
+    // Daviplata por SMS
+    if ((m = /DaviPlata:\s*Pagaste\s+([\d.,]+)\s+con tu Tarjeta/i.exec(t)))
+      return ev({ banco: 'daviplata', tipo: 'gasto', comercio: '', monto: num(m[1]) });
+    if ((m = /^Recibiste\s+([\d.,]+)\./i.exec(t)))
+      return ev({ banco: 'daviplata', tipo: 'entrada', persona: '', monto: num(m[1]) });
+    if ((m = /DaviPlata:\s*acabas de Sacar\s+([\d.,]+)/i.exec(t)))
+      return ev({ banco: 'daviplata', tipo: 'retiro', monto: num(m[1]) });
+
+    // Nubank (tarjeta de crédito)
+    if ((m = /Compra aprobada por \$?([\d.,]+).*?Tu compra en (.+?) por \$?([\d.,]+) con tu tarjeta terminada en/i.exec(t)))
+      return ev({ banco: 'nubank', tc: true, tipo: 'gasto', comercio: limpio(m[2]), monto: num(m[3]) });
+
+    // Falabella
+    if ((m = /Transferiste con .*?Enviaste \$?([\d.,]+) a (?:Llave \w+ de )?(.+?)\.\s*(\d{4}-\d{2}-\d{2}.*)$/i.exec(t)))
+      return ev({ banco: 'falabella', tipo: 'salida', persona: limpio(m[2]), monto: num(m[1]), ts: fechaTexto(m[3], ts) });
+    if ((m = /Transferencia recibida.*?([A-ZÁÉÍÓÚÑ][\wÁÉÍÓÚÑ ]*?) te ha enviado \$?([\d.,]+) a tu cuenta\.\s*(\d{4}-\d{2}-\d{2}.*)$/i.exec(t)))
+      return ev({ banco: 'falabella', tipo: 'entrada', persona: limpio(m[1]), monto: num(m[2]), ts: fechaTexto(m[3], ts) });
+
+    // Billetera de Google: título = comercio, texto = "COP12,480 con Tarjeta Nequi Visa ••4335"
+    if (n.app === 'wallet' && (m = /COP\s*([\d.,]+)\s+con\s+(Tarjeta\s+)?(.+?)\s*[•·*]+\s*\d{4}/i.exec(n.texto || ''))) {
+      const tarjeta = m[3];
+      const banco = /nequi/i.test(tarjeta) ? 'nequi' : /nu\b|nubank/i.test(tarjeta) ? 'nubank' : /davi.*oro|oro/i.test(tarjeta) ? 'davibank' : /davi/i.test(tarjeta) ? 'daviplata' : '';
+      return ev({ banco: banco, tc: banco === 'nubank' || banco === 'davibank', tipo: 'gasto', comercio: limpio(n.titulo), monto: num(m[1]) });
+    }
+
+    // Nequi (app y SMS)
+    if ((m = /(?:NEQUI:\s*)?Pagaste ([\d.,]+) en (.+?)$/i.exec(t.replace(/^Compra exitosa con Tarjeta[^P]*/i, ''))))
+      return ev({ banco: 'nequi', tipo: 'gasto', comercio: limpio(m[2]), monto: num(m[1]) });
+    if ((m = /Hiciste un pago en (.+?) por \$?([\d.,]+)/i.exec(t)))
+      return ev({ banco: 'nequi', tipo: 'gasto', comercio: limpio(m[1]).replace(/- /g, ''), monto: num(m[2]), pse: true });
+    if (/Pago exitoso por PSE/i.test(t)) return null;
+    if ((m = /env[ií]o de plata por \$?([\d.,]+) fue exitoso/i.exec(t)))
+      return ev({ banco: 'nequi', tipo: 'salida', persona: '', monto: num(m[1]) });
+    if ((m = /(.+?) te envió ([\d.,]+),?\s*¡lo mejor/i.exec(t.replace(/^Env[ií]o\s*/i, ''))))
+      return ev({ banco: 'nequi', tipo: 'entrada', persona: limpio(m[1]), monto: num(m[2]) });
+
+    // Correo de PlacetoPay: confirma un pago PSE que ya llegó por Nequi
+    if ((m = /Transacción aprobada en (\w+).*?COP \$?([\d.,]+)/i.exec(t)))
+      return ev({ banco: 'nequi', tipo: 'gasto', comercio: limpio(m[1]), monto: num(m[2]), pse: true, correo: true });
+    return null;
+  }
+
+  /* Dos avisos son el mismo hecho si coinciden monto, banco y comercio dentro de una ventana corta.
+     a y b: { tipo, monto, banco, t (ms), quien, pse } */
+  function mismoHecho(a, b) {
+    if (Math.abs(a.monto - b.monto) > 0.5) return false;
+    if (a.tipo === 'transferencia' || b.tipo === 'transferencia') {
+      const o = a.tipo === 'transferencia' ? b : a;
+      if (o.tipo !== 'salida' && o.tipo !== 'entrada' && o.tipo !== 'transferencia') return false;
+      return Math.abs(a.t - b.t) <= 20 * MS_MIN;
+    }
+    if (a.tipo !== b.tipo) return false;
+    if (a.banco && b.banco && a.banco !== b.banco) return false;
+    if (Math.abs(a.t - b.t) > 12 * MS_MIN) return false;
+    const x = norm(a.quien), y = norm(b.quien);
+    if (x && y && x.indexOf(y) < 0 && y.indexOf(x) < 0 && !(a.pse && b.pse)) return false;
+    return true;
+  }
+
+  /* ¿Ya lo registraste a mano? mismo monto, cuenta compatible y fecha ±1 día. libre(m) filtra movimientos ya enlazados. */
+  function yaRegistrado(ev, movimientos, libre) {
+    const dia = 86400000;
+    return movimientos.find(function (m) {
+      if (Math.abs(m.monto - ev.monto) > 0.5) return false;
+      if (Math.abs(m.fecha.getTime() + 12 * 3600000 - ev.t) > 1.6 * dia) return false;
+      if (ev.cuenta && m.cuenta && ev.cuenta !== m.cuenta && ev.cuenta !== m.destino && ev.destino !== m.cuenta && ev.destino !== m.destino) return false;
+      return !libre || libre(m);
+    }) || null;
+  }
+
+  return { num: num, parse: parse, mismoHecho: mismoHecho, yaRegistrado: yaRegistrado, esMio: esMio, norm: norm, MS_MIN: MS_MIN };
+})();
+
+function avModo_() {
+  const m = String(PropertiesService.getScriptProperties().getProperty('AVISOS_MODO') || '').trim();
+  return AV_MODOS.indexOf(m) >= 0 ? m : 'avisar';
+}
+
+function hojaAvisos_() {
+  const libro = SpreadsheetApp.getActiveSpreadsheet();
+  let h = libro.getSheetByName(HOJA_AV);
+  if (!h) {
+    h = libro.insertSheet(HOJA_AV);
+    h.getRange(1, 1, 1, ENC_AV.length).setValues([ENC_AV]);
+    h.setFrozenRows(1);
+  }
+  return h;
+}
+
+/** Últimos avisos (por defecto 300) como objetos; `fila` es el número de fila en la hoja. */
+function leerAvisos_(max) {
+  const h = hojaAvisos_();
+  const ult = h.getLastRow();
+  if (ult < 2) return [];
+  const desde = Math.max(2, ult - (max || 300) + 1);
+  return h.getRange(desde, 1, ult - desde + 1, ENC_AV.length).getValues().map(function (v, i) {
+    const t = v[1] instanceof Date ? v[1].getTime() : 0;
+    return {
+      fila: desde + i, id: String(v[0]), t: t, fuentes: String(v[2]).split('+').filter(Boolean), n: Number(v[3]) || 1,
+      banco: String(v[4]), cuenta: String(v[5]), tipo: String(v[6]), monto: Number(v[7]) || 0, quien: String(v[8]), destino: String(v[9]),
+      recurrente: v[10] === 'sí', tc: v[11] === 'sí', estado: String(v[12]), idMov: String(v[13] || ''), nota: String(v[14] || ''),
+      recibido: v[15] instanceof Date ? v[15] : null, res: String(v[16] || ''), texto: String(v[17] || ''), pse: v[18] === 'sí'
+    };
+  }).filter(function (r) { return r.id && r.t; });
+}
+
+function avFilaDe_(r) {
+  return [r.id, new Date(r.t), r.fuentes.join('+'), r.n, r.banco, r.cuenta, r.tipo, r.monto, r.quien, r.destino,
+    r.recurrente ? 'sí' : '', r.tc ? 'sí' : '', r.estado, r.idMov, r.nota, r.recibido || new Date(), r.res, String(r.texto).slice(0, 600), r.pse ? 'sí' : ''];
+}
+
+function avGuardar_(r) {
+  const h = hojaAvisos_();
+  if (r.fila) h.getRange(r.fila, 1, 1, ENC_AV.length).setValues([avFilaDe_(r)]);
+  else { r.fila = h.getLastRow() + 1; h.getRange(r.fila, 1, 1, ENC_AV.length).setValues([avFilaDe_(r)]); }
+}
+
+/** Las escrituras de avisos esperan a que los movimientos ya estén guardados (así nunca queda "Registrado" sin movimiento). */
+let AV_POST_ = null;
+function avDiferir_(fn) { (AV_POST_ = AV_POST_ || []).push(fn); }
+function avEjecutarDiferidos_() { const f = AV_POST_ || []; AV_POST_ = null; f.forEach(function (fn) { fn(); }); }
+
+/** Cuenta de la hoja que corresponde al banco del aviso (vacía si no hay una sola candidata). */
+function avCuenta_(cfg, banco, tc) {
+  if (!banco) return '';
+  const c = cfg.cuentas.filter(function (x) {
+    return x.activa !== false && AV.norm(x.nombre).indexOf(AV.norm(banco)) >= 0 && ((x.tipo === 'Deuda') === !!tc);
+  });
+  return c.length === 1 ? c[0].nombre : '';
+}
+
+function avTs_(v) {
+  const s = limpiar(v);
+  if (!s) return Date.now();
+  if (/^\d{10,13}$/.test(s)) return s.length <= 10 ? Number(s) * 1000 : Number(s);
+  const t = new Date(s).getTime();
+  return isNaN(t) ? Date.now() : Math.min(t, Date.now() + 3600000);
+}
+
+function avFechaISO_(t) {
+  const hoyF = hoy();
+  const f = soloFecha(new Date(t));
+  return Utilities.formatDate(f > hoyF ? hoyF : f, zona(), 'yyyy-MM-dd');
+}
+
+function avEnlazados_(recientes) {
+  const c = {};
+  recientes.forEach(function (r) { if (r.idMov) c[r.idMov] = (c[r.idMov] || 0) + 1; });
+  return c;
+}
+
+/** Acción "aviso": lo manda la macro del celular con app, titulo, texto y ts (milisegundos). */
+function registrarAviso(p, cfg) {
+  const texto = String(p.texto || '').trim(), titulo = String(p.titulo || '').trim();
+  if (!texto && !titulo) throw new Error('El aviso viene vacío.');
+  const t = avTs_(p.ts);
+  const ev = AV.parse({ app: limpiar(p.app).toLowerCase() || 'sms', titulo: titulo, texto: texto, ts: t });
+  if (!ev || !(ev.monto > 0)) return 'ℹ️ Ese aviso no es un movimiento. Lo ignoré.';
+  const yo = cfg.ajustes.nombre || '';
+  const nuevo = {
+    t: ev.ts, tipo: ev.tipo === 'retiro' ? 'retiro' : ev.tipo, monto: ev.monto, banco: ev.banco || '', quien: ev.comercio || ev.persona || '',
+    cuenta: avCuenta_(cfg, ev.banco, ev.tc), destino: '', pse: !!ev.pse, tc: !!ev.tc, recurrente: !!ev.recurrente
+  };
+  const recientes = leerAvisos_(300);
+
+  // 1) Mismo hecho avisado por otro canal (app + SMS + Billetera + correo): solo suma un aviso.
+  const dup = recientes.find(function (r) { return AV.mismoHecho(r, nuevo); });
+  if (dup) {
+    dup.n++;
+    if (dup.fuentes.indexOf(ev.fuente) < 0) dup.fuentes.push(ev.fuente);
+    if (nuevo.quien && (!dup.quien || (nuevo.quien.length > dup.quien.length && !ev.correo))) dup.quien = nuevo.quien;
+    if (!dup.cuenta && nuevo.cuenta) dup.cuenta = nuevo.cuenta;
+    if (!dup.banco && nuevo.banco) dup.banco = nuevo.banco;
+    dup.texto = (dup.texto + ' | ' + ev.crudo).slice(0, 600);
+    avDiferir_(function () { avGuardar_(dup); });
+    return '👌 Aviso repetido (' + dup.n + ' avisos del mismo movimiento). No lo dupliqué.';
+  }
+
+  // 2) Salida de una cuenta tuya + entrada propia en otra, por el mismo monto y casi a la misma hora: es una transferencia.
+  const sentido = nuevo.tipo === 'salida' ? 'entrada' : (nuevo.tipo === 'entrada' && AV.esMio(nuevo.quien, yo)) ? 'salida' : '';
+  const par = sentido && recientes.find(function (r) {
+    return r.estado === 'Pendiente' && r.tipo === sentido && Math.abs(r.monto - nuevo.monto) < 0.5 && Math.abs(r.t - nuevo.t) <= 20 * AV.MS_MIN &&
+      r.banco !== nuevo.banco && (sentido === 'salida' || AV.esMio(r.quien, yo));
+  });
+  if (par) {
+    const salida = sentido === 'salida' ? par : nuevo, entrada = sentido === 'salida' ? nuevo : par;
+    par.tipo = 'transferencia';
+    par.t = salida.t;
+    par.banco = salida.banco; par.cuenta = salida.cuenta; par.destino = entrada.cuenta; par.quien = 'Tú';
+    par.n++;
+    if (par.fuentes.indexOf(ev.fuente) < 0) par.fuentes.push(ev.fuente);
+    par.texto = (par.texto + ' | ' + ev.crudo).slice(0, 600);
+    return avAsentar_(par, cfg, recientes, 'Transferencia entre tus cuentas detectada');
+  }
+
+  nuevo.id = 'av' + Utilities.getUuid().slice(0, 8);
+  nuevo.fuentes = [ev.fuente]; nuevo.n = 1; nuevo.estado = 'Pendiente'; nuevo.idMov = ''; nuevo.nota = ''; nuevo.res = ''; nuevo.texto = ev.crudo; nuevo.fila = 0;
+  return avAsentar_(nuevo, cfg, recientes, 'Aviso nuevo');
+}
+
+/** Decide qué pasa con un aviso recién creado o recién emparejado: ya estaba, se registra solo o queda pendiente. */
+function avAsentar_(r, cfg, recientes, titulo) {
+  const enl = avEnlazados_(recientes);
+  const ya = AV.yaRegistrado(r, leerMovimientos(), function (m) { return (enl[m.id] || 0) < (m.tipo === TIPO.TRANSF ? 2 : 1); });
+  if (ya) {
+    r.estado = 'Ya estaba'; r.idMov = ya.id; r.nota = 'Coincide con "' + ya.desc + '" que ya registraste';
+    avDiferir_(function () { avGuardar_(r); });
+    return '👌 Ya lo tenías registrado ("' + ya.desc + '").';
+  }
+  const monto = r.monto;
+  if (avModo_() === 'auto' && r.tipo === 'gasto' && r.cuenta) {
+    const antes = PEND_ ? PEND_.length : 0;
+    registrarGasto({ descripcion: r.quien || ('Compra ' + r.cuenta), monto: monto, cuenta: r.cuenta, cuotas: r.tc ? '1' : '', fecha: avFechaISO_(r.t) }, cfg);
+    r.estado = 'Registrado'; r.idMov = PEND_ && PEND_[antes] ? String(PEND_[antes][12]) : ULT_ID_;
+    r.nota = 'Automático' + (r.tc ? ' · 1 cuota (aclárala editando el movimiento)' : '');
+    avDiferir_(function () { avGuardar_(r); });
+    return '✅ Registrado solo: ' + pesos(monto) + ' en ' + (r.quien || r.cuenta) + ' (' + r.cuenta + ')';
+  }
+  if (avModo_() === 'auto' && r.tipo === 'transferencia' && r.cuenta && r.destino) {
+    const antes = PEND_ ? PEND_.length : 0;
+    registrarTransferencia({ desde: r.cuenta, hacia: r.destino, monto: monto, fecha: avFechaISO_(r.t) }, cfg);
+    r.estado = 'Registrado'; r.idMov = PEND_ && PEND_[antes] ? String(PEND_[antes][12]) : ULT_ID_; r.nota = 'Automático';
+    avDiferir_(function () { avGuardar_(r); });
+    return '✅ Transferencia registrada sola: ' + pesos(monto) + ' · ' + r.cuenta + ' → ' + r.destino;
+  }
+  r.estado = 'Pendiente';
+  avDiferir_(function () { avGuardar_(r); });
+  return '🔔 ' + titulo + ' por confirmar: ' + pesos(monto) + (r.quien ? ' · ' + r.quien : '');
+}
+
+/** Acción "avisoresolver": como = gasto|ingreso|mepagaron|meprestaron|lepague|transferencia|pagocredito (con `datos` JSON igual al de esa acción) | ignorar | reabrir. */
+function resolverAviso(p, cfg) {
+  const id = limpiar(p.id);
+  const r = leerAvisos_(400).find(function (x) { return x.id === id; });
+  if (!r) throw new Error('No encontré ese aviso (¿ya es muy antiguo?).');
+  const como = limpiar(p.como);
+  if (como === 'reabrir') {
+    if (r.estado !== 'Ignorado') throw new Error('Solo se pueden reabrir los avisos ignorados.');
+    r.estado = 'Pendiente'; r.nota = '';
+    avDiferir_(function () { avGuardar_(r); });
+    return '↩️ El aviso volvió a "Por confirmar".';
+  }
+  if (r.estado !== 'Pendiente') throw new Error('Ese aviso ya se resolvió (' + r.estado + ').');
+  if (como === 'ignorar') {
+    r.estado = 'Ignorado'; r.nota = limpiar(p.nota) || 'Lo ignoraste';
+    avDiferir_(function () { avGuardar_(r); });
+    return '🙈 Aviso ignorado.';
+  }
+  const manejadores = { gasto: registrarGasto, ingreso: registrarIngreso, mepagaron: registrarMePagaron, meprestaron: registrarMePrestaron,
+    lepague: registrarLePague, transferencia: registrarTransferencia, pagocredito: registrarPagoCredito };
+  const f = manejadores[como];
+  if (!f) throw new Error('No sé cómo registrar "' + como + '".');
+  let datos = {};
+  try { datos = typeof p.datos === 'string' ? JSON.parse(p.datos || '{}') : (p.datos || {}); } catch (e) { throw new Error('Los datos del aviso no tienen un formato válido.'); }
+  const q = {};
+  Object.keys(datos).forEach(function (k) { q[k] = datos[k]; });
+  q.monto = r.monto;                         // el monto es el que dijo el banco
+  if (!limpiar(q.fecha)) q.fecha = avFechaISO_(r.t);
+  const antes = PEND_ ? PEND_.length : 0;
+  const msg = f(q, cfg);
+  r.estado = 'Registrado'; r.idMov = PEND_ && PEND_[antes] ? String(PEND_[antes][12]) : ULT_ID_;
+  r.nota = como; r.res = JSON.stringify({ como: como, datos: datos }).slice(0, 900);
+  avDiferir_(function () { avGuardar_(r); });
+  return msg;
+}
+
+function cambiarModoAvisos(p) {
+  const m = limpiar(p.modo);
+  if (AV_MODOS.indexOf(m) < 0) throw new Error('Modo no válido (avisar o auto).');
+  PropertiesService.getScriptProperties().setProperty('AVISOS_MODO', m);
+  return m === 'auto' ? '⚡ Modo automático: los gastos simples y las transferencias entre tus cuentas se registran solos.' : '🔔 Modo "solo avisar": nada se registra hasta que lo confirmes.';
+}
+
+/** Lo que muestra la app en "Por confirmar": pendientes + lo reciente ya resuelto. */
+function resumenAvisos(cfg, movs) {
+  const h = SpreadsheetApp.getActiveSpreadsheet().getSheetByName(HOJA_AV);
+  const base = { modo: avModo_(), pendientes: 0, items: [] };
+  if (!h || h.getLastRow() < 2) return base;
+  const corte = Date.now() - 14 * 86400000;
+  const todos = leerAvisos_(300).filter(function (r) { return r.estado === 'Pendiente' || r.t >= corte; });
+  let sug = 0;
+  base.pendientes = todos.filter(function (r) { return r.estado === 'Pendiente'; }).length;
+  base.items = todos.sort(function (a, b) { return b.t - a.t; }).slice(0, 80).map(function (r) {
+    let cat = '';
+    if (r.estado === 'Pendiente' && r.tipo === 'gasto' && r.quien && sug < 30) { sug++; cat = sugerirCategoria(r.quien, cfg, movs) || ''; }
+    return { id: r.id, t: Utilities.formatDate(new Date(r.t), zona(), "yyyy-MM-dd'T'HH:mm"), fuentes: r.fuentes, n: r.n, banco: r.banco, cuenta: r.cuenta,
+      tipo: r.tipo, monto: r.monto, quien: r.quien, destino: r.destino, recurrente: r.recurrente, tc: r.tc, estado: r.estado, idMov: r.idMov,
+      nota: r.nota, sugCategoria: cat, texto: r.texto.slice(0, 220), mio: r.tipo === 'entrada' && AV.esMio(r.quien, cfg.ajustes.nombre) };
+  });
+  return base;
 }
 
 /* =================================================================

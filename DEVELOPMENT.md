@@ -41,8 +41,15 @@ sw.js                     service worker: red primero (3 s) y caché de respaldo
 cards.js, cards/, logos/  catálogo de imágenes de tarjetas y logos de bancos
 backend/Codigo.gs         Google Apps Script (API + correos + cálculos). Es la misma versión que está en línea.
 backend/Dashboard.html    tablero antiguo servido por Apps Script (sin mantenimiento activo)
+avisos.js                 pantalla "Por confirmar" (avisos de bancos); resuelve con el formulario de registro.js
+docs/avisos-macro.md      cómo armar la macro del celular que reenvía notificaciones/SMS (sin claves)
 tests/                    pruebas del backend en Node (ver abajo)
 ```
+
+**Avisos de bancos.** La macro hace `POST accion=aviso` (app, titulo, texto, ts). El backend (`registrarAviso`, objeto `AV`) lee el texto,
+une avisos repetidos, detecta transferencias propias y lo ya registrado, y lo guarda en la hoja **Avisos** (Pendiente / Registrado / Ignorado / Ya estaba).
+`avisoresolver` registra con los mismos manejadores de siempre (el monto es siempre el del banco); `avisosmodo` cambia entre *avisar* y *auto*.
+Las escrituras en Avisos se hacen después de guardar los movimientos (`avDiferir_`).
 
 **Flujo de datos.** El celular (atajo de *HTTP Request Shortcuts*) y la app envían registros con
 `POST` al Apps Script (`doPost`, parámetro `accion`). La app lee todo con
