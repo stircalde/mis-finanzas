@@ -22,6 +22,7 @@ Sheet.prototype.getLastColumn=function(){let nc=0;this.grid.forEach(r=>{if(r)nc=
 Sheet.prototype.getMaxRows=function(){return Math.max(1000,this.grid.length);};
 Sheet.prototype.insertRowBefore=function(r){this.grid.splice(r-1,0,[]);return this;};
 Sheet.prototype.appendRow=function(r){this.grid.push(r.slice());};
+Sheet.prototype.deleteRow=function(r){this.grid.splice(r-1,1);return this;};
 ['setTabColor','setRowHeight','setColumnWidth','setFrozenRows','setFrozenColumns','setConditionalFormatRules','setName','setHiddenGridlines'].forEach(k=>Sheet.prototype[k]=function(){return this;});
 const sheets={};
 global.SpreadsheetApp={getActiveSpreadsheet:()=>({getSpreadsheetTimeZone:()=>'America/Bogota',getSheetByName:n=>sheets[n]||null,insertSheet:(n)=>(sheets[n]=new Sheet(n)),setActiveSheet(){}}),

@@ -17,6 +17,7 @@ const URL_APP = 'https://stircalde.github.io/mis-finanzas/'; // la app del dashb
 
 const HOJA_MOV = 'Movimientos';
 const HOJA_CONFIG = 'Configuración';
+const HOJA_ELIM = 'Eliminados';
 
 const ENC_MOV = ['Fecha', 'Tipo', 'Descripción', 'Monto', 'Categoría', 'Cuenta', 'Cuenta destino',
   'Para quién', 'Cuotas', 'Valor cuota', 'Costo financiero', 'Registrado el', 'ID'];
@@ -77,22 +78,26 @@ function doPost(e) {
       case 'ajuste': mensaje = registrarAjuste(p, cfg); break;
       case 'editarmov': mensaje = editarMovimiento(p, cfg); break;
       case 'deudaantigua': mensaje = agregarDeudaAntigua(p, cfg); break;
+      case 'previsualizarborrado': mensaje = previsualizarBorrado(p, cfg); break;
+      case 'borrarmov': mensaje = borrarMovimiento(p, cfg); break;
+      case 'restaurarmov': mensaje = restaurarMovimientos(p, cfg); break;
       case 'ledebiaantes': mensaje = agregarLeDebiaAntes(p, cfg); break;
       case 'fijoadmin': mensaje = administrarFijo(p, cfg); break;
       case 'cuentaadmin': mensaje = administrarCuenta(p, cfg); break;
       default: throw new Error('Acción desconocida: ' + p.accion);
     }
     guardarPendientes_();
-    return json({ ok: true, mensaje: mensaje, config: configTelefono(CACHE_CFG_ ? cfg : leerConfig()) });
+    return json({ ok: true, mensaje: mensaje, extra: EXTRA_, config: configTelefono(CACHE_CFG_ ? cfg : leerConfig()) });
   } catch (err) {
     return json({ ok: false, mensaje: '❌ ' + (conLock ? err.message : 'La hoja está ocupada. Intenta de nuevo en unos segundos.') });
   } finally {
     RID_ = '';
+    EXTRA_ = null;
     PEND_ = null;   // si hubo error, lo pendiente se descarta: nada quedó escrito
     if (conLock) lock.releaseLock();
   }
 }
-let RID_ = '', RID_N_ = 0, PEND_ = null;
+let RID_ = '', RID_N_ = 0, PEND_ = null, EXTRA_ = null;   // EXTRA_: datos estructurados que algunas acciones devuelven junto al mensaje
 
 function registrarGasto(p, cfg) {
   const monto = aNumero(p.monto);
@@ -372,6 +377,14 @@ function editarMovimiento(p, cfg) {
     const c = limpiar(p.categoria); if (!c) throw new Error('Elige la categoría.');
     marca('categoría', ant[4], c); nuevo[4] = c;
   }
+  if (tiene('para')) {
+    if (tipo !== TIPO.GASTO) throw new Error('Solo los gastos tienen "para quién".');
+    const para = paraCanonico(cfg, limpiar(p.para));
+    const r = reparto({ para: para, monto: monto });
+    const suma = r.otros.reduce(function (t, x) { return t + x.v; }, 0);
+    if (para.indexOf(':') >= 0 && suma > monto) throw new Error('Lo que repartes (' + pesos(suma) + ') supera el monto del gasto (' + pesos(monto) + ').');
+    marca('para quién', ant[7], para); nuevo[7] = para;
+  }
   let cta = null;
   if (tiene('cuenta')) {
     const nombre = limpiar(p.cuenta);
@@ -448,6 +461,113 @@ function agregarLeDebiaAntes(p, cfg) {
   const est = calcular(leerMovimientos(), cfg, hoy());
   const x = est.lesDebo.find(function (y) { return y.persona === persona; });
   return '🙋 Anotado: le debías ' + pesos(monto) + ' a ' + persona + ' (' + concepto + ').\nAhora le debes ' + pesos(x ? x.saldo : monto) + '. Cuando se lo pagues, regístralo con ↩️ Le pagué.';
+}
+
+/* ---------- Eliminar movimientos (con vista previa, doble confirmación y deshacer) ---------- */
+
+/** Los movimientos que nacieron del mismo registro (apartado, comisión, aporte de mamá…) comparten esta familia. */
+function familiaId_(id) {
+  id = String(id);
+  return id.indexOf('fijo:') === 0 ? id.replace(/:aporte$/, '') : id.split('#')[0];
+}
+
+/** Filas de la hoja (número y valores) del movimiento y de todo lo que nació con él. */
+function filasDeFamilia_(id) {
+  id = limpiar(id);
+  if (!id) throw new Error('Falta el identificador del movimiento.');
+  if (id.indexOf('hist:') === 0) throw new Error('Los movimientos cargados de extractos prevalecen y no se eliminan: ya están incluidos en el saldo inicial.');
+  const h = hojaMovimientos();
+  const n = h.getLastRow() - 1;
+  const todo = n < 1 ? [] : h.getRange(2, 1, n, ENC_MOV.length).getValues();
+  const fam = familiaId_(id);
+  const filas = [];
+  todo.forEach(function (r, i) { if (String(r[12]) && familiaId_(r[12]) === fam) filas.push({ fila: i + 2, v: r }); });
+  if (!filas.some(function (f) { return String(f.v[12]) === id; })) throw new Error('No encontré ese movimiento. Puede que ya se haya borrado.');
+  if (filas.some(function (f) { return String(f.v[12]).indexOf('hist:') === 0; })) throw new Error('Este registro está ligado a un extracto y no se elimina.');
+  return filas;
+}
+
+/** Qué pasaría con tus saldos y con lo que te deben si esas filas desaparecieran. No escribe nada. */
+function efectoDeBorrar_(cfg, ids) {
+  const movs = leerMovimientos();
+  const antes = calcular(movs, cfg, hoy());
+  const despues = calcular(movs.filter(function (m) { return ids.indexOf(m.id) < 0; }), cfg, hoy());
+  const efectos = [], avisos = [];
+  let mover = null;
+  cfg.cuentas.forEach(function (c) {
+    const a = Math.round(antes.saldos[c.nombre] || 0), d = Math.round(despues.saldos[c.nombre] || 0);
+    if (a !== d) efectos.push({ cuenta: c.nombre, antes: a, despues: d, deuda: c.tipo === 'Deuda' });
+    if (c.apartaPara && d !== 0) {
+      const origen = c.alimentaDesde || (cfg.cuentas.find(function (x) { return x.tipo === 'Plata' && x.activa && x.nombre !== c.nombre; }) || {}).nombre || '';
+      avisos.push(d > 0
+        ? 'El bolsillo "' + c.nombre + '" quedaría con ' + pesos(d) + ' que ya no corresponden a ningún apartado. Puedes moverlos a ' + (origen || 'otra cuenta') + '.'
+        : 'El bolsillo "' + c.nombre + '" quedaría en −' + pesos(-d) + ': esa plata ya se usó (por ejemplo, en un pago). Puedes reponerla desde ' + (origen || 'otra cuenta') + '.');
+      if (origen) mover = d > 0 ? { desde: c.nombre, hacia: origen, monto: d } : { desde: origen, hacia: c.nombre, monto: -d };
+    } else if (c.tipo === 'Plata' && d < 0 && a >= 0) avisos.push('"' + c.nombre + '" quedaría en negativo (−' + pesos(-d) + '). Revisa si falta registrar algo.');
+  });
+  const personas = [];
+  antes.personas.forEach(function (x) {
+    const y = despues.personas.find(function (z) { return z.persona === x.persona; }) || { neto: 0 };
+    if (Math.round(x.neto) !== Math.round(y.neto)) personas.push({ persona: x.persona, antes: Math.round(x.neto), despues: Math.round(y.neto) });
+  });
+  return { efectos: efectos, avisos: avisos, personas: personas, mover: mover };
+}
+
+function resumenFila_(v) {
+  return { id: String(v[12]), fecha: fmt(soloFecha(v[0])), tipo: String(v[1]).trim(), desc: String(v[2]), monto: Number(v[3]) || 0, cuenta: String(v[5]).trim(), destino: String(v[6]).trim() };
+}
+
+function previsualizarBorrado(p, cfg) {
+  const filas = filasDeFamilia_(p.id);
+  const ids = filas.map(function (f) { return String(f.v[12]); });
+  const e = efectoDeBorrar_(cfg, ids);
+  EXTRA_ = { movimientos: filas.map(function (f) { return resumenFila_(f.v); }), efectos: e.efectos, personas: e.personas, avisos: e.avisos, mover: e.mover };
+  return 'Vista previa: ' + ids.length + ' movimiento(s).';
+}
+
+function borrarMovimiento(p, cfg) {
+  if (limpiar(p.confirmo) !== 'ELIMINAR') throw new Error('Falta la confirmación: escribe ELIMINAR.');
+  const filas = filasDeFamilia_(p.id);
+  const ids = filas.map(function (f) { return String(f.v[12]); });
+  const e = efectoDeBorrar_(cfg, ids);
+  const libro = SpreadsheetApp.getActiveSpreadsheet();
+  let el = libro.getSheetByName(HOJA_ELIM);
+  if (!el) {
+    el = libro.insertSheet(HOJA_ELIM);
+    el.getRange(1, 1, 1, ENC_MOV.length + 2).setValues([ENC_MOV.concat(['Eliminado el', 'Lote'])]);
+    el.setFrozenRows(1);
+  }
+  const lote = Utilities.getUuid().slice(0, 8), ahora = new Date();
+  const copia = filas.map(function (f) { return f.v.concat([ahora, lote]); });
+  el.getRange(el.getLastRow() + 1, 1, copia.length, ENC_MOV.length + 2).setValues(copia);   // primero se guarda la copia…
+  const h = hojaMovimientos();
+  filas.map(function (f) { return f.fila; }).sort(function (a, b) { return b - a; }).forEach(function (n) { h.deleteRow(n); });   // …y luego se quita
+  CACHE_MOVS_ = null;
+  EXTRA_ = { lote: lote, borrados: ids.length, avisos: e.avisos, mover: e.mover };
+  let msg = '🗑️ Eliminado' + (ids.length > 1 ? ' (' + ids.length + ' movimientos ligados)' : '') + ': ' + filas.map(function (f) { return String(f.v[2]); }).join(' · ');
+  e.efectos.forEach(function (x) { msg += '\n' + x.cuenta + ': ' + pesos(x.antes) + ' → ' + pesos(x.despues); });
+  e.avisos.forEach(function (a) { msg += '\n⚠️ ' + a; });
+  return msg + '\n↩️ Quedó guardado en la pestaña "Eliminados": puedes deshacerlo.';
+}
+
+function restaurarMovimientos(p, cfg) {
+  const lote = limpiar(p.lote);
+  if (!lote) throw new Error('Falta el lote.');
+  const el = SpreadsheetApp.getActiveSpreadsheet().getSheetByName(HOJA_ELIM);
+  if (!el || el.getLastRow() < 2) throw new Error('No hay nada eliminado que restaurar.');
+  const todo = el.getRange(2, 1, el.getLastRow() - 1, ENC_MOV.length + 2).getValues();
+  const filas = [];
+  todo.forEach(function (r, i) { if (String(r[ENC_MOV.length + 1]) === lote) filas.push({ fila: i + 2, v: r.slice(0, ENC_MOV.length) }); });
+  if (!filas.length) throw new Error('Ese borrado ya se restauró o no existe.');
+  const existentes = leerMovimientos();
+  filas.forEach(function (f) { if (existentes.some(function (m) { return m.id === String(f.v[12]); })) throw new Error('Ya existe un movimiento con ese identificador; no se restaura para no duplicar.'); });
+  const h = hojaMovimientos();
+  const r0 = h.getLastRow() + 1;
+  h.getRange(r0, 1, filas.length, ENC_MOV.length).setValues(filas.map(function (f) { return f.v; }));
+  try { formatoFilas_(h, r0, filas.length); } catch (e) { /* cosmético */ }
+  filas.map(function (f) { return f.fila; }).sort(function (a, b) { return b - a; }).forEach(function (n) { el.deleteRow(n); });
+  CACHE_MOVS_ = null;
+  return '↩️ Restaurado' + (filas.length > 1 ? ' (' + filas.length + ' movimientos)' : '') + ': ' + filas.map(function (f) { return String(f.v[2]); }).join(' · ');
 }
 
 function lineaPresupuesto(cfg, cat, fecha) {
@@ -1436,7 +1556,7 @@ function armarDashboard(est, movs, cfg, claveMes, hoyF) {
         destino: m.tipo === TIPO.MEPAGARON ? '' : m.destino, persona: m.tipo === TIPO.MEPRESTARON || m.tipo === TIPO.LEPAGUE || m.tipo === TIPO.MEPAGARON ? m.para : '', para: r && r.otros.length === 1 && r.mio === 0 ? r.otros[0].p : '',
         compartido: r && r.otros.length > 1 ? r.otros.length : 0, mio: r ? r.mio : 0,
         cuotas: m.cuotas, valorCuota: m.valorCuota, costo: m.costo, emoji: emoji, fijo: fijosPorNombre[fijo] ? fijo : '',
-        hist: esHist(m), resumen: cuentaEnResumen(m), id: m.id };
+        hist: esHist(m), resumen: cuentaEnResumen(m), id: m.id, paraRaw: m.tipo === TIPO.GASTO ? m.para : '' };
     });
 
   const mesesDisponibles = {};

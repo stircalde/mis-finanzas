@@ -32,7 +32,7 @@ de *Propiedades de script → CLAVE*.
 5. Si algo falla: Gestionar implementaciones → Editar → elige la versión anterior.
 
 ## Estado
-- Backend desplegado: versión 22 (editar movimientos, deudas antiguas; hash a03f729f118a; clave en Propiedades de script). App: ver `VERSION` en `sw.js`.
+- Backend desplegado: versión 23 (editar "para quién", eliminar con deshacer; hash 8bcf1af84de3; clave en Propiedades de script). App: ver `VERSION` en `sw.js`.
 - Apariencia (tema, 8 colores, Original/Cristal/Mate, OLED) publicada: ver DEVELOPMENT.md.
 - Pendientes conocidos: `tests/conocidos.json`. Intereses de tarjeta Opción A ya en línea (v21); falta confirmar
   la fórmula de Nubank en cuotas siguientes con el extracto de noviembre.
@@ -52,4 +52,4 @@ de *Propiedades de script → CLAVE*.
   B. Después: límites de gasto editables (idea 2) y Metas de ahorro en Más (idea 4).
   C. Luego: "Próximos pagos" a la altura de las vecinas (idea 1) y logo dinámico coherente con color y estilo (idea 3).
   D. Al final, estudios: registro automático por notificaciones (notificación → transacción detectada → verificación → registro; incluye compras a cuotas y conciliar transferencias entre cuentas; Android), compartir la app (datos independientes, actualizaciones, novedades por versión) e iOS (limitaciones frente a Android).
-  E. En curso (7-oct, aprobado por Hector): editar "para quién" (varias personas) y borrar movimientos con doble confirmación; filas ligadas (apartado, comisión, aporte de mamá) se borran juntas y avisa si el bolsillo queda ≠ $0; los borrados pasan a una pestaña "Eliminados" (recuperables); los "hist:" de extractos prevalecen y no se tocan.
+  E. HECHO y publicado el 7-oct (PR #8, app mf-v5-60, backend v23): editar "para quién" (varias personas) y borrar movimientos con doble confirmación; filas ligadas (apartado, comisión, aporte de mamá) se borran juntas y avisa si el bolsillo queda ≠ $0; los borrados pasan a una pestaña "Eliminados" (recuperables); los "hist:" de extractos prevalecen y no se tocan.

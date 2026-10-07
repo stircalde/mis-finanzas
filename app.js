@@ -766,7 +766,7 @@
     var ico = icoComercio(m);
     if (!ico && EMOJI_GRUPO[grupoMov(m)] && (m.tipo === 'Transferencia' || m.tipo === 'Ajuste')) m = Object.assign({}, m, { emoji: EMOJI_GRUPO[grupoMov(m)] });
     var plan = m.id && PLANES['m:' + m.id];
-    var editable = !plan && m.id && !m.hist && m.tipo !== 'Ajuste';
+    var editable = !plan && m.id && !m.hist;
     return '<div class="tx-row' + (plan ? ' tx-plan' : '') + (editable ? ' tx-ed' : '') + '"' + (plan ? ' data-plan="' + esc(plan.id) + '" role="button" tabindex="0"' : editable ? ' data-mid="' + esc(m.id) + '" role="button" tabindex="0"' : '') + '>' + (ico ? '<div aria-hidden="true">' + ico + '</div>' : '<div class="ico" aria-hidden="true">' + esc(m.emoji) + '</div>') + '<div style="min-width:0"><div class="d">' + esc(m.desc) + '</div>' +
       '<div class="m">' + meta.join('<span>·</span>') + '</div>' + (plan ? miniPlan(plan) : '') + '</div><div class="a ' + cls + '">' + signo + pesos(Math.abs(m.monto)).replace('−', '') + extra + '</div></div>';
   }
