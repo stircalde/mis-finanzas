@@ -58,6 +58,9 @@ ok(r.ok && deb('Pedro').saldo === 200000, 'un pago posterior baja el saldo actua
 r = P({ accion: 'ledebiaantes', persona: 'Camila', concepto: 'Préstamo', monto: '400000', saldoActual: '250000', fecha: '2026-08-01' }); A.tic();
 ok(r.ok && les('Camila') && les('Camila').saldo === 250000, 'les debes: queda el saldo actual (250.000): ' + (les('Camila') && les('Camila').saldo) + ' ' + r.mensaje);
 ok(les('Camila').prestamos.reduce((a, x) => a + x.monto, 0) === 400000 && les('Camila').devoluciones.reduce((a, x) => a + x.monto, 0) === 150000, 'les debes: prestado = valor inicial (400.000) y devuelto = diferencia (150.000)');
+r = P({ accion: 'ledebiaantes', persona: 'Laura', concepto: 'Matrícula', monto: '1000000', fecha: '2026-01-10', pagos: [{ fecha: '2026-03-06', monto: '300000' }, { fecha: '2026-04-13', monto: '200000' }] }); A.tic();
+ok(r.ok && les('Laura') && les('Laura').saldo === 500000 && les('Laura').prestamos.reduce((a, y) => a + y.monto, 0) === 1000000 && les('Laura').devoluciones.length === 2, 'les debes: pagos anteriores con fecha (saldo 500.000, 2 pagos): ' + r.mensaje);
+r = P({ accion: 'ledebiaantes', persona: 'Laura', concepto: 'X', monto: '100000', fecha: '2026-01-10', pagos: [{ fecha: '2026-03-06', monto: '300000' }] }); ok(!r.ok, 'les debes: pagos mayores al inicial no sirven');
 r = P({ accion: 'ledebiaantes', persona: 'Camila', concepto: 'Otro', monto: '100000', saldoActual: '200000', fecha: '2026-08-01' }); ok(!r.ok, 'les debes: saldo mayor al inicial no sirve');
 
 A.fin('favores_fechas');
