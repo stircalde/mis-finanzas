@@ -1268,3 +1268,26 @@ button.util.mini { background: none; border: 0; padding: 4px 0; border-radius: 8
 .adm-item.lim .adm-info > span { white-space: normal; overflow: visible; text-overflow: clip; }
 .adm-btn small { display: block; margin-top: 3px; font: 400 .78rem var(--font-body); color: var(--muted); line-height: 1.35; }
 .adm-lista .adm-btn { text-align: left; }
+
+/* ---- Metas de ahorro ---- */
+.meta-info { min-width: 0; }
+.meta-det { display: grid; gap: 14px; min-width: 0; align-content: center; }
+.meta-sel h3 { margin: 2px 0 6px; font-size: 1.15rem; font-weight: 600; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.meta-sel .eyebrow { color: var(--muted); }
+.meta-sel .fig { display: flex; align-items: baseline; gap: 8px; flex-wrap: wrap; }
+.meta-sel .fig .v { font-size: 1.6rem; font-weight: 600; }
+.meta-sel .fig .of { color: var(--muted); font-size: .9rem; }
+.meta-pie { font-size: .8rem; color: var(--muted); line-height: 1.35; margin-top: 4px; }
+.metas-card .donut-wrap svg { max-width: 220px; margin: 0 auto; display: block; }
+.meta-foto { width: 48px; height: 48px; border-radius: 14px; overflow: hidden; display: grid; place-items: center; background: var(--surface-2); border: 1px solid var(--line); flex: none; }
+.meta-foto.grande { width: 92px; height: 92px; border-radius: 18px; }
+.meta-img { width: 100%; height: 100%; object-fit: cover; display: block; }
+.meta-emo { font-size: 1.5rem; line-height: 1; }
+.meta-foto.grande .meta-emo { font-size: 2.6rem; }
+.meta-foto-sel { display: flex; align-items: center; gap: 14px; flex-wrap: wrap; }
+.meta-foto-bt { display: flex; flex-direction: column; align-items: flex-start; gap: 8px; }
+.adm-item.meta-item { grid-template-columns: auto minmax(0, 1fr) auto; row-gap: 8px; }
+.adm-item.meta-item .adm-info b { white-space: normal; }
+.adm-item.meta-item .adm-info > span { white-space: normal; line-height: 1.35; }
+.adm-item.meta-item .meter { margin-top: 4px; }
+.meta-acc { grid-column: 1 / -1; display: flex; gap: 8px; justify-content: flex-end; }

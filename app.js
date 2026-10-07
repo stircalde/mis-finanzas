@@ -331,12 +331,16 @@
     app.appendChild(hero(d));
     app.appendChild(billetera(d));
     var g = el('<div class="grid"></div>');
-    g.appendChild(proximos(d, true));
+    var pr = proximos(d, true);
+    g.appendChild(pr);
     var st = el('<div class="stack flat c-5"></div>');
     st.appendChild(presupuesto(d));
     st.appendChild(ultimoMovimiento(d));
     g.appendChild(st);
     app.appendChild(g);
+    if (pr._ajustar) pr._ajustar(g, st);
+    var tms = tarjetaMetas(d);
+    if (tms) app.appendChild(tms);
     app.appendChild(categorias(d));
     var g3 = el('<div class="grid"></div>');
     g3.appendChild(historico(d));
@@ -503,6 +507,7 @@
     var lista = d.proximos;
     var pendientes = lista.filter(function (p) { return p.estado === 'pendiente' || p.estado === 'automatico' || p.estado === 'cancelar'; });
     llenarAgenda(cont, comprimido ? pendientes.slice(0, 1) : lista, d);
+    var MAX_INICIO = 12;
     if (!lista.length) cont.appendChild(el('<div class="empty">No tienes pagos en los próximos 35 días.</div>'));
     // La lista completa se abre en una hoja flotante (no alarga Inicio); Atrás la cierra.
     if (comprimido && lista.length > 1) {
@@ -513,6 +518,36 @@
           function (h) { llenarAgenda(h.querySelector('.agenda'), lista, d); });
       });
       n.appendChild(b);
+    }
+    // En pantallas anchas la tarjeta vecina es más alta: se muestran tantos pagos como quepan para igualarla (en el celular, uno).
+    if (comprimido && pendientes.length > 1) {
+      n._ajustar = function (g, st) {
+        if (window.__mfAjusteRO) { try { window.__mfAjusteRO.disconnect(); } catch (e) { /* nada */ } window.__mfAjusteRO = null; }
+        var pintando = false;
+        function ajustar() {
+          if (pintando || !n.isConnected) return;
+          pintando = true;
+          var ancho = getComputedStyle(g).gridTemplateColumns.split(' ').length > 1;
+          var pon = function (k) { cont.innerHTML = ''; llenarAgenda(cont, pendientes.slice(0, k), d); if (n.querySelector('.ver-todo')) n.querySelector('.ver-todo').hidden = k >= lista.length; };
+          if (!ancho) { n.style.alignSelf = ''; pon(1); pintando = false; return; }
+          n.style.alignSelf = 'start';
+          pon(1);
+          var alto = st.offsetHeight, k = 1;
+          while (k < Math.min(MAX_INICIO, pendientes.length)) {
+            pon(k + 1);
+            if (n.offsetHeight > alto) { pon(k); break; }
+            k++;
+          }
+          n.style.alignSelf = '';
+          pintando = false;
+        }
+        ajustar();
+        if (window.ResizeObserver) {
+          var t = null;
+          window.__mfAjusteRO = new ResizeObserver(function () { cancelAnimationFrame(t); t = requestAnimationFrame(ajustar); });
+          window.__mfAjusteRO.observe(st); window.__mfAjusteRO.observe(g);
+        }
+      };
     }
     return n;
   }
@@ -992,6 +1027,7 @@
       '<section class="card"><div class="card-h"><h2>Secciones</h2></div><div class="mas-lista">' +
       fila('calendario', '📅', 'Calendario', 'Pagos y movimientos día a día') +
       fila('medeben', '🤝', 'Favores', 'Te deben ' + pesos(d.totalMeDeben || 0) + ' · Les debes ' + pesos(totalLes)) +
+      fila('metas', '🏁', 'Metas de ahorro', resumenMetas(d)) +
       '</div></section>' +
       '<section class="card"><div class="card-h"><h2>Configuración</h2></div><div class="mas-lista">' +
       fila('cuentas', '💳', 'Mis cuentas y tarjetas', 'Agregar, editar, imagen de la tarjeta, archivar') +
@@ -999,7 +1035,7 @@
       fila('limites', '🎯', 'Límites de gasto', resumenLimites(d)) +
       fila('apariencia', '🎨', 'Apariencia', resumenApariencia()) +
       '</div></section>' +
-      '<p class="hint mas-pie">Próximamente aquí: metas de ahorro e inversiones.</p></div>');
+      '</div>');
     n.querySelectorAll('.mas-fila').forEach(function (b) {
       b.addEventListener('click', function () {
         var k = b.dataset.k;
@@ -1007,6 +1043,7 @@
         else if (k === 'cuentas' && window.MFAdmin) MFAdmin.cuentas();
         else if (k === 'fijos' && window.MFAdmin) MFAdmin.fijos();
         else if (k === 'limites' && window.MFAdmin) MFAdmin.limites();
+        else if (k === 'metas' && window.MFAdmin) MFAdmin.metas();
         else if (k === 'apariencia') abrirApariencia();
       });
     });
@@ -1445,6 +1482,65 @@
     if (AP.oled) h.setAttribute('data-oled', ''); else h.removeAttribute('data-oled');
     var m = document.querySelector('meta[name="theme-color"]');
     if (m) m.setAttribute('content', colorPlano(getComputedStyle(h).backgroundColor) || (claro ? '#f3f5fb' : '#050912'));
+  }
+  function resumenMetas(d) {
+    var l = d.metas || [];
+    if (!l.length) return 'Ahorra para algo con un bolsillo y una foto';
+    var m = metaProxima(d);
+    return l.length + (l.length === 1 ? ' meta' : ' metas') + (m ? ' · ' + esc(m.nombre) + ' ' + m.pct + ' %' : '');
+  }
+  // La meta más próxima: la de fecha más cercana sin lograr; sin fechas, la más avanzada; si todas están logradas, una lograda.
+  function metaProxima(d) {
+    var l = (d.metas || []).filter(function (m) { return !m.lograda; });
+    if (!l.length) return (d.metas || [])[0] || null;
+    var con = l.filter(function (m) { return m.fecha; }).sort(function (a, b) { return a.fecha < b.fecha ? -1 : 1; });
+    return con[0] || l.sort(function (a, b) { return b.pct - a.pct; })[0];
+  }
+  function fotoMeta(m) {
+    return m.foto ? '<img class="meta-img" alt="" src="' + esc(m.foto) + '">' : '<span class="meta-emo" aria-hidden="true">' + esc(m.emoji || '🎯') + '</span>';
+  }
+  function detalleMeta(m) {
+    if (m.lograda) return '¡Meta lograda! 🎉';
+    var t = ['Faltan ' + pesos(m.falta)];
+    if (m.fecha) t.push(m.vencida ? 'se venció el ' + fechaCorta(m.fecha) : 'para el ' + fechaCorta(m.fecha));
+    if (m.mensual) t.push('≈ ' + pesos(m.mensual) + ' al mes');
+    return t.join(' · ');
+  }
+  // "Tus metas": mismo formato de "¿En qué se fue la plata?": un anillo de progreso con la foto de la meta y la lista al lado.
+  function tarjetaMetas(d) {
+    var todas = d.metas || [];
+    if (!todas.length) return null;
+    var orden = todas.slice().sort(function (a, b) {
+      if (a.lograda !== b.lograda) return a.lograda ? 1 : -1;
+      if (a.fecha && b.fecha) return a.fecha < b.fecha ? -1 : a.fecha > b.fecha ? 1 : 0;
+      if (a.fecha || b.fecha) return a.fecha ? -1 : 1;
+      return b.pct - a.pct;
+    });
+    var sel = 0, R = 80, W = 24, C = 2 * Math.PI * R;
+    var n = el('<section class="card metas-card"><div class="card-h"><h2>Tus metas de ahorro</h2><span class="aside"></span></div><div class="donut-layout"><div class="donut-wrap chart-wrap"></div><div class="meta-det"></div></div></section>');
+    n.querySelector('.aside').textContent = orden.length + (orden.length === 1 ? ' meta' : ' metas');
+    var anillo = n.querySelector('.donut-wrap'), det = n.querySelector('.meta-det');
+    function pinta() {
+      var m = orden[sel], len = C * m.pct / 100, color = m.lograda ? 'var(--good)' : 'var(--accent)';
+      var centro = m.foto
+        ? '<defs><clipPath id="mclip"><circle cx="100" cy="100" r="66"/></clipPath></defs><image href="' + esc(m.foto) + '" x="34" y="34" width="132" height="132" preserveAspectRatio="xMidYMid slice" clip-path="url(#mclip)"/>'
+        : '<text x="100" y="112" text-anchor="middle" font-size="52">' + esc(m.emoji || '🎯') + '</text>';
+      anillo.innerHTML = '<svg viewBox="0 0 200 200" role="img" aria-label="' + esc(m.nombre) + ': ' + m.pct + ' % de la meta"><circle cx="100" cy="100" r="' + R + '" fill="none" stroke="var(--surface-2)" stroke-width="' + W + '"/>' +
+        (m.pct > 0 ? '<circle cx="100" cy="100" r="' + R + '" fill="none" stroke="' + color + '" stroke-width="' + W + '" stroke-linecap="round" stroke-dasharray="' + Math.max(0.01, len) + ' ' + C + '" transform="rotate(-90 100 100)"/>' : '') + centro + '</svg>';
+      var filas = orden.map(function (x, i) {
+        return '<button type="button" data-i="' + i + '"' + (i === sel ? ' class="on"' : '') + '><span class="sw" style="background:' + SERIES[i % SERIES.length] + '"></span><span class="nm">' + esc(x.nombre) + '</span>' +
+          '<span class="pc">' + x.pct + ' %</span><span class="mv">' + pesos(x.ahorrado) + '</span></button>';
+      }).join('');
+      det.innerHTML = '<div class="meta-sel"><div class="eyebrow">' + (m.lograda ? 'Meta lograda' : 'Más próxima') + '</div><h3>' + esc(m.nombre) + '</h3>' +
+        '<div class="fig"><span class="v num">' + pesos(m.ahorrado) + '</span><span class="of">de ' + pesos(m.objetivo) + ' · ' + m.pct + ' %</span></div>' +
+        '<div class="meta-pie">' + esc(detalleMeta(m)) + '</div></div>' +
+        '<div class="cat-list">' + filas + '</div>' +
+        '<button type="button" class="ver-todo" data-admin>Administrar mis metas<span style="display:inline-flex;transform:rotate(-90deg)">' + ICON.chevron + '</span></button>';
+      det.querySelectorAll('.cat-list button').forEach(function (b) { b.addEventListener('click', function () { sel = +b.dataset.i; pinta(); }); });
+      det.querySelector('[data-admin]').addEventListener('click', function () { if (window.MFAdmin) MFAdmin.metas(); });
+    }
+    pinta();
+    return n;
   }
   function resumenLimites(d) {
     var l = d.presupuestos || [];
@@ -1996,7 +2092,7 @@
 
   /* ---------- lo que necesita el botón de registrar (registro.js) ---------- */
   window.MF = {
-    API: API, imgTarjeta: imgTarjeta, fotoTarjeta: fotoTarjeta, DEMO: DEMO, clave: clave, leerLocal: leerLocal, guardarLocal: guardarLocal, esc: esc, el: el, pesos: pesosReal,
+    API: API, imgTarjeta: imgTarjeta, fotoTarjeta: fotoTarjeta, fotoMeta: fotoMeta, detalleMeta: detalleMeta, metaProxima: metaProxima, DEMO: DEMO, clave: clave, leerLocal: leerLocal, guardarLocal: guardarLocal, esc: esc, el: el, pesos: pesosReal,
     datos: function () { return datos; }, abrirHoja: abrirHoja, cerrarHoja: function () { cerrarHoja(true); }, logo: logo, ir: ir, fechaCorta: fechaCorta, icon: ICON,
     hoy: function () { return datos && datos.hoy; },
     listo: function () { return !!datos && !nav.hidden; },
