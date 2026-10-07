@@ -1153,6 +1153,7 @@
     if (p.abonos && p.abonos.length) h += '<div class="deb-sub">Pagos que te ha hecho</div>' + p.abonos.map(function (a) {
       return '<div class="deb-t deb-ab"><span>' + fechaCorta(a.fecha) + ' · ' + esc(a.desc || 'Abono') + '</span><b class="num">+' + pesos(a.monto) + '</b></div>'; }).join('');
     if (p.pagados && p.pagados.length) h += '<div class="deb-sub">Ya saldado</div>' + p.pagados.map(function (c, i) { return concepto(c, true, 'p' + i); }).join('');
+    h += '<button type="button" class="btn link deb-reg" data-compartir="me" data-persona="' + esc(p.persona) + '">📤 Compartir resumen</button>';
     return h + '</div>';
   }
   // Abre o cierra una sección con la animación suave (sin repintar la página).
@@ -1187,6 +1188,8 @@
   }
   // Favores: registrar desde el concepto que te deben (me pagaron) o desde la persona a la que le debes (le pagué).
   function registrarDesdeFavores(e) {
+    var cmp = e.target.closest('[data-compartir]');
+    if (cmp) { e.stopPropagation(); if (MF.compartirFavor) MF.compartirFavor({ sentido: cmp.dataset.compartir, persona: cmp.dataset.persona }); return; }
     var b = e.target.closest('[data-reg]'); if (!b || !MF.registrarCon) return;
     e.stopPropagation();
     if (b.dataset.reg === 'mepagaron') MF.registrarCon('ingreso', b.dataset.key ? { tipoIng: '__mepagaron', persona: b.dataset.persona, aplica: '__compra', compra: b.dataset.key } : { tipoIng: '__mepagaron', persona: b.dataset.persona });
@@ -1246,6 +1249,7 @@
         if (x.aFavor) h2 += '<div class="deb-nota">Te pagó ' + pesos(x.aFavor) + ' de más; quedó como saldo a su favor.</div>';
         if (x.credito) h2 += '<button type="button" class="btn link" data-mama>Ver los préstamos de mamá para tus créditos</button>';
         h2 += '<button type="button" class="btn deb-reg-todo" data-reg="lepague" data-persona="' + esc(x.persona) + '"' + (x.mama && !x.prestado && !x.aFavor ? ' data-mamacred' : '') + '>💳 Registrar que le pagué a ' + esc(x.persona) + '</button>';
+        h2 += '<button type="button" class="btn link deb-reg" data-compartir="les" data-persona="' + esc(x.persona) + '">📤 Compartir resumen</button>';
         det = '<div class="plegable' + (abierto ? ' abierta' : '') + '"><div class="plegable-in">' + h2 + '</div></div></div>';
       }
       return '<div class="owed-item' + (abierto ? ' open' : '') + '"><div class="owed-row les" role="button" tabindex="0" aria-expanded="' + !!abierto + '" data-l="' + i + '"><div><div class="p">' + (x.mama ? '👩 ' : '') + esc(x.persona) +
@@ -2138,7 +2142,7 @@
   /* ---------- lo que necesita el botón de registrar (registro.js) ---------- */
   window.MF = {
     API: API, imgTarjeta: imgTarjeta, fotoTarjeta: fotoTarjeta, fotoMeta: fotoMeta, detalleMeta: detalleMeta, metaProxima: metaProxima, DEMO: DEMO, clave: clave, leerLocal: leerLocal, guardarLocal: guardarLocal, esc: esc, el: el, pesos: pesosReal,
-    datos: function () { return datos; }, abrirHoja: abrirHoja, cerrarHoja: function () { cerrarHoja(true); }, logo: logo, ir: ir, fechaCorta: fechaCorta, icon: ICON,
+    datos: function () { return datos; }, abrirHoja: abrirHoja, cerrarHoja: function () { cerrarHoja(true); }, logo: logo, logoMarca: logoMarca, ir: ir, fechaCorta: fechaCorta, icon: ICON,
     hoy: function () { return datos && datos.hoy; },
     listo: function () { return !!datos && !nav.hidden; },
     refrescar: function () { if (datos && !DEMO) cargar(mesSel === datos.meses[0] ? '' : mesSel, true); }

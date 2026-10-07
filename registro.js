@@ -497,14 +497,35 @@
     // Registrar instantáneo: queda en la cola y se guarda en tu hoja en segundo plano.
     cola.push({ datos: datos, tipo: tipo, st: JSON.parse(JSON.stringify(st)), titulo: tituloDe(datos) });
     guardarCola();
-    listo();
+    listo(favorDe(datos));
     procesar();
   }
 
-  function listo() {
+  // Si lo registrado es un favor (nuevo, pago recibido o pago hecho), guarda cómo estaba la persona para poder compartir la imagen.
+  function favorDe(d) {
+    try {
+      var dd = MF.datos() || {}, sentido, persona, tipo, antes;
+      var igual = function (a, b) { return String(a || '').trim().toLowerCase() === String(b || '').trim().toLowerCase(); };
+      var suma = function (l) { return (l || []).reduce(function (s, m) { return s + m.monto; }, 0); };
+      if (d.accion === 'mepagaron') { sentido = 'me'; persona = d.persona; tipo = 'pago'; }
+      else if (d.accion === 'lepague') { sentido = 'les'; persona = d.persona; tipo = 'devolucion'; }
+      else if (d.accion === 'gasto' && d.para && String(d.para).indexOf(',') < 0) { sentido = 'me'; persona = d.para; tipo = 'nuevo'; }
+      else if (d.accion === 'meprestaron') { sentido = 'les'; persona = d.persona; tipo = 'prestamo'; }
+      else return null;
+      if (!persona) return null;
+      var p = ((sentido === 'me' ? dd.meDeben : dd.lesDebo) || []).filter(function (x) { return igual(x.persona, persona); })[0];
+      antes = sentido === 'me' ? { saldoAntes: p ? p.saldo : 0, pagadoAntes: p ? p.pagado || 0 : 0, prestadoAntes: p ? p.prestado || 0 : 0 }
+        : { saldoAntes: p ? p.saldo : 0, pagadoAntes: p ? suma(p.devoluciones) : 0, prestadoAntes: p ? suma(p.prestamos) : 0 };
+      return { sentido: sentido, persona: persona, evento: Object.assign({ tipo: tipo, monto: Number(d.monto) || 0, fecha: d.fecha, desc: d.descripcion || '' }, antes) };
+    } catch (e) { return null; }
+  }
+  function listo(favor) {
     if (!cuerpo) return;
     cuerpo.innerHTML = '<div class="reg-ok"><div class="reg-ok-ico">✓</div><h3>Listo</h3><p>Se está guardando en tu hoja. Te aviso abajo cuando quede confirmado; si no hay internet, se envía solo cuando vuelva.</p><div class="reg-ok-acc">' +
+      (favor && MF.compartirFavor ? '<button class="btn" type="button" data-compartir-fav>📤 Compartir ' + (favor.evento.tipo === 'pago' || favor.evento.tipo === 'devolucion' ? 'el pago' : 'el favor') + '</button>' : '') +
       '<button class="btn" type="button" data-otro>➕ Registrar otro</button><button class="btn primary" type="button" data-fin>Listo</button></div></div>';
+    var bc = cuerpo.querySelector('[data-compartir-fav]');
+    if (bc) bc.addEventListener('click', function () { cerrar(); setTimeout(function () { MF.compartirFavor(favor); }, 320); });
     cuerpo.querySelector('[data-otro]').addEventListener('click', function () { reiniciar(); pintar(); });
     cuerpo.querySelector('[data-fin]').addEventListener('click', function () { cerrar(); });
   }

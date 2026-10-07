@@ -1333,3 +1333,10 @@ button.util.mini { background: none; border: 0; padding: 4px 0; border-radius: 8
 .adm-item.meta-item .adm-info > span { white-space: normal; line-height: 1.35; }
 .adm-item.meta-item .meter { margin-top: 4px; }
 .meta-acc { grid-column: 1 / -1; display: flex; gap: 8px; justify-content: flex-end; }
+
+/* ============ Compartir favor ============ */
+.cmp-prev { display: grid; place-items: center; min-height: 160px; max-height: 58vh; overflow: auto; border-radius: 14px; border: 1px solid var(--line-strong); background: var(--surface-2); }
+.cmp-prev img { display: block; width: 100%; height: auto; }
+.cmp-carga { color: var(--muted); padding: 40px 16px; text-align: center; }
+.cmp-acc { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 12px; }
+.cmp-acc .btn { flex: 1 1 160px; justify-content: center; }
