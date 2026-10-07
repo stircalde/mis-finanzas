@@ -32,7 +32,7 @@ de *Propiedades de script → CLAVE*.
 5. Si algo falla: Gestionar implementaciones → Editar → elige la versión anterior.
 
 ## Estado
-- Backend desplegado: versión 27 (fecha de pago de favores y favor antiguo con saldo actual; hash 65d465219828; clave en Propiedades de script). App: ver `VERSION` en `sw.js`.
+- Backend desplegado: versión 28 (favor antiguo "les debes": valor inicial como prestado + diferencia como devuelto; hash ba953c86cbb7; clave en Propiedades de script). App: ver `VERSION` en `sw.js`.
 - Apariencia (tema, 8 colores, Original/Cristal/Mate, OLED) publicada: ver DEVELOPMENT.md.
 - Pendientes conocidos: `tests/conocidos.json`. Intereses de tarjeta Opción A ya en línea (v21); falta confirmar
   la fórmula de Nubank en cuotas siguientes con el extracto de noviembre.
