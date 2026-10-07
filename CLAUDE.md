@@ -32,7 +32,7 @@ de *Propiedades de script → CLAVE*.
 5. Si algo falla: Gestionar implementaciones → Editar → elige la versión anterior.
 
 ## Estado
-- Backend desplegado: versión 26 (Metas de ahorro; hash fb92328f522e; clave en Propiedades de script). App: ver `VERSION` en `sw.js`.
+- Backend desplegado: versión 27 (fecha de pago de favores y favor antiguo con saldo actual; hash 65d465219828; clave en Propiedades de script). App: ver `VERSION` en `sw.js`.
 - Apariencia (tema, 8 colores, Original/Cristal/Mate, OLED) publicada: ver DEVELOPMENT.md.
 - Pendientes conocidos: `tests/conocidos.json`. Intereses de tarjeta Opción A ya en línea (v21); falta confirmar
   la fórmula de Nubank en cuotas siguientes con el extracto de noviembre.
@@ -52,6 +52,7 @@ de *Propiedades de script → CLAVE*.
   B. HECHO 7-oct (backend v26, app mf-v5-63): límites de gasto editables + 15 categorías nuevas + Favores "Añadir registro" + Metas de ahorro (idea 4; tarjeta en Inicio sobre "¿En qué se fue la plata?").
   C. HECHO 7-oct: "Próximos pagos" a la altura de las vecinas (idea 1) y logo dinámico SVG con volumen (idea 3; app mf-v5-65; íconos de la PWA siguen estáticos y sin cambios).
   G. HECHO 7-oct: Favores → compartir el favor como imagen (resumen con pagos, y pago + resumen al registrar; app mf-v5-67, solo app, sin backend).
+  H. HECHO 7-oct (backend v27, app mf-v5-68): fecha de pago opcional en favores, favor antiguo con valor inicial + saldo actual, "Le prestaste".
   D. Al final, estudios: registro automático por notificaciones (notificación → transacción detectada → verificación → registro; incluye compras a cuotas y conciliar transferencias entre cuentas; Android), compartir la app (datos independientes, actualizaciones, novedades por versión) e iOS (limitaciones frente a Android).
   E. HECHO y publicado el 7-oct (PR #8, app mf-v5-60, backend v23): editar "para quién" (varias personas) y borrar movimientos con doble confirmación; filas ligadas (apartado, comisión, aporte de mamá) se borran juntas y avisa si el bolsillo queda ≠ $0; los borrados pasan a una pestaña "Eliminados" (recuperables); los "hist:" de extractos prevalecen y no se tocan.
   F. Davibank, ajuste +$16.450 (7-oct): NO es interés diario sin facturar (el cupo/pago total del banco no se movió del 1 al 7-oct: $3.769.905; el mínimo del banco hoy $977.234 no lo incluye). Origen desconocido: revisar con el extracto del 16-oct (¿renglón de $16.450?). Los intereses ya facturados sí ocupan cupo (extractos ago/sep). No eliminar el ajuste hasta entonces.
