@@ -1270,15 +1270,15 @@ button.util.mini { background: none; border: 0; padding: 4px 0; border-radius: 8
 .adm-lista .adm-btn { text-align: left; }
 
 /* ---- Metas de ahorro ---- */
-.meta-card { display: grid; gap: 10px; cursor: pointer; }
-.meta-card:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
-.meta-top { display: grid; grid-template-columns: auto minmax(0, 1fr) auto; align-items: center; gap: 12px; }
 .meta-info { min-width: 0; }
-.meta-info h3 { margin: 2px 0 0; font-size: 1.05rem; font-weight: 600; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.meta-card .fig { display: flex; align-items: baseline; gap: 8px; flex-wrap: wrap; }
-.meta-card .fig .v { font-size: 1.45rem; font-weight: 600; }
-.meta-card .fig .of { color: var(--muted); font-size: .88rem; }
-.meta-pie { font-size: .8rem; color: var(--muted); line-height: 1.35; }
+.meta-det { display: grid; gap: 14px; min-width: 0; align-content: center; }
+.meta-sel h3 { margin: 2px 0 6px; font-size: 1.15rem; font-weight: 600; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.meta-sel .eyebrow { color: var(--muted); }
+.meta-sel .fig { display: flex; align-items: baseline; gap: 8px; flex-wrap: wrap; }
+.meta-sel .fig .v { font-size: 1.6rem; font-weight: 600; }
+.meta-sel .fig .of { color: var(--muted); font-size: .9rem; }
+.meta-pie { font-size: .8rem; color: var(--muted); line-height: 1.35; margin-top: 4px; }
+.metas-card .donut-wrap svg { max-width: 220px; margin: 0 auto; display: block; }
 .meta-foto { width: 48px; height: 48px; border-radius: 14px; overflow: hidden; display: grid; place-items: center; background: var(--surface-2); border: 1px solid var(--line); flex: none; }
 .meta-foto.grande { width: 92px; height: 92px; border-radius: 18px; }
 .meta-img { width: 100%; height: 100%; object-fit: cover; display: block; }
@@ -1291,4 +1291,3 @@ button.util.mini { background: none; border: 0; padding: 4px 0; border-radius: 8
 .adm-item.meta-item .adm-info > span { white-space: normal; line-height: 1.35; }
 .adm-item.meta-item .meter { margin-top: 4px; }
 .meta-acc { grid-column: 1 / -1; display: flex; gap: 8px; justify-content: flex-end; }
-.meta-card .eyebrow { color: var(--muted); }

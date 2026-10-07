@@ -1933,7 +1933,8 @@ function estadoMetas(cfg, est, hoyF) {
     const falta = Math.max(0, m.objetivo - ahorrado);
     const dias = m.fecha ? Math.round((soloFecha(m.fecha).getTime() - soloFecha(hoyF).getTime()) / 86400000) : null;
     const meses = dias === null ? 0 : Math.max(1, dias / 30.4375);
-    return { nombre: m.nombre, emoji: m.emoji, objetivo: m.objetivo, fecha: m.fecha ? fmt(m.fecha) : '', cuenta: m.cuenta, foto: m.foto,
+    const cta = cfg.cuentas.find(function (x) { return x.nombre === m.cuenta; });
+    return { nombre: m.nombre, emoji: m.emoji, objetivo: m.objetivo, fecha: m.fecha ? fmt(m.fecha) : '', cuenta: m.cuenta, principal: cta && cta.alimentaDesde && !cta.apartaPara ? cta.alimentaDesde : '', foto: m.foto,
       ahorrado: ahorrado, falta: falta, pct: Math.min(100, Math.floor(ahorrado / m.objetivo * 100)), lograda: falta === 0,
       dias: dias, vencida: dias !== null && dias < 0 && falta > 0,
       mensual: dias !== null && dias >= 0 && falta > 0 ? Math.ceil(falta / meses) : 0 };
@@ -1947,7 +1948,7 @@ function asegurarTablaMetas(h) {
   h.getRange(f + 1, 1, 1, 6).setValues([['Meta', 'Emoji', 'Objetivo', 'Fecha límite', 'Cuenta', 'Foto']]).setFontWeight('bold').setBackground('#dbe8ff');
   CACHE_CFG_ = null;
 }
-/** guardar: anterior, nombre, emoji, objetivo, fecha (opcional), cuenta (existente) o cuentaNueva, foto (data:image/jpeg; vacío la quita; sin enviar, la deja). quitar: nombre. */
+/** guardar: anterior, nombre, emoji, objetivo, fecha (opcional), cuenta (existente) o cuentaNueva + principal (la cuenta de la que nace el bolsillo), foto (data:image/jpeg; vacío la quita; sin enviar, la deja). quitar: nombre. */
 function administrarMeta(p, cfg) {
   const op = limpiar(p.op) || 'guardar';
   const h = hojaConfig();
@@ -1957,12 +1958,28 @@ function administrarMeta(p, cfg) {
     const nombre = limpiar(p.nombre);
     const m = metas.find(function (x) { return x.nombre === nombre; });
     if (!m) throw new Error('La meta "' + nombre + '" no existe.');
+    const cta = cfg.cuentas.find(function (x) { return x.nombre === m.cuenta; });
+    // Un bolsillo creado para la meta (nació de otra cuenta): su plata vuelve a esa cuenta y el bolsillo se archiva.
+    const propio = !!(cta && cta.alimentaDesde && !cta.apartaPara && cta.tipo === 'Plata' && cta.activa);
+    let msg = '🗂️ Quité la meta "' + nombre + '".';
+    if (propio) {
+      const usa = cfg.fijos.filter(function (f) { return f.activo && f.cuenta === cta.nombre; }).map(function (f) { return f.nombre; });
+      if (usa.length) throw new Error('Antes cambia la cuenta de estos gastos fijos (o quítalos): ' + usa.join(', ') + '.');
+      cuentaPorNombre(cfg, cta.alimentaDesde);
+      const saldo = saldoDe(cfg, cta.nombre);
+      if (saldo < 0) throw new Error('El bolsillo "' + cta.nombre + '" está en negativo (' + pesos(saldo) + '). Cuádralo antes de quitar la meta.');
+      if (saldo > 0) agregarMovimiento([hoy(), TIPO.TRANSF, 'Meta "' + nombre + '": plata de vuelta a ' + cta.alimentaDesde, saldo, '', cta.nombre, cta.alimentaDesde, '', '', '', '']);
+      guardarFilaConfig('Cuenta', cta.nombre, { 'Activa': 'No' });
+      msg += saldo > 0 ? '\n↩️ Los ' + pesos(saldo) + ' del bolsillo volvieron a ' + cta.alimentaDesde + ' y archivé "' + cta.nombre + '".' : '\n🗂️ Archivé el bolsillo "' + cta.nombre + '" (estaba en $0).';
+    } else {
+      msg += ' La cuenta "' + m.cuenta + '" y su plata siguen igual.';
+    }
     const v = h.getDataRange().getValues(), i = filaEncabezado(v, 'Meta');
     for (let j = i + 1; j < v.length && String(v[j][0]).trim().indexOf('▸') !== 0; j++) {
       if (String(v[j][0]).trim() === nombre) { h.getRange(j + 1, 1, 1, 6).setValues([['', '', '', '', '', '']]); break; }
     }
     CACHE_CFG_ = null;
-    return '🗂️ Quité la meta "' + nombre + '". La cuenta "' + m.cuenta + '" y su plata siguen igual.';
+    return msg;
   }
   const anterior = limpiar(p.anterior);
   const nombre = limpiar(p.nombre);
@@ -1986,7 +2003,10 @@ function administrarMeta(p, cfg) {
   let cuenta = limpiar(p.cuenta);
   const nueva = limpiar(p.cuentaNueva);
   if (nueva) {
+    const prin = cuentaPorNombre(cfg, p.principal);
+    if (prin.tipo !== 'Plata' || !prin.activa || prin.nombre === CUENTA_MAMA) throw new Error('El bolsillo tiene que salir de una de tus cuentas de plata.');
     administrarCuenta({ op: 'guardar', nombre: nueva, tipo: 'Plata', emoji: emoji, saldo: 0 }, cfg);
+    guardarFilaConfig('Cuenta', nueva, { 'Se alimenta desde': prin.nombre }, false);
     cuenta = nueva;
   } else {
     const c = cuentaPorNombre(cfg, cuenta);
@@ -2003,7 +2023,7 @@ function administrarMeta(p, cfg) {
   if (anterior && anterior !== nombre) valores['Meta'] = nombre;
   guardarFilaConfig('Meta', anterior || nombre, valores, !anterior);
   return (previa ? '✏️ Actualicé ' : '🏁 Creé ') + 'la meta "' + nombre + '": ' + pesos(objetivo) + ' en "' + cuenta + '"' + (fd ? ' para el ' + fmt(fd) : '') +
-    (nueva ? '\n🆕 Creé el bolsillo "' + nueva + '".' : '');
+    (nueva ? '\n🆕 Creé el bolsillo "' + nueva + '" (sale de ' + limpiar(p.principal) + ').' : '');
 }
 
 /**

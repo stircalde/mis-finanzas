@@ -643,7 +643,7 @@
     var ocupadas = {}; (d.metas || []).forEach(function (x) { if (!m || x.nombre !== m.nombre) ocupadas[x.cuenta] = 1; });
     var libres = (d.cuentasCfg || []).filter(function (c) { return c.tipo === 'Plata' && c.activa && !c.mama && !ocupadas[c.nombre] && !/^Bolsillo para /.test(c.nombre) && !c.apartaPara; });
     var st = { anterior: m ? m.nombre : '', nombre: m ? m.nombre : '', emoji: m ? m.emoji : '🎯', objetivo: m ? m.objetivo : NaN, fecha: m ? m.fecha : '',
-      cuentaModo: m ? 'existente' : 'nueva', cuenta: m ? m.cuenta : '', cuentaNueva: '', foto: m ? m.foto : '', fotoCambio: false, errorFoto: '' };
+      cuentaModo: m ? 'existente' : 'nueva', cuenta: m ? m.cuenta : '', cuentaNueva: '', principal: '', foto: m ? m.foto : '', fotoCambio: false, errorFoto: '' };
     var ctl = hojaFormulario(nuevo ? 'Nueva meta' : 'Editar ' + m.nombre, nuevo ? 'Ponle nombre, cuánto quieres juntar y dónde la guardas' : 'Cambia lo que necesites', st, function (st) {
       var h = '<div class="campo"><label>Foto de tu meta (opcional)</label><div class="meta-foto-sel"><div class="meta-foto grande">' +
         MF.fotoMeta({ foto: st.foto, emoji: st.emoji }) + '</div><div class="meta-foto-bt">' +
@@ -658,7 +658,12 @@
       var ops = [['nueva', '🆕 Crear un bolsillo nuevo']];
       if (libres.length) ops.push(['existente', '🏦 Usar una cuenta que ya tengo']);
       h += fChips(st, 'cuentaModo', '¿Dónde la guardas?', ops, 'Lo que haya en esa cuenta cuenta como ahorrado. Para ahorrar, mueves plata hacia ella.');
-      if (st.cuentaModo === 'nueva') h += fTexto(st, 'cuentaNueva', 'Nombre del bolsillo', st.nombre ? 'Bolsillo ' + st.nombre : 'Ej: Bolsillo Viaje');
+      if (st.cuentaModo === 'nueva') {
+        var madres = (d.cuentasCfg || []).filter(function (c) { return c.tipo === 'Plata' && c.activa && !c.mama && !c.apartaPara && !/^Bolsillo /.test(c.nombre); });
+        h += fTexto(st, 'cuentaNueva', 'Nombre del bolsillo', st.nombre ? 'Bolsillo ' + st.nombre : 'Ej: Bolsillo Viaje');
+        h += fSelect(st, 'principal', '¿De qué cuenta nace el bolsillo?', madres.map(function (c) { return [c.nombre, c.emoji + ' ' + c.nombre]; }), 'Elige la cuenta');
+        h += '<p class="nota">Si algún día quitas la meta, la plata del bolsillo vuelve a esa cuenta.</p>';
+      }
       else h += fSelect(st, 'cuenta', 'Cuenta', libres.concat(m ? (d.cuentasCfg || []).filter(function (c) { return c.nombre === m.cuenta; }) : []).filter(function (c, i, a) { return a.indexOf(c) === i; }).map(function (c) { return [c.nombre, c.emoji + ' ' + c.nombre]; }), 'Elige la cuenta');
       return h;
     }, function (st) {
@@ -667,8 +672,9 @@
       if (!(st.objetivo > 0)) throw new Error('Escribe cuánto quieres juntar.');
       var dato = { accion: 'metaadmin', op: 'guardar', anterior: st.anterior, nombre: nombre, emoji: String(st.emoji || '').trim() || '🎯', objetivo: st.objetivo, fecha: st.fecha || '' };
       if (st.cuentaModo === 'nueva') {
-        var cn = String(st.cuentaNueva || '').trim() || 'Bolsillo ' + nombre;
-        dato.cuentaNueva = cn;
+        if (!st.principal) throw new Error('Elige la cuenta de la que nace el bolsillo.');
+        dato.cuentaNueva = String(st.cuentaNueva || '').trim() || 'Bolsillo ' + nombre;
+        dato.principal = st.principal;
       } else {
         if (!st.cuenta) throw new Error('Elige la cuenta donde guardas la meta.');
         dato.cuenta = st.cuenta;
@@ -687,7 +693,10 @@
       if (a === 'sinfoto') { st.foto = ''; st.fotoCambio = true; ctl.repintar(); return; }
       if (a !== 'quitar' || nuevo) return;
       MF.abrirHoja('<div class="sheet-h"><div><h2>¿Quitar "' + esc(m.nombre) + '"?</h2></div><button class="icon-btn" type="button" data-cerrar aria-label="Cerrar">' + ICON.close + '</button></div>' +
-        '<p class="adm-nota">Tu plata no se toca: el bolsillo "' + esc(m.cuenta) + '" y su saldo siguen igual. Solo dejas de ver esta meta.</p>' +
+        '<p class="adm-nota">' + (m.principal
+          ? (m.ahorrado > 0 ? 'Los ' + pesos(m.ahorrado) + ' que hay en el bolsillo "' + esc(m.cuenta) + '" vuelven a ' + esc(m.principal) + ' y el bolsillo se archiva. No pierdes plata.'
+            : 'El bolsillo "' + esc(m.cuenta) + '" está en $0: solo se archiva.')
+          : 'Tu plata no se toca: "' + esc(m.cuenta) + '" y su saldo siguen igual. Solo dejas de ver esta meta.') + '</p>' +
         '<div class="reg-err" hidden></div><button type="button" class="btn adm-btn rojo" data-quitar>Sí, quitar la meta</button><button type="button" class="btn adm-btn" data-cerrar>No, volver</button>', function (h) {
           h.querySelector('[data-quitar]').addEventListener('click', function (e) { ejecutar(h.querySelector('.sheet'), e.currentTarget, { accion: 'metaadmin', op: 'quitar', nombre: m.nombre }); });
         });

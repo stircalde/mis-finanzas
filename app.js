@@ -335,13 +335,13 @@
     g.appendChild(pr);
     var st = el('<div class="stack flat c-5"></div>');
     st.appendChild(presupuesto(d));
-    var tm = tarjetaMeta(d);
-    if (tm) st.appendChild(tm);
     st.appendChild(ultimoMovimiento(d));
     g.appendChild(st);
     app.appendChild(g);
     if (pr._ajustar) pr._ajustar(g, st);
     app.appendChild(categorias(d));
+    var tms = tarjetaMetas(d);
+    if (tms) app.appendChild(tms);
     var g3 = el('<div class="grid"></div>');
     g3.appendChild(historico(d));
     g3.appendChild(semanal(d));
@@ -1506,18 +1506,40 @@
     if (m.mensual) t.push('≈ ' + pesos(m.mensual) + ' al mes');
     return t.join(' · ');
   }
-  function tarjetaMeta(d) {
-    var m = metaProxima(d);
-    if (!m) return null;
-    var n = el('<section class="card meta-card o3" role="button" tabindex="0" aria-label="Ver mis metas de ahorro"><div class="meta-top"><div class="meta-foto">' + fotoMeta(m) + '</div>' +
-      '<div class="meta-info"><div class="eyebrow">' + (m.lograda ? 'Meta lograda' : 'Tu próxima meta') + '</div><h3>' + esc(m.nombre) + '</h3></div>' +
-      '<span class="chip ' + (m.lograda ? 'ok' : '') + '">' + m.pct + ' %</span></div>' +
-      '<div class="fig"><span class="v num">' + pesos(m.ahorrado) + '</span><span class="of">de ' + pesos(m.objetivo) + '</span></div>' +
-      '<div class="meter ' + (m.lograda ? 'ok' : '') + '" role="img" aria-label="' + m.pct + ' % de la meta"><i style="width:' + m.pct + '%"></i></div>' +
-      '<div class="meta-pie">' + esc(detalleMeta(m)) + '</div></section>');
-    function abrir() { if (window.MFAdmin) MFAdmin.metas(); }
-    n.addEventListener('click', abrir);
-    n.addEventListener('keydown', function (e) { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); abrir(); } });
+  // "Tus metas": mismo formato de "¿En qué se fue la plata?": un anillo de progreso con la foto de la meta y la lista al lado.
+  function tarjetaMetas(d) {
+    var todas = d.metas || [];
+    if (!todas.length) return null;
+    var orden = todas.slice().sort(function (a, b) {
+      if (a.lograda !== b.lograda) return a.lograda ? 1 : -1;
+      if (a.fecha && b.fecha) return a.fecha < b.fecha ? -1 : a.fecha > b.fecha ? 1 : 0;
+      if (a.fecha || b.fecha) return a.fecha ? -1 : 1;
+      return b.pct - a.pct;
+    });
+    var sel = 0, R = 80, W = 24, C = 2 * Math.PI * R;
+    var n = el('<section class="card metas-card"><div class="card-h"><h2>Tus metas de ahorro</h2><span class="aside"></span></div><div class="donut-layout"><div class="donut-wrap chart-wrap"></div><div class="meta-det"></div></div></section>');
+    n.querySelector('.aside').textContent = orden.length + (orden.length === 1 ? ' meta' : ' metas');
+    var anillo = n.querySelector('.donut-wrap'), det = n.querySelector('.meta-det');
+    function pinta() {
+      var m = orden[sel], len = C * m.pct / 100, color = m.lograda ? 'var(--good)' : 'var(--accent)';
+      var centro = m.foto
+        ? '<defs><clipPath id="mclip"><circle cx="100" cy="100" r="66"/></clipPath></defs><image href="' + esc(m.foto) + '" x="34" y="34" width="132" height="132" preserveAspectRatio="xMidYMid slice" clip-path="url(#mclip)"/>'
+        : '<text x="100" y="112" text-anchor="middle" font-size="52">' + esc(m.emoji || '🎯') + '</text>';
+      anillo.innerHTML = '<svg viewBox="0 0 200 200" role="img" aria-label="' + esc(m.nombre) + ': ' + m.pct + ' % de la meta"><circle cx="100" cy="100" r="' + R + '" fill="none" stroke="var(--surface-2)" stroke-width="' + W + '"/>' +
+        (m.pct > 0 ? '<circle cx="100" cy="100" r="' + R + '" fill="none" stroke="' + color + '" stroke-width="' + W + '" stroke-linecap="round" stroke-dasharray="' + Math.max(0.01, len) + ' ' + C + '" transform="rotate(-90 100 100)"/>' : '') + centro + '</svg>';
+      var filas = orden.map(function (x, i) {
+        return '<button type="button" data-i="' + i + '"' + (i === sel ? ' class="on"' : '') + '><span class="sw" style="background:' + SERIES[i % SERIES.length] + '"></span><span class="nm">' + esc(x.nombre) + '</span>' +
+          '<span class="pc">' + x.pct + ' %</span><span class="mv">' + pesos(x.ahorrado) + '</span></button>';
+      }).join('');
+      det.innerHTML = '<div class="meta-sel"><div class="eyebrow">' + (m.lograda ? 'Meta lograda' : 'Más próxima') + '</div><h3>' + esc(m.nombre) + '</h3>' +
+        '<div class="fig"><span class="v num">' + pesos(m.ahorrado) + '</span><span class="of">de ' + pesos(m.objetivo) + ' · ' + m.pct + ' %</span></div>' +
+        '<div class="meta-pie">' + esc(detalleMeta(m)) + '</div></div>' +
+        '<div class="cat-list">' + filas + '</div>' +
+        '<button type="button" class="ver-todo" data-admin>Administrar mis metas<span style="display:inline-flex;transform:rotate(-90deg)">' + ICON.chevron + '</span></button>';
+      det.querySelectorAll('.cat-list button').forEach(function (b) { b.addEventListener('click', function () { sel = +b.dataset.i; pinta(); }); });
+      det.querySelector('[data-admin]').addEventListener('click', function () { if (window.MFAdmin) MFAdmin.metas(); });
+    }
+    pinta();
     return n;
   }
   function resumenLimites(d) {
