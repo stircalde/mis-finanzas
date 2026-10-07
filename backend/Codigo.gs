@@ -85,6 +85,7 @@ function doPost(e) {
       case 'fijoadmin': mensaje = administrarFijo(p, cfg); break;
       case 'cuentaadmin': mensaje = administrarCuenta(p, cfg); break;
       case 'limiteadmin': mensaje = administrarLimite(p, cfg); break;
+      case 'metaadmin': mensaje = administrarMeta(p, cfg); break;
       default: throw new Error('Acción desconocida: ' + p.accion);
     }
     guardarPendientes_();
@@ -1648,6 +1649,7 @@ function armarDashboard(est, movs, cfg, claveMes, hoyF) {
         interesDesde1: interesDesde1(c), activa: c.activa, saldo: Math.round(est.saldos[c.nombre] || 0), mama: c.nombre === CUENTA_MAMA, imagen: c.imagen || '' };
     }),
     listaCategorias: cfg.categorias.map(function (c) { return { nombre: c.nombre, emoji: c.emoji }; }),
+    metas: estadoMetas(cfg, est, hoyF),
     historico: meses,
     semanas: semanas,
     movimientos: historial,
@@ -1918,6 +1920,90 @@ function guardarFilaConfig(encabezado, clave, valores, crear) {
   }
   Object.keys(valores).forEach(function (k) { h.getRange(fila, enc.indexOf(k) + 1).setValue(valores[k]); });
   CACHE_CFG_ = null;
+}
+
+/**
+ * Metas de ahorro: cada meta va ligada a una cuenta de plata (un bolsillo): el progreso es el saldo de esa cuenta.
+ * Aportar a una meta es "Mover plata" hacia su cuenta, así que no hay contabilidad aparte.
+ */
+const FOTO_META_MAX = 45000;   // una celda de Google Sheets aguanta 50.000 caracteres
+function estadoMetas(cfg, est, hoyF) {
+  return (cfg.metas || []).map(function (m) {
+    const ahorrado = Math.max(0, Math.round(est.saldos[m.cuenta] || 0));
+    const falta = Math.max(0, m.objetivo - ahorrado);
+    const dias = m.fecha ? Math.round((soloFecha(m.fecha).getTime() - soloFecha(hoyF).getTime()) / 86400000) : null;
+    const meses = dias === null ? 0 : Math.max(1, dias / 30.4375);
+    return { nombre: m.nombre, emoji: m.emoji, objetivo: m.objetivo, fecha: m.fecha ? fmt(m.fecha) : '', cuenta: m.cuenta, foto: m.foto,
+      ahorrado: ahorrado, falta: falta, pct: Math.min(100, Math.floor(ahorrado / m.objetivo * 100)), lograda: falta === 0,
+      dias: dias, vencida: dias !== null && dias < 0 && falta > 0,
+      mensual: dias !== null && dias >= 0 && falta > 0 ? Math.ceil(falta / meses) : 0 };
+  });
+}
+function asegurarTablaMetas(h) {
+  const v = h.getDataRange().getValues();
+  if (filaEncabezado(v, 'Meta') >= 0) return;
+  const f = h.getLastRow() + 2;
+  h.getRange(f, 1).setValue('▸ METAS DE AHORRO').setFontWeight('bold').setFontColor('#0b3d91').setFontSize(12);
+  h.getRange(f + 1, 1, 1, 6).setValues([['Meta', 'Emoji', 'Objetivo', 'Fecha límite', 'Cuenta', 'Foto']]).setFontWeight('bold').setBackground('#dbe8ff');
+  CACHE_CFG_ = null;
+}
+/** guardar: anterior, nombre, emoji, objetivo, fecha (opcional), cuenta (existente) o cuentaNueva, foto (data:image/jpeg; vacío la quita; sin enviar, la deja). quitar: nombre. */
+function administrarMeta(p, cfg) {
+  const op = limpiar(p.op) || 'guardar';
+  const h = hojaConfig();
+  asegurarTablaMetas(h);
+  const metas = cfg.metas || [];
+  if (op === 'quitar') {
+    const nombre = limpiar(p.nombre);
+    const m = metas.find(function (x) { return x.nombre === nombre; });
+    if (!m) throw new Error('La meta "' + nombre + '" no existe.');
+    const v = h.getDataRange().getValues(), i = filaEncabezado(v, 'Meta');
+    for (let j = i + 1; j < v.length && String(v[j][0]).trim().indexOf('▸') !== 0; j++) {
+      if (String(v[j][0]).trim() === nombre) { h.getRange(j + 1, 1, 1, 6).setValues([['', '', '', '', '', '']]); break; }
+    }
+    CACHE_CFG_ = null;
+    return '🗂️ Quité la meta "' + nombre + '". La cuenta "' + m.cuenta + '" y su plata siguen igual.';
+  }
+  const anterior = limpiar(p.anterior);
+  const nombre = limpiar(p.nombre);
+  if (!nombre) throw new Error('Escribe el nombre de la meta.');
+  const previa = anterior ? metas.find(function (x) { return x.nombre === anterior; }) : null;
+  if (anterior && !previa) throw new Error('La meta "' + anterior + '" no existe.');
+  if (!previa || anterior !== nombre) nombreValido(nombre);
+  if (metas.some(function (x) { return x.nombre !== anterior && normalizarTexto(x.nombre) === normalizarTexto(nombre); })) throw new Error('Ya tienes una meta llamada "' + nombre + '".');
+  const objetivo = aNumero(p.objetivo);
+  if (!(objetivo > 0)) throw new Error('El objetivo no es válido.');
+  const emoji = (limpiar(p.emoji) || '🎯').slice(0, 8);
+  let fd = '';
+  if (limpiar(p.fecha)) {
+    const mf = limpiar(p.fecha).match(/^(\d{4})-(\d{1,2})-(\d{1,2})/);
+    if (!mf) throw new Error('La fecha límite no es válida.');
+    fd = new Date(+mf[1], +mf[2] - 1, +mf[3]);
+    if (fd.getFullYear() !== +mf[1] || fd.getMonth() !== +mf[2] - 1 || fd.getDate() !== +mf[3]) throw new Error('La fecha límite no existe.');
+    const igual = previa && previa.fecha && soloFecha(previa.fecha).getTime() === fd.getTime();
+    if (fd < hoy() && !igual) throw new Error('La fecha límite no puede ser pasada.');
+  }
+  let cuenta = limpiar(p.cuenta);
+  const nueva = limpiar(p.cuentaNueva);
+  if (nueva) {
+    administrarCuenta({ op: 'guardar', nombre: nueva, tipo: 'Plata', emoji: emoji, saldo: 0 }, cfg);
+    cuenta = nueva;
+  } else {
+    const c = cuentaPorNombre(cfg, cuenta);
+    if (c.tipo !== 'Plata' || !c.activa || c.nombre === CUENTA_MAMA || c.apartaPara) throw new Error('Esa cuenta no sirve para una meta: elige una de tu plata, que no sea un bolsillo de tarjeta.');
+    const ocupada = metas.find(function (x) { return x.cuenta === c.nombre && x.nombre !== anterior; });
+    if (ocupada) throw new Error('"' + c.nombre + '" ya es el bolsillo de la meta "' + ocupada.nombre + '".');
+  }
+  const valores = { 'Emoji': emoji, 'Objetivo': objetivo, 'Fecha límite': fd || '', 'Cuenta': cuenta };
+  if (p.foto !== undefined && p.foto !== null) {
+    const foto = String(p.foto).trim();
+    if (foto && (!/^data:image\/jpeg;base64,[A-Za-z0-9+\/=]+$/.test(foto) || foto.length > FOTO_META_MAX)) throw new Error('La foto no es válida o es muy pesada.');
+    valores['Foto'] = foto;
+  }
+  if (anterior && anterior !== nombre) valores['Meta'] = nombre;
+  guardarFilaConfig('Meta', anterior || nombre, valores, !anterior);
+  return (previa ? '✏️ Actualicé ' : '🏁 Creé ') + 'la meta "' + nombre + '": ' + pesos(objetivo) + ' en "' + cuenta + '"' + (fd ? ' para el ' + fmt(fd) : '') +
+    (nueva ? '\n🆕 Creé el bolsillo "' + nueva + '".' : '');
 }
 
 /**
@@ -2667,6 +2753,9 @@ function hojaConfig() {
     ['Salario', '💼'], ['Honorarios', '📄'], ['Transferencias recibidas', '📲'], [CAT_APORTE, '👩'], ['Otros', '💰']
   ], 3);
 
+  seccion('METAS DE AHORRO', 'Cada meta va ligada a una cuenta de plata (un bolsillo): el progreso es su saldo. Se administran desde Más → Metas de ahorro.');
+  tabla(['Meta', 'Emoji', 'Objetivo', 'Fecha límite', 'Cuenta', 'Foto'], [], 3);
+
   seccion('AJUSTES', '');
   tabla(['Ajuste', 'Valor'], [['Nombre', ''], ['Recordar días antes', 3], ['Correo para recordatorios', '']], 0);
 
@@ -2699,7 +2788,7 @@ function filaEncabezado(v, encabezado) {
   }
   return primero;
 }
-const NOMBRES_RESERVADOS = ['cuenta', 'gasto fijo', 'credito', 'persona', 'presupuesto', 'categoria', 'tipo de ingreso', 'ajuste', 'corte davibank'];
+const NOMBRES_RESERVADOS = ['meta', 'cuenta', 'gasto fijo', 'credito', 'persona', 'presupuesto', 'categoria', 'tipo de ingreso', 'ajuste', 'corte davibank'];
 function nombreValido(nombre) {
   if (/^▸/.test(nombre)) throw new Error('El nombre no puede empezar con ▸.');
   if (NOMBRES_RESERVADOS.indexOf(normalizarTexto(nombre)) >= 0) throw new Error('"' + nombre + '" es un nombre reservado de la hoja. Usa otro (por ejemplo "' + nombre + ' 1").');
@@ -2794,6 +2883,10 @@ function leerConfig() {
     const t = Number(r['Tope mensual']);
     if (t > 0) presupuestos[String(r['Presupuesto']).trim()] = t;
   });
+  const metas = leerTabla(v, 'Meta').map(function (r) {
+    return { nombre: String(r['Meta']).trim(), emoji: String(r['Emoji'] || '🎯').trim(), objetivo: Number(r['Objetivo']) || 0,
+      fecha: fecha(r['Fecha límite']), cuenta: String(r['Cuenta'] || '').trim(), foto: String(r['Foto'] || '').trim() };
+  }).filter(function (m) { return m.nombre && m.objetivo > 0; });
   const ingresos = leerTabla(v, 'Tipo de ingreso').map(function (r) {
     return { nombre: String(r['Tipo de ingreso']).trim(), emoji: String(r['Emoji'] || '💰').trim() };
   });
@@ -2809,7 +2902,7 @@ function leerConfig() {
     .map(function (r) { return { corte: soloFecha(r['Corte Davibank']), limite: soloFecha(r['Límite de pago']) }; });
 
   CACHE_CFG_ = { cuentas: cuentas, previas: previas, deudoresIniciales: deudoresIniciales, fijos: fijos, categorias: categorias, presupuestos: presupuestos,
-    ingresos: ingresos, ajustes: ajustes, davi: davi };
+    ingresos: ingresos, ajustes: ajustes, davi: davi, metas: metas };
   return CACHE_CFG_;
 }
 
