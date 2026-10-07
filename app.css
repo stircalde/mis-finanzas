@@ -1249,3 +1249,5 @@ button.util.mini { background: none; border: 0; padding: 4px 0; border-radius: 8
 .pago-lista li b { color: var(--ink); font-weight: 600; white-space: nowrap; }
 .deb-reg { font-size: .82rem; padding: 4px 0 0; }
 .deb-reg-todo { width: 100%; margin-top: 10px; font-weight: 600; }
+.tx-ed { cursor: pointer; border-radius: var(--r-sm); }
+.tx-ed:hover { background: var(--accent-soft); }

@@ -748,7 +748,7 @@
       if (ctx !== m.cuenta && m.cuenta !== 'Mamá (regalo)') meta.push(esDeuda(m.cuenta) ? '<span>pagó</span>' + etiqueta(m.cuenta) : etiqueta(m.cuenta));
       signo = '+'; cls = 'in';
     } else if (m.tipo === 'Me pagaron') { if (ctx !== m.cuenta) meta.push(etiqueta(m.cuenta)); signo = '+'; cls = 'in'; extra = '<small>devolución</small>'; }
-    else if (m.tipo === 'Me prestaron') { if (ctx !== m.cuenta) meta.push(etiqueta(m.cuenta)); signo = '+'; cls = 'mv'; extra = '<small>préstamo · le debes</small>'; }
+    else if (m.tipo === 'Me prestaron') { if (m.cuenta && ctx !== m.cuenta) meta.push(etiqueta(m.cuenta)); else if (!m.cuenta) meta.push('<span>de antes · no movió tus cuentas</span>'); signo = '+'; cls = 'mv'; extra = '<small>préstamo · le debes</small>'; }
     else if (m.tipo === 'Le pagué') { if (ctx !== m.cuenta) meta.push(etiqueta(m.cuenta)); signo = '−'; cls = 'mv'; extra = '<small>le devolviste</small>'; }
     else if (m.tipo === 'Transferencia') {
       meta.push(m.cuenta ? etiqueta(m.cuenta) + '<span>→</span>' + etiqueta(m.destino) : '<span>→</span>' + etiqueta(m.destino));
@@ -766,7 +766,8 @@
     var ico = icoComercio(m);
     if (!ico && EMOJI_GRUPO[grupoMov(m)] && (m.tipo === 'Transferencia' || m.tipo === 'Ajuste')) m = Object.assign({}, m, { emoji: EMOJI_GRUPO[grupoMov(m)] });
     var plan = m.id && PLANES['m:' + m.id];
-    return '<div class="tx-row' + (plan ? ' tx-plan' : '') + '"' + (plan ? ' data-plan="' + esc(plan.id) + '" role="button" tabindex="0"' : '') + '>' + (ico ? '<div aria-hidden="true">' + ico + '</div>' : '<div class="ico" aria-hidden="true">' + esc(m.emoji) + '</div>') + '<div style="min-width:0"><div class="d">' + esc(m.desc) + '</div>' +
+    var editable = !plan && m.id && !m.hist && m.tipo !== 'Ajuste';
+    return '<div class="tx-row' + (plan ? ' tx-plan' : '') + (editable ? ' tx-ed' : '') + '"' + (plan ? ' data-plan="' + esc(plan.id) + '" role="button" tabindex="0"' : editable ? ' data-mid="' + esc(m.id) + '" role="button" tabindex="0"' : '') + '>' + (ico ? '<div aria-hidden="true">' + ico + '</div>' : '<div class="ico" aria-hidden="true">' + esc(m.emoji) + '</div>') + '<div style="min-width:0"><div class="d">' + esc(m.desc) + '</div>' +
       '<div class="m">' + meta.join('<span>·</span>') + '</div>' + (plan ? miniPlan(plan) : '') + '</div><div class="a ' + cls + '">' + signo + pesos(Math.abs(m.monto)).replace('−', '') + extra + '</div></div>';
   }
   function listaAgrupada(items, ctx) {
@@ -1171,8 +1172,12 @@
       '<div class="stat"><div class="k">Balance</div><div class="v num">' + (neto >= 0 ? '+' : '−') + pesos(Math.abs(neto)).replace('−', '') + '</div><div class="d">' + (neto >= 0 ? 'a tu favor' : 'en contra') + '</div></div></div></section>'));
     var sec = el('<section class="card"><div class="card-h"><h2>Te deben</h2><span class="aside">Total <b>' + pesos(d.totalMeDeben) + '</b></span></div>' +
       '<div class="owed">' + (html || '<div class="empty">Nadie te debe plata en este momento.</div>') + '</div>' +
-      '<p class="hint">Toca un nombre para ver por qué te debe; desde ahí puedes registrar lo que te pague.</p></section>');
-    sec.addEventListener('click', registrarDesdeFavores);
+      '<p class="hint">Toca un nombre para ver por qué te debe; desde ahí puedes registrar lo que te pague.</p>' +
+      '<button type="button" class="btn" data-deuda-antigua>➕ Algo que me debían desde antes</button>' + '</section>');
+    sec.addEventListener('click', function (e) {
+      if (e.target.closest('[data-deuda-antigua]')) { if (window.MFAdmin) MFAdmin.deudaAntigua('me'); return; }
+      registrarDesdeFavores(e);
+    });
     sec.querySelectorAll('.owed-row[data-i]').forEach(function (r) {
       function tocar() { var k = 'deb:' + d.meDeben[+r.dataset.i].persona; plegar(r.parentNode, k, r); }
       r.addEventListener('click', tocar);
@@ -1196,7 +1201,7 @@
       var det = '';
       {
         var filas = [];
-        x.prestamos.forEach(function (m) { filas.push('<div class="deb-t deb-ab"><span>' + fechaCorta(m.fecha) + ' · ' + esc(m.desc) + ' → ' + esc(m.cuenta) + '</span><b class="num">' + pesos(m.monto) + '</b></div>'); });
+        x.prestamos.forEach(function (m) { filas.push('<div class="deb-t deb-ab"><span>' + fechaCorta(m.fecha) + ' · ' + esc(m.desc) + (m.cuenta ? ' → ' + esc(m.cuenta) : ' · de antes') + '</span><b class="num">' + pesos(m.monto) + '</b></div>'); });
         var h2 = '<div class="deb">' + (filas.length ? '<div class="deb-sub">Lo que te prestó</div>' + filas.join('') : '');
         if (x.devoluciones.length) h2 += '<div class="deb-sub">Lo que le has devuelto</div>' + x.devoluciones.map(function (m) { return '<div class="deb-t deb-ab"><span>' + fechaCorta(m.fecha) + ' · desde ' + esc(m.cuenta) + '</span><b class="num">−' + pesos(m.monto) + '</b></div>'; }).join('');
         if (x.aFavor) h2 += '<div class="deb-nota">Te pagó ' + pesos(x.aFavor) + ' de más; quedó como saldo a su favor.</div>';
@@ -1209,8 +1214,12 @@
     }).join('');
     var sl = el('<section class="card"><div class="card-h"><h2>Les debes</h2><span class="aside">Total <b>' + pesos(totLes) + '</b></span></div>' +
       '<div class="owed">' + (htmlL || '<div class="empty">No le debes plata a nadie. 🙌</div>') + '</div>' +
-      '<p class="hint">Toca un nombre para ver el detalle y registrar lo que le pagues. Si alguien te presta: botón ➕ → Ingreso → 🙋 Alguien me prestó plata.</p></section>');
-    sl.addEventListener('click', registrarDesdeFavores);
+      '<p class="hint">Toca un nombre para ver el detalle y registrar lo que le pagues. Si alguien te presta: botón ➕ → Ingreso → 🙋 Alguien me prestó plata.</p>' +
+      '<button type="button" class="btn" data-deuda-antigua="les">➕ Algo que le debía desde antes</button>' + '</section>');
+    sl.addEventListener('click', function (e) {
+      if (e.target.closest('[data-deuda-antigua]')) { if (window.MFAdmin) MFAdmin.deudaAntigua('les'); return; }
+      registrarDesdeFavores(e);
+    });
     sl.querySelectorAll('.owed-row[data-l]').forEach(function (r) {
       var tocarL = function () { plegar(r.parentNode, 'les:' + lesDebo[+r.dataset.l].persona, r); };
       r.addEventListener('click', tocarL);
@@ -1572,8 +1581,10 @@
       '<p class="hint">' + (p.pendiente > 0 ? 'Te falta pagar ' + pesos(p.pendiente) + (p.pendiente > p.capitalPendiente + 5 ? ' con intereses y cargos' : '') + '. ' : '') +
       (p.capitalApp ? 'El capital sale de la app de Addi y baja a medida que pagas las cuotas. ' : '') +
       (p.estimado ? 'Fechas estimadas con el ciclo de la tarjeta. ' : '') + 'Las cuotas se marcan pagadas a medida que registras pagos al crédito.</p>' +
-      '<button type="button" class="btn" data-ir>Ver ' + esc(p.cuenta) + '</button></div></div>');
+      '<button type="button" class="btn" data-ir>Ver ' + esc(p.cuenta) + '</button>' +
+      (p.mov ? '<button type="button" class="btn" data-editar-mov>✏️ Corregir esta compra</button>' : '') + '</div></div>');
     hoja.addEventListener('click', function (e) {
+      if (e.target.closest('[data-editar-mov]')) { if (window.MFAdmin) MFAdmin.movimiento(p.mov); return; }
       if (e.target === hoja || e.target.closest('[data-cerrar]')) cerrarHoja(true);
       else if (e.target.closest('[data-ir]')) irDesdeHoja('#/credito/' + encodeURIComponent(p.cuenta));
     });
@@ -1584,11 +1595,15 @@
     if (e.key === 'Escape') cerrarHoja(true);
     var r = e.target.closest && e.target.closest('.tx-row[data-plan]');
     if (r && (e.key === 'Enter' || e.key === ' ')) { e.preventDefault(); if (PLANES[r.dataset.plan]) abrirPlan(PLANES[r.dataset.plan]); }
+    var ed = e.target.closest && e.target.closest('.tx-row[data-mid]');
+    if (ed && (e.key === 'Enter' || e.key === ' ') && window.MFAdmin) { e.preventDefault(); MFAdmin.movimiento(ed.dataset.mid); }
   });
   document.addEventListener('click', function (e) {
     if (hojaAbierta && hojaAbierta.classList.contains('es-plan') && hojaAbierta.contains(e.target)) return;
     var r = e.target.closest('[data-plan]');
-    if (r && PLANES[r.dataset.plan]) { e.stopPropagation(); abrirPlan(PLANES[r.dataset.plan]); }
+    if (r && PLANES[r.dataset.plan]) { e.stopPropagation(); abrirPlan(PLANES[r.dataset.plan]); return; }
+    var ed = e.target.closest('.tx-row[data-mid]');
+    if (ed && window.MFAdmin && !e.target.closest('a, button')) { e.stopPropagation(); MFAdmin.movimiento(ed.dataset.mid); }
   }, true);
 
   /* =================== BILLETERA: TUS TARJETAS =================== */
