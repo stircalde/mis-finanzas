@@ -4,14 +4,14 @@ A.fresco(); A.reloj(2026, 9, 1, 11);
 const lim = (n) => D().presupuestos.find(x => x.grupo === n);
 const L = (o) => P(Object.assign({ accion: 'limiteadmin' }, o));
 
-ok(lim('Ocio') && lim('Ocio').categorias.length === 3, 'parte con el límite "Ocio" de 3 categorías');
+ok(lim('Ocio') && lim('Ocio').categorias.length === 2, 'parte con el límite "Ocio" de 2 categorías');
 // 1) Crear
-let r = L({ op: 'guardar', anterior: '', nombre: 'Casa', tope: '500000', categorias: 'Mercado|Servicios y hogar' }); A.tic();
-ok(r.ok && lim('Casa') && lim('Casa').tope === 500000 && lim('Casa').categorias.join() === 'Mercado,Servicios y hogar', 'crear Casa: ' + r.mensaje);
-ok(lim('Ocio').categorias.length === 3, 'Ocio no cambia al crear otro');
+let r = L({ op: 'guardar', anterior: '', nombre: 'Casa', tope: '500000', categorias: 'Mercado|Servicios públicos' }); A.tic();
+ok(r.ok && lim('Casa') && lim('Casa').tope === 500000 && lim('Casa').categorias.join() === 'Mercado,Servicios públicos', 'crear Casa: ' + r.mensaje);
+ok(lim('Ocio').categorias.length === 2, 'Ocio no cambia al crear otro');
 // 2) Una categoría de otro límite pasa al nuevo y se avisa
-r = L({ op: 'guardar', anterior: '', nombre: 'Compras', tope: '200000', categorias: 'Compras en línea|Ropa' }); A.tic();
-ok(r.ok && /antes en "Ocio"/.test(r.mensaje) && lim('Compras').categorias.indexOf('Compras en línea') >= 0 && lim('Ocio').categorias.indexOf('Compras en línea') < 0, 'mueve categoría de Ocio: ' + r.mensaje);
+r = L({ op: 'guardar', anterior: '', nombre: 'Compras', tope: '200000', categorias: 'Comidas afuera|Ropa' }); A.tic();
+ok(r.ok && /antes en "Ocio"/.test(r.mensaje) && lim('Compras').categorias.indexOf('Comidas afuera') >= 0 && lim('Ocio').categorias.indexOf('Comidas afuera') < 0, 'mueve categoría de Ocio: ' + r.mensaje);
 // 3) El gasto cuenta en el límite de su categoría
 P({ accion: 'gasto', descripcion: 'Mercadito', monto: '30000', cuenta: 'Nequi', categoria: 'Mercado', fecha: '2026-10-01' }); A.tic();
 ok(lim('Casa').gastado >= 30000, 'el gasto de Mercado cuenta en Casa: ' + (lim('Casa') && lim('Casa').gastado));

@@ -629,15 +629,19 @@ function palabrasClave(t) { return normalizarTexto(t).split(' ').filter(function
 /** Diccionario base (palabra → categoría), solo con las categorías que existen en tu hoja. */
 function diccionarioCategorias(cfg) {
   const base = [
-    ['\\b(temu|shein|amazon|aliexpress|mercado ?libre)\\b', 'Compras en línea'],
-    ['\\b(terpel|eds|gasolina|primax|biomax|texaco|combustible|tanqueo)\\b', 'Gasolina'],
+    ['\\b(terpel|eds|gasolina|primax|biomax|texaco|combustible|tanqueo|parqueadero|peaje|peajes|uber|didi|cabify|taxi)\\b', 'Transporte'],
     ['\\b(d1|ara|exito|metro|makro|jumbo|carulla|olimpica|isimo|mercado|supermercado|fruver|carniceria|panaderia|huevos|leche)\\b', 'Mercado'],
-    ['\\b(rappi|qbano|mcdonalds?|automac|sushi|pizza|hamburguesa|almuerzo|desayuno|cena|restaurante|cafe|kfc|frisby|corral|comida|helado|empanada)\\b', 'Comida rápida y restaurantes'],
-    ['\\b(koaj|movies|calzatodo|arturo calle|zara|ropa|zapatos|tenis|camisa|camiseta|pantalon|jean|saraluz)\\b', 'Ropa'],
+    ['\\b(rappi|qbano|mcdonalds?|automac|sushi|pizza|hamburguesa|almuerzo|desayuno|cena|restaurante|cafe|kfc|frisby|corral|comida|helado|empanada|alitas|salchipapa|pollo)\\b', 'Comidas afuera'],
+    ['\\b(koaj|movies|calzatodo|arturo calle|zara|ropa|zapatos|tenis|camisa|camiseta|pantalon|jean|saraluz|shein)\\b', 'Ropa'],
     ['\\b(smart ?fit|gimnasio|gym|proteina|creatina|suplementos?|whey)\\b', 'Gimnasio y suplementos'],
     ['\\b(youtube|netflix|spotify|google one|claude|disney|hbo|max|prime video|icloud|hevy|chatgpt|suscripcion)\\b', 'Suscripciones'],
     ['\\b(cine|cinemark|procinal|steam|playstation|xbox|nintendo|videojuegos?|juego|concierto|boleta|boletas)\\b', 'Entretenimiento y videojuegos'],
-    ['\\b(luz|agua|gas|internet|movistar|claro|tigo|arriendo|servicios|epm|centrales electricas|aseo)\\b', 'Servicios y hogar']
+    ['\\b(luz|agua|gas|internet|movistar|claro|tigo|arriendo|servicios|epm|centrales electricas|aseo)\\b', 'Servicios públicos'],
+    ['\\b(drogueria|farmacia|farmatel|cruz verde|locatel|medicamentos?|medico|cita medica|odontologo|examenes?)\\b', 'Salud y farmacia'],
+    ['\\b(perras?|perros?|gatos?|mascotas?|veterinari[ao]|concentrado|petco)\\b', 'Mascotas'],
+    ['\\b(regalo|regalos|detalle|cumpleanos|obsequio)\\b', 'Regalos y detalles'],
+    ['\\b(homecenter|dollarcity|colchon|edredon|almohadas?|sillas?|muebles?|cortinas?|ikea|easy|decoracion)\\b', 'Hogar y enseres'],
+    ['\\b(amazon|temu|aliexpress|mercado ?libre|cargador|audifonos|celular|computador|teclado|mouse|cable|accesorios?)\\b', 'Tecnología y accesorios']
   ];
   const hay = {};
   cfg.categorias.forEach(function (c) { hay[c.nombre] = true; });
@@ -2487,7 +2491,7 @@ function migrarVersionAnterior(mov) {
   const ancho = vieja.getLastColumn();
   const enc = vieja.getRange(1, 1, 1, ancho).getValues()[0].map(String);
   const col = function (nombre) { return enc.indexOf(nombre); };
-  const mapaCat = { 'Ropa y compras en línea': 'Compras en línea', 'Deudas': 'Otros', 'Salud': 'Otros' };
+  const mapaCat = { 'Ropa y compras en línea': 'Tecnología y accesorios', 'Deudas': 'Otros', 'Salud': 'Otros' };
   const filas = vieja.getRange(2, 1, n, ancho).getValues()
     .filter(function (r) { return r[0] instanceof Date && Number(r[col('Monto')]) > 0; })
     .map(function (r) {
@@ -2618,8 +2622,8 @@ function hojaConfig() {
     fj('Google One', 19900, 'Mensual', 22, '', 'Suscripciones', 'TC Davibank', 'Automático', '', '', '', 'one.google.com', '#4285F4', '#FFFFFF'),
     fj('Spotify', 300000, 'Anual', '', '2027-07-22', 'Suscripciones', 'TC Davibank', 'Automático', '', '', '', 'spotify.com', '#1DB954', '#FFFFFF'),
     fj('Streaming familiar', 42000, 'Mensual', 9, '', 'Suscripciones', 'TC Davibank', 'Automático', 'Ana, Carlos, Luisa', 7000, '', 'netflix.com', '#E50914', '#FFFFFF'),
-    fj('Internet y TV', 107000, 'Mensual', 21, '', 'Servicios y hogar', 'Nequi', 'Manual', '', '', '', '', '#019DF4', '#FFFFFF'),
-    fj('Plan celular familiar', 32000, 'Mensual', 26, '', 'Servicios y hogar', 'Nequi', 'Manual', '', '', '', '', '#019DF4', '#FFFFFF'),
+    fj('Internet y TV', 107000, 'Mensual', 21, '', 'Servicios públicos', 'Nequi', 'Manual', '', '', '', '', '#019DF4', '#FFFFFF'),
+    fj('Plan celular familiar', 32000, 'Mensual', 26, '', 'Servicios públicos', 'Nequi', 'Manual', '', '', '', '', '#019DF4', '#FFFFFF'),
     fj('Suscripción de apps', 66000, 'Mensual', 28, '', 'Suscripciones', 'TC Nubank', 'Automático', '', '', '', '', '#D97757', '#FFFFFF'),
     fj('Prueba gratis', 24490, 'Una vez', '', '2026-10-20', 'Suscripciones', 'Nequi', 'Manual', '', '', 'Cancelar', '', '#FF441F', '#FFFFFF'),
     fj('Cuota de manejo Nubank', 12000, 'Mensual', 1, '', CAT_INTERESES, 'TC Nubank', 'Automático', '', '', '', 'nu.com.co', '#820AD1', '#FFFFFF'),
@@ -2638,14 +2642,19 @@ function hojaConfig() {
   seccion('CATEGORÍAS DE GASTO', 'La columna "Presupuesto" agrupa categorías bajo un tope mensual (tabla siguiente).');
   tabla(['Categoría', 'Emoji', 'Presupuesto'], [
     ['Mercado', '🛒', ''],
-    ['Comida rápida y restaurantes', '🍔', 'Ocio'],
+    ['Comidas afuera', '🍔', 'Ocio'],
     ['Entretenimiento y videojuegos', '🎮', 'Ocio'],
-    ['Compras en línea', '🛍️', 'Ocio'],
     ['Ropa', '👕', ''],
     ['Suscripciones', '📺', ''],
     ['Gimnasio y suplementos', '💪', ''],
-    ['Gasolina', '⛽', ''],
-    ['Servicios y hogar', '💡', ''],
+    ['Transporte', '🚗', ''],
+    ['Servicios públicos', '💡', ''],
+    ['Hogar y enseres', '🏠', ''],
+    ['Salud y farmacia', '💊', ''],
+    ['Mascotas', '🐕', ''],
+    ['Regalos y detalles', '🎁', ''],
+    ['Tecnología y accesorios', '💻', ''],
+    ['Préstamos a personas', '🤝', ''],
     ['Otros', '🔖', '']
   ], 5);
 
