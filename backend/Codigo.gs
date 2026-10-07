@@ -518,12 +518,27 @@ function agregarLeDebiaAntes(p, cfg) {
   const fecha = leerFechaMov(p.fecha);
   // Saldo actual (opcional): lo que todavía le debes; se anota el valor inicial en el concepto.
   const saldoTxt = limpiar(p.saldoActual);
-  const saldo = saldoTxt === '' ? monto : aNumero(saldoTxt);
+  let saldo = saldoTxt === '' ? monto : aNumero(saldoTxt);
   if (saldoTxt !== '' && !(saldo > 0)) throw new Error('El saldo actual debe ser mayor que cero (si ya se lo pagaste todo, no hace falta registrarlo).');
   if (saldo > monto) throw new Error('El saldo actual no puede ser mayor que el valor inicial.');
-  // Se anota el valor inicial completo como préstamo y la diferencia como lo ya devuelto (ambos sin cuenta: no mueven saldos).
+  // Pagos previos con fecha (opcional): lista [{fecha, monto}] (o JSON). Si vienen, reemplazan al saldo actual.
+  let pagos = p.pagos;
+  if (typeof pagos === 'string' && limpiar(pagos) !== '') { try { pagos = JSON.parse(pagos); } catch (e) { throw new Error('Los pagos anteriores no tienen un formato válido.'); } }
+  pagos = Array.isArray(pagos) ? pagos : [];
+  let sumaPagos = 0;
+  pagos = pagos.map(function (x) {
+    const m = aNumero(x.monto);
+    if (!(m > 0)) throw new Error('Un pago anterior tiene un monto no válido.');
+    sumaPagos += m;
+    return { fecha: leerFechaMov(x.fecha), monto: m };
+  });
+  if (sumaPagos > monto) throw new Error('Los pagos anteriores (' + pesos(sumaPagos) + ') superan el valor inicial (' + pesos(monto) + ').');
+  // Se anota el valor inicial completo como préstamo y lo ya devuelto como pagos (ambos sin cuenta: no mueven saldos).
   agregarMovimiento([fecha, TIPO.MEPRESTARON, concepto, monto, '', '', '', persona, '', '', '']);
-  if (saldo < monto) agregarMovimiento([fecha, TIPO.LEPAGUE, 'Pagado antes de usar la app · ' + concepto, monto - saldo, '', '', '', persona, '', '', '']);
+  if (pagos.length) {
+    pagos.forEach(function (x) { agregarMovimiento([x.fecha, TIPO.LEPAGUE, 'Pago anterior · ' + concepto, x.monto, '', '', '', persona, '', '', '']); });
+    saldo = monto - sumaPagos;
+  } else if (saldo < monto) agregarMovimiento([fecha, TIPO.LEPAGUE, 'Pagado antes de usar la app · ' + concepto, monto - saldo, '', '', '', persona, '', '', '']);
   const est = calcular(leerMovimientos(), cfg, hoy());
   const x = est.lesDebo.find(function (y) { return y.persona === persona; });
   return '🙋 Anotado: le debes ' + pesos(saldo) + ' a ' + persona + ' (' + concepto + ').\nAhora le debes ' + pesos(x ? x.saldo : saldo) + '. Cuando se lo pagues, regístralo con ↩️ Le pagué.';
