@@ -178,7 +178,7 @@
   function pedirClave(error) {
     nav.hidden = true;
     app.innerHTML = '';
-    var n = el('<form class="login"><img src="icons/icon-192.png" alt=""><h1>Mis finanzas</h1>' +
+    var n = el('<form class="login">' + logoMarca(84) + '<h1>Mis finanzas</h1>' +
       '<p style="color:var(--ink-2);margin:0">Escribe tu clave para ver tus datos. Queda guardada solo en este dispositivo.</p>' +
       '<input id="clave" type="password" autocomplete="current-password" placeholder="Tu clave" required>' +
       (error ? '<div class="err">' + esc(error) + '</div>' : '') +
@@ -1474,6 +1474,29 @@
     try { var c = document.createElement('canvas'); c.width = c.height = 1; var x = c.getContext('2d'); x.fillStyle = '#000'; x.fillStyle = css; x.fillRect(0, 0, 1, 1);
       var p = x.getImageData(0, 0, 1, 1).data; return '#' + [p[0], p[1], p[2]].map(function (v) { return ('0' + v.toString(16)).slice(-2); }).join(''); } catch (e) { return ''; }
   }
+
+  // ---- Logo de la marca (SVG dinámico). Toma los colores de la Apariencia vía CSS (.mf-logo en app.css);
+  // la geometría es la misma siempre. Los íconos de la PWA (manifest/favicon) son archivos estáticos aparte. ----
+  var logoN = 0;
+  function logoMarca(px) {
+    var k = 'mfl' + (++logoN);
+    function g(id, dir, st) { return '<linearGradient id="' + k + id + '" ' + dir + '>' + st.map(function (s) { return '<stop offset="' + s[0] + '" style="stop-color:var(' + s[1] + ')"/>'; }).join('') + '</linearGradient>'; }
+    return '<svg class="mf-logo" viewBox="0 0 64 64" width="' + px + '" height="' + px + '" role="img" aria-label="Mis finanzas" focusable="false"><defs>' +
+      g('t', 'x1="0" y1="0" x2="0.6" y2="1"', [[0, '--lg-t1'], [1, '--lg-t2']]) +
+      g('b', 'x1="0" y1="0" x2="0" y2="1"', [[0, '--lg-b1'], [1, '--lg-b2']]) +
+      g('c', 'x1="0" y1="0" x2="0" y2="1"', [[0, '--lg-c1'], [1, '--lg-c2']]) +
+      g('a', 'x1="0" y1="0" x2="1" y2="0"', [[0, '--lg-a1'], [0.55, '--lg-a2'], [1, '--lg-a3']]) +
+      '<radialGradient id="' + k + 'g" cx="0.62" cy="0.42" r="0.6"><stop offset="0" style="stop-color:var(--lg-glow)"/><stop offset="1" style="stop-color:var(--lg-glow);stop-opacity:0"/></radialGradient>' +
+      '<linearGradient id="' + k + 'l" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#fff" stop-opacity=".22"/><stop offset="1" stop-color="#fff" stop-opacity="0"/></linearGradient></defs>' +
+      '<rect class="lg-tile" x="1.5" y="1.5" width="61" height="61" rx="15" fill="url(#' + k + 't)"/>' +
+      '<rect class="lg-glow" x="1.5" y="1.5" width="61" height="61" rx="15" fill="url(#' + k + 'g)"/>' +
+      '<path class="lg-gloss" d="M16.5 1.5h31A15 15 0 0 1 62.5 16.5V30C46 36 18 36 1.5 30V16.5A15 15 0 0 1 16.5 1.5z" fill="url(#' + k + 'l)"/>' +
+      '<rect class="lg-rim" x="1.5" y="1.5" width="61" height="61" rx="15" fill="none"/>' +
+      '<rect class="lg-bar" x="13" y="30" width="11" height="15" rx="3.6" fill="url(#' + k + 'b)"/>' +
+      '<rect class="lg-mid" x="26.5" y="19" width="11" height="26" rx="3.6" fill="url(#' + k + 'c)"/>' +
+      '<rect class="lg-bar" x="40" y="8" width="11" height="37" rx="3.6" fill="url(#' + k + 'b)"/>' +
+      '<path class="lg-arc" d="M7 38C10 60 44 64 58 17C49 46 22 54 7 38Z" fill="url(#' + k + 'a)"/></svg>';
+  }
   function aplicarTema() {
     var claro = temaActual() === 'claro', h = document.documentElement;
     h.setAttribute('data-theme', claro ? 'light' : 'dark');
@@ -1600,6 +1623,7 @@
     });
   }
   aplicarTema();
+  (function () { var im = document.querySelector('.nav .brand img'); if (im) im.outerHTML = logoMarca(32); })();
   if (mqClaro && mqClaro.addEventListener) mqClaro.addEventListener('change', function () { if (!temaGuardado) { aplicarTema(); repintar(); } });
 
   /* =================== PLANES DE PAGO DE CADA COMPRA =================== */
