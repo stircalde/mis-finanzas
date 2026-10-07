@@ -129,7 +129,7 @@
     origen: ['mama'],
     fijo: ['monto', 'cuenta', 'mama', '_montoAuto'],
     desde: ['hacia'],
-    para: ['paraQuien', 'paraNueva'],
+    para: ['paraQuien', 'paraNueva', 'fechaPago'],
     paraQuien: ['paraNueva']
   };
 
@@ -186,6 +186,7 @@
         if (!cfg.personas.length) st.paraQuien = '__nueva';
         h += fChips('paraQuien', '¿Quién?', cfg.personas.map(function (p) { return [p.n, p.n]; }).concat([['__nueva', '➕ Alguien nuevo']]));
         if (st.paraQuien === '__nueva') h += fTexto('paraNueva', '¿Cómo se llama?', 'Nombre');
+        h += campo('📅 ¿Para cuándo te paga? (opcional)', '<input class="in" data-k="fechaPago" type="date" min="' + esc(st.fecha || hoyISO()) + '" value="' + esc(st.fechaPago || '') + '">', 'Si no hay fecha acordada, déjala vacía. Con fecha, no aparece como vencido antes de ese día.', 'fechaPago');
       }
       return h + fFecha();
     },
@@ -314,7 +315,7 @@
           if (!para) falta('Escribe el nombre de la persona.');
         }
         return { accion: 'gasto', fecha: f, descripcion: st.desc.trim(), monto: st.monto, categoria: st.cat || '', para: para, cuenta: st.cuenta,
-          cuotas: cuotas, valorCuota: d && d.valor && st.valorCuota > 0 ? st.valorCuota : '', apartar: d && d.bolsillo && st.apartar === 'si' ? 'si' : '',
+          fechaPago: para ? String(st.fechaPago || '') : '', cuotas: cuotas, valorCuota: d && d.valor && st.valorCuota > 0 ? st.valorCuota : '', apartar: d && d.bolsillo && st.apartar === 'si' ? 'si' : '',
           exterior: d && d.cuotas && !d.valor && st.exterior === 'si' ? 'si' : '' };
       }
       case 'ingreso': {
