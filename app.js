@@ -1479,23 +1479,44 @@
   // la geometría es la misma siempre. Los íconos de la PWA (manifest/favicon) son archivos estáticos aparte. ----
   var logoN = 0;
   function logoMarca(px) {
-    var k = 'mfl' + (++logoN);
-    function g(id, dir, st) { return '<linearGradient id="' + k + id + '" ' + dir + '>' + st.map(function (s) { return '<stop offset="' + s[0] + '" style="stop-color:var(' + s[1] + ')"/>'; }).join('') + '</linearGradient>'; }
-    return '<svg class="mf-logo" viewBox="0 0 64 64" width="' + px + '" height="' + px + '" role="img" aria-label="Mis finanzas" focusable="false"><defs>' +
-      g('t', 'x1="0" y1="0" x2="0.6" y2="1"', [[0, '--lg-t1'], [1, '--lg-t2']]) +
-      g('b', 'x1="0" y1="0" x2="0" y2="1"', [[0, '--lg-b1'], [1, '--lg-b2']]) +
-      g('c', 'x1="0" y1="0" x2="0" y2="1"', [[0, '--lg-c1'], [1, '--lg-c2']]) +
-      g('a', 'x1="0" y1="0" x2="1" y2="0"', [[0, '--lg-a1'], [0.55, '--lg-a2'], [1, '--lg-a3']]) +
-      '<radialGradient id="' + k + 'g" cx="0.62" cy="0.42" r="0.6"><stop offset="0" style="stop-color:var(--lg-glow)"/><stop offset="1" style="stop-color:var(--lg-glow);stop-opacity:0"/></radialGradient>' +
+    var k = 'mfl' + (++logoN), u = function (i) { return 'url(#' + k + i + ')'; };
+    function st(o, v, a) { return '<stop offset="' + o + '" style="stop-color:var(' + v + ')"' + (a == null ? '' : ' stop-opacity="' + a + '"') + '/>'; }
+    function gr(id, dir, stops) { return '<linearGradient id="' + k + id + '" ' + dir + '>' + stops.map(function (s) { return st(s[0], s[1], s[2]); }).join('') + '</linearGradient>'; }
+    var V = 'x1="0" y1="0" x2="0" y2="1"', H = 'x1="0" y1="0" x2="1" y2="0"';
+    // Volumen de una barra: base vertical + luz por la izquierda y sombra profunda por la derecha (todo en objectBoundingBox).
+    function barra(x, y, w, h, base, vol, cls) {
+      var geo = 'x="' + x + '" y="' + y + '" width="' + w + '" height="' + h + '" rx="3.6"';
+      return '<rect class="' + cls + '" ' + geo + ' fill="' + u(base) + '"/>' +
+        '<rect class="lg-vol" ' + geo + ' fill="' + u(vol) + '"/>' +
+        '<rect class="lg-det" ' + geo + ' fill="none" stroke="' + u('e') + '" stroke-width=".5"/>' +
+        '<rect class="lg-det" x="' + (x + 1.2) + '" y="' + (y + 3.4) + '" width="1.5" height="' + (h - 9) + '" rx=".75" fill="' + u('s') + '"/>' +
+        '<rect class="lg-det" x="' + (x + 2.6) + '" y="' + (y + 1.2) + '" width="' + (w - 5.2) + '" height="1.7" rx=".85" fill="' + u('p') + '"/>';
+    }
+    return '<svg class="mf-logo' + (px < 36 ? ' lg-s' : '') + '" viewBox="0 0 64 64" width="' + px + '" height="' + px + '" role="img" aria-label="Mis finanzas" focusable="false"><defs>' +
+      gr('t', 'x1="0" y1="0" x2="0.6" y2="1"', [[0, '--lg-t1'], [1, '--lg-t2']]) +
+      gr('b', V, [[0, '--lg-b1'], [1, '--lg-b2']]) +
+      gr('c', V, [[0, '--lg-c1'], [1, '--lg-c2']]) +
+      gr('a', H, [[0, '--lg-a1'], [0.55, '--lg-a2'], [1, '--lg-a3']]) +
+      gr('v', H, [[0, '--lg-lit', 0.6], [0.16, '--lg-lit', 0.14], [0.34, '--lg-lit', 0], [0.34, '--lg-deep', 0], [0.7, '--lg-deep', 0.3], [1, '--lg-deep', 0.72]]) +
+      gr('w', H, [[0, '--lg-litc', 0.8], [0.2, '--lg-litc', 0.2], [0.34, '--lg-deepc', 0], [0.66, '--lg-deepc', 0.4], [1, '--lg-deepc', 0.85]]) +
+      gr('s', V, [[0, '--lg-spec', 0.95], [0.5, '--lg-spec', 0.3], [1, '--lg-spec', 0]]) +
+      gr('p', H, [[0, '--lg-spec', 0], [0.35, '--lg-spec', 0.5], [1, '--lg-spec', 0]]) +
+      gr('e', V, [[0, '--lg-spec', 0.4], [0.35, '--lg-spec', 0.05], [1, '--lg-spec', 0]]) +
+      gr('av', V, [[0, '--lg-deep', 0.7], [0.5, '--lg-deep', 0], [0.5, '--lg-lit', 0], [1, '--lg-lit', 0.5]]) +
+      gr('as', H, [[0, '--lg-lit', 0], [0.35, '--lg-lit', 0.9], [0.8, '--lg-lit', 0.5], [1, '--lg-lit', 0]]) +
+      gr('r', 'x1="0" y1="0" x2="1" y2="1"', [[0, '--lg-rim1'], [0.22, '--lg-rim2'], [0.7, '--lg-rim2'], [1, '--lg-rim3']]) +
+      '<radialGradient id="' + k + 'g" cx="0.5" cy="0.5" r="0.5"><stop offset="0" style="stop-color:var(--lg-glow)"/><stop offset="1" style="stop-color:var(--lg-glow);stop-opacity:0"/></radialGradient>' +
       '<linearGradient id="' + k + 'l" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#fff" stop-opacity=".22"/><stop offset="1" stop-color="#fff" stop-opacity="0"/></linearGradient></defs>' +
-      '<rect class="lg-tile" x="1.5" y="1.5" width="61" height="61" rx="15" fill="url(#' + k + 't)"/>' +
-      '<rect class="lg-glow" x="1.5" y="1.5" width="61" height="61" rx="15" fill="url(#' + k + 'g)"/>' +
-      '<path class="lg-gloss" d="M16.5 1.5h31A15 15 0 0 1 62.5 16.5V30C46 36 18 36 1.5 30V16.5A15 15 0 0 1 16.5 1.5z" fill="url(#' + k + 'l)"/>' +
-      '<rect class="lg-rim" x="1.5" y="1.5" width="61" height="61" rx="15" fill="none"/>' +
-      '<rect class="lg-bar" x="13" y="30" width="11" height="15" rx="3.6" fill="url(#' + k + 'b)"/>' +
-      '<rect class="lg-mid" x="26.5" y="19" width="11" height="26" rx="3.6" fill="url(#' + k + 'c)"/>' +
-      '<rect class="lg-bar" x="40" y="8" width="11" height="37" rx="3.6" fill="url(#' + k + 'b)"/>' +
-      '<path class="lg-arc" d="M7 38C10 60 44 64 58 17C49 46 22 54 7 38Z" fill="url(#' + k + 'a)"/></svg>';
+      '<rect class="lg-tile" x="1.5" y="1.5" width="61" height="61" rx="15" fill="' + u('t') + '"/>' +
+      '<rect class="lg-glow" x="1.5" y="1.5" width="61" height="61" rx="15" fill="' + u('g') + '"/>' +
+      '<path class="lg-gloss" d="M16.5 1.5h31A15 15 0 0 1 62.5 16.5V30C46 36 18 36 1.5 30V16.5A15 15 0 0 1 16.5 1.5z" fill="' + u('l') + '"/>' +
+      '<rect class="lg-bevel" x="3.1" y="3.1" width="57.8" height="57.8" rx="13.5" fill="none"/>' +
+      '<rect class="lg-rim" x="1.5" y="1.5" width="61" height="61" rx="15" fill="none" stroke="' + u('r') + '"/>' +
+      '<ellipse class="lg-halo" cx="33" cy="35" rx="30" ry="28" fill="' + u('g') + '"/>' +
+      barra(13, 30, 11, 15, 'b', 'v', 'lg-bar') + barra(26.5, 19, 11, 26, 'c', 'w', 'lg-mid') + barra(40, 8, 11, 37, 'b', 'v', 'lg-bar') +
+      '<path class="lg-arc" d="M7 38C10 60 44 64 58 17C49 46 22 54 7 38Z" fill="' + u('a') + '"/>' +
+      '<path class="lg-vol" d="M7 38C10 60 44 64 58 17C49 46 22 54 7 38Z" fill="' + u('av') + '"/>' +
+      '<path class="lg-det" d="M7 38C10 60 44 64 58 17" fill="none" stroke="' + u('as') + '" stroke-width="1" stroke-linecap="round"/></svg>';
   }
   function aplicarTema() {
     var claro = temaActual() === 'claro', h = document.documentElement;
