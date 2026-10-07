@@ -262,7 +262,6 @@ body { min-height: 100vh; min-height: 100dvh; overscroll-behavior-y: contain; }
   .shell { display: grid; grid-template-columns: 220px minmax(0, 1fr); }
   .nav { position: sticky; top: 0; height: 100vh; display: flex; flex-direction: column; gap: 4px; padding: 22px 14px; border-top: 0; border-right: 1px solid var(--line); background: color-mix(in srgb, var(--tinte) 9%, #010101); }
   .nav .brand { display: flex; align-items: center; gap: 10px; font-family: var(--font-display); font-weight: 600; padding: 4px 8px 20px; }
-  .nav .brand img { border-radius: 9px; }
   .nav a { grid-template-columns: 24px 1fr; justify-items: start; align-items: center; gap: 12px; padding: 11px 12px; font-size: 0.95rem; }
   .nav a.on { background: var(--accent-soft); }
   .page { padding-bottom: 48px; max-width: 1480px; padding-inline: 36px; }
@@ -324,7 +323,7 @@ body { min-height: 100vh; min-height: 100dvh; overscroll-behavior-y: contain; }
 
 /* primera vez: pedir la clave */
 .login { max-width: 420px; margin: 12vh auto 0; text-align: center; display: grid; gap: 14px; }
-.login img { width: 84px; height: 84px; margin: 0 auto; border-radius: 22px; box-shadow: 0 20px 50px -20px color-mix(in srgb, var(--c1) 80%, transparent); }
+.login .mf-logo { margin: 0 auto; filter: none; }
 .login input { background: var(--surface-2); border: 1px solid var(--line-strong); color: var(--ink); border-radius: 12px; padding: 13px; font: inherit; text-align: center; }
 .login .btn.primary { background: var(--accent); border-color: var(--accent); color: var(--on-accent); font-weight: 600; padding: 12px; }
 .err { color: var(--crit); font-size: 0.86rem; }
@@ -1173,6 +1172,49 @@ html, body { overscroll-behavior-y: contain; }
 :root[data-oled][data-theme="dark"] .cal-glass .glow { opacity: 0.25; }
 :root[data-oled][data-theme="dark"] .hero { box-shadow: none; }
 :root[data-oled][data-theme="dark"][data-estilo="cristal"] body::before { background: #000; }
+
+/* ============ Logo de la marca (SVG dinámico): usa los tokens de Apariencia; la forma no cambia ============
+   Volumen: luz por la izquierda de cada barra (--lg-lit), sombra profunda por la derecha (--lg-deep),
+   reflejos (--lg-spec), borde iluminado (--lg-rim1…3) y halo (--lg-glow). Todo son degradados: sin filtros.
+   A menos de 36 px se ocultan los detalles finos (.lg-det, .lg-bevel) y queda el volumen. */
+.mf-logo {
+  display: block; flex: none;
+  --lg-t1: color-mix(in srgb, var(--c4) 20%, #060810); --lg-t2: color-mix(in srgb, var(--c4) 4%, #000);
+  --lg-rim: color-mix(in srgb, var(--c1) 70%, transparent);
+  --lg-rim1: color-mix(in srgb, var(--c2) 100%, #fff); --lg-rim2: color-mix(in srgb, var(--c1) 40%, transparent); --lg-rim3: color-mix(in srgb, var(--c1) 85%, transparent);
+  --lg-glow: color-mix(in srgb, var(--c1) 30%, transparent);
+  --lg-lit: var(--c2); --lg-litc: color-mix(in srgb, var(--c2) 30%, #fff); --lg-deep: color-mix(in srgb, var(--c4) 45%, #000); --lg-deepc: color-mix(in srgb, var(--c4) 55%, var(--c2)); --lg-spec: color-mix(in srgb, var(--c2) 15%, #fff);
+  --lg-b1: var(--c1); --lg-b2: var(--c4);
+  --lg-c1: color-mix(in srgb, var(--c2) 8%, #fff); --lg-c2: color-mix(in srgb, var(--c2) 60%, #fff);
+  --lg-a1: var(--c4); --lg-a2: var(--c1); --lg-a3: var(--c2);
+}
+.mf-logo .lg-rim { stroke-width: .7; }
+.mf-logo .lg-bevel { stroke: rgba(0, 0, 0, .3); stroke-width: .7; }
+.mf-logo .lg-gloss { display: none; }
+.mf-logo.lg-s .lg-det, .mf-logo.lg-s .lg-bevel { display: none; }
+:root[data-theme="light"] .mf-logo {
+  --lg-t1: #fff; --lg-t2: color-mix(in srgb, var(--c1c) 7%, #fff);
+  --lg-rim: color-mix(in srgb, var(--c1c) 38%, transparent);
+  --lg-rim1: color-mix(in srgb, var(--c1c) 55%, transparent); --lg-rim2: color-mix(in srgb, var(--c1c) 25%, transparent); --lg-rim3: color-mix(in srgb, var(--c1c) 50%, transparent);
+  --lg-glow: color-mix(in srgb, var(--c1c) 20%, transparent);
+  --lg-lit: #fff; --lg-litc: #fff; --lg-deep: color-mix(in srgb, var(--c1c) 60%, #000); --lg-deepc: color-mix(in srgb, var(--c1c) 70%, var(--c2c)); --lg-spec: #fff;
+  --lg-b1: var(--c1c); --lg-b2: color-mix(in srgb, var(--c1c) 78%, #000);
+  --lg-c1: color-mix(in srgb, var(--c2c) 75%, var(--c1c)); --lg-c2: color-mix(in srgb, var(--c2c) 50%, var(--c1c));
+  --lg-a1: color-mix(in srgb, var(--c1c) 72%, #000); --lg-a2: var(--c1c); --lg-a3: color-mix(in srgb, var(--c2c) 60%, var(--c1c));
+}
+:root[data-theme="light"] .mf-logo .lg-rim { stroke-width: .9; }
+:root[data-theme="light"] .mf-logo .lg-bevel { stroke: color-mix(in srgb, var(--c1c) 14%, transparent); }
+:root[data-oled][data-theme="dark"] .mf-logo { --lg-t1: #000; --lg-t2: #000; --lg-glow: color-mix(in srgb, var(--c1) 34%, transparent); }
+:root[data-estilo="cristal"] .mf-logo .lg-gloss { display: block; }
+:root[data-estilo="cristal"] .mf-logo { --lg-glow: color-mix(in srgb, var(--c1) 22%, transparent); }
+:root[data-estilo="mate"] .mf-logo .lg-glow, :root[data-estilo="mate"] .mf-logo .lg-halo, :root[data-estilo="mate"] .mf-logo .lg-vol,
+:root[data-estilo="mate"] .mf-logo .lg-det, :root[data-estilo="mate"] .mf-logo .lg-bevel { display: none; }
+:root[data-estilo="mate"] .mf-logo .lg-rim { stroke: var(--lg-rim); }
+:root[data-estilo="mate"] .mf-logo .lg-tile { fill: var(--lg-t2); }
+:root[data-estilo="mate"] .mf-logo .lg-bar { fill: var(--lg-b2); }
+:root[data-estilo="mate"] .mf-logo .lg-mid { fill: var(--lg-c2); }
+:root[data-estilo="mate"] .mf-logo .lg-arc { fill: var(--lg-a2); }
+:root[data-estilo="mate"][data-theme="dark"]:not([data-oled]) .mf-logo .lg-tile { fill: var(--surface-2); }
 
 /* ============ Hoja de Apariencia ============ */
 .ap-hoja { display: flex; flex-direction: column; }
