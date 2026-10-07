@@ -68,7 +68,7 @@
     };
     var extraAccion = null;
     pintar();
-    return { alAccion: function (fn) { extraAccion = fn; } };
+    return { alAccion: function (fn) { extraAccion = fn; }, repintar: function () { pintar(); } };
   }
   function mostrarError(form, msg) { var e = form.querySelector('.reg-err'); e.textContent = msg; e.hidden = false; e.scrollIntoView({ block: 'nearest' }); }
 
@@ -568,6 +568,132 @@
   }
   function err2(h, er) { var p = document.createElement('p'); p.className = 'adm-nota'; p.textContent = er.message; h.appendChild(p); }
 
+  /* =================== METAS DE AHORRO =================== */
+  // Cada meta va ligada a un bolsillo (una cuenta de plata): lo que hay en él es lo que llevas. Aportar = mover plata hacia ese bolsillo.
+  var FOTO_MAX = 42000;   // la foto viaja y se guarda como texto en una celda (límite 50.000 caracteres)
+  // Reduce la foto (cámara o galería) a un JPEG pequeño que quepa en la hoja.
+  function reducirFoto(archivo) {
+    return new Promise(function (ok, mal) {
+      var url = URL.createObjectURL(archivo), img = new Image();
+      img.onload = function () {
+        try {
+          var lado = 420, w = img.naturalWidth, h = img.naturalHeight;
+          if (!w || !h) throw new Error('vacía');
+          for (var intento = 0; intento < 6; intento++) {
+            var f = Math.min(1, lado / Math.max(w, h)), cv = document.createElement('canvas');
+            cv.width = Math.max(1, Math.round(w * f)); cv.height = Math.max(1, Math.round(h * f));
+            cv.getContext('2d').drawImage(img, 0, 0, cv.width, cv.height);
+            for (var q = 0.72; q >= 0.34; q -= 0.1) {
+              var data = cv.toDataURL('image/jpeg', q);
+              if (data.length <= FOTO_MAX) { URL.revokeObjectURL(url); ok(data); return; }
+            }
+            lado = Math.round(lado * 0.8);
+          }
+          throw new Error('pesada');
+        } catch (e) { URL.revokeObjectURL(url); mal(new Error('No pude preparar esa foto. Prueba con otra.')); }
+      };
+      img.onerror = function () { URL.revokeObjectURL(url); mal(new Error('No pude abrir esa foto. Prueba con otra.')); };
+      img.src = url;
+    });
+  }
+  function elegirFoto(camara) {
+    return new Promise(function (ok, mal) {
+      var inp = document.createElement('input');
+      inp.type = 'file'; inp.accept = 'image/*'; if (camara) inp.setAttribute('capture', 'environment');
+      inp.style.display = 'none'; document.body.appendChild(inp);
+      inp.addEventListener('cancel', function () { inp.remove(); ok(null); });
+      inp.addEventListener('change', function () {
+        var f = inp.files && inp.files[0]; inp.remove();
+        if (!f) { ok(null); return; }
+        reducirFoto(f).then(ok, mal);
+      });
+      inp.click();
+    });
+  }
+  function metas() {
+    var d = MF.datos(), lista = d.metas || [];
+    var fila = function (m, i) {
+      var cls = m.lograda ? 'ok' : m.vencida ? 'crit' : '';
+      return '<div class="adm-item meta-item"><div class="meta-foto">' + MF.fotoMeta(m) + '</div><div class="adm-info"><b>' + esc(m.nombre) + '</b>' +
+        '<span>' + esc(MF.detalleMeta(m)) + '</span>' +
+        '<div class="meter ' + cls + '" role="img" aria-label="' + m.pct + ' % de la meta"><i style="width:' + m.pct + '%"></i></div></div>' +
+        '<span class="num adm-v">' + pesos(m.ahorrado) + '<small>de ' + pesos(m.objetivo) + '</small></span>' +
+        '<div class="meta-acc">' + (m.lograda ? '' : '<button type="button" class="btn-mini" data-ap="' + i + '">➕ Aportar</button>') +
+        '<button type="button" class="btn-mini" data-ed="' + i + '" aria-label="Editar ' + esc(m.nombre) + '">✏️</button></div></div>';
+    };
+    var html = '<div class="sheet-h"><div><h2>Metas de ahorro</h2><div class="kind">Cada meta vive en un bolsillo: lo que hay en él es lo que llevas</div></div>' +
+      '<button class="icon-btn" type="button" data-cerrar aria-label="Cerrar">' + ICON.close + '</button></div>' +
+      '<button type="button" class="btn adm-btn verde" data-nuevo>➕ Nueva meta</button>' +
+      '<div class="adm-lista">' + (lista.length ? lista.map(fila).join('') : '<p class="adm-nota">Todavía no tienes metas. Crea una, ponle foto y elige el bolsillo donde la vas a guardar.</p>') + '</div>';
+    MF.abrirHoja(html, function (h) {
+      h.querySelector('[data-nuevo]').addEventListener('click', function () { formMeta(null); });
+      h.querySelectorAll('[data-ed]').forEach(function (b) { b.addEventListener('click', function () { formMeta(lista[+b.dataset.ed]); }); });
+      h.querySelectorAll('[data-ap]').forEach(function (b) {
+        b.addEventListener('click', function () {
+          var m = lista[+b.dataset.ap];
+          MF.cerrarHoja();
+          // Espera a que termine de cerrarse esta hoja; si no, abrir el registro en el mismo instante lo arrastra.
+          setTimeout(function () { if (MF.registrarCon) MF.registrarCon('mover', { hacia: m.cuenta }); }, 320);
+        });
+      });
+    });
+  }
+  function formMeta(m) {
+    var d = MF.datos(), nuevo = !m;
+    var ocupadas = {}; (d.metas || []).forEach(function (x) { if (!m || x.nombre !== m.nombre) ocupadas[x.cuenta] = 1; });
+    var libres = (d.cuentasCfg || []).filter(function (c) { return c.tipo === 'Plata' && c.activa && !c.mama && !ocupadas[c.nombre] && !/^Bolsillo para /.test(c.nombre) && !c.apartaPara; });
+    var st = { anterior: m ? m.nombre : '', nombre: m ? m.nombre : '', emoji: m ? m.emoji : '🎯', objetivo: m ? m.objetivo : NaN, fecha: m ? m.fecha : '',
+      cuentaModo: m ? 'existente' : 'nueva', cuenta: m ? m.cuenta : '', cuentaNueva: '', foto: m ? m.foto : '', fotoCambio: false, errorFoto: '' };
+    var ctl = hojaFormulario(nuevo ? 'Nueva meta' : 'Editar ' + m.nombre, nuevo ? 'Ponle nombre, cuánto quieres juntar y dónde la guardas' : 'Cambia lo que necesites', st, function (st) {
+      var h = '<div class="campo"><label>Foto de tu meta (opcional)</label><div class="meta-foto-sel"><div class="meta-foto grande">' +
+        MF.fotoMeta({ foto: st.foto, emoji: st.emoji }) + '</div><div class="meta-foto-bt">' +
+        '<button type="button" class="btn-mini" data-accion="camara">📷 Tomar foto</button>' +
+        '<button type="button" class="btn-mini" data-accion="galeria">🖼️ Elegir de la galería</button>' +
+        (st.foto ? '<button type="button" class="btn-mini" data-accion="sinfoto">Quitar foto</button>' : '') + '</div></div>' +
+        (st.errorFoto ? '<p class="nota" style="color:var(--crit)">' + esc(st.errorFoto) + '</p>' : '<p class="nota">Se reduce y se guarda en tu hoja, así la ves en todos tus dispositivos.</p>') + '</div>';
+      h += fTexto(st, 'nombre', 'Nombre de la meta', 'Ej: Viaje a Cartagena, Moto, Colchón');
+      h += campo('Emoji (se ve si no hay foto)', '<input class="in" data-k="emoji" type="text" maxlength="4" autocomplete="off" value="' + esc(st.emoji) + '">');
+      h += fMonto(st, 'objetivo', '¿Cuánto quieres juntar?');
+      h += fFecha(st, 'fecha', '¿Para cuándo? (opcional)');
+      var ops = [['nueva', '🆕 Crear un bolsillo nuevo']];
+      if (libres.length) ops.push(['existente', '🏦 Usar una cuenta que ya tengo']);
+      h += fChips(st, 'cuentaModo', '¿Dónde la guardas?', ops, 'Lo que haya en esa cuenta cuenta como ahorrado. Para ahorrar, mueves plata hacia ella.');
+      if (st.cuentaModo === 'nueva') h += fTexto(st, 'cuentaNueva', 'Nombre del bolsillo', st.nombre ? 'Bolsillo ' + st.nombre : 'Ej: Bolsillo Viaje');
+      else h += fSelect(st, 'cuenta', 'Cuenta', libres.concat(m ? (d.cuentasCfg || []).filter(function (c) { return c.nombre === m.cuenta; }) : []).filter(function (c, i, a) { return a.indexOf(c) === i; }).map(function (c) { return [c.nombre, c.emoji + ' ' + c.nombre]; }), 'Elige la cuenta');
+      return h;
+    }, function (st) {
+      var nombre = String(st.nombre || '').trim();
+      if (!nombre) throw new Error('Escribe el nombre de la meta.');
+      if (!(st.objetivo > 0)) throw new Error('Escribe cuánto quieres juntar.');
+      var dato = { accion: 'metaadmin', op: 'guardar', anterior: st.anterior, nombre: nombre, emoji: String(st.emoji || '').trim() || '🎯', objetivo: st.objetivo, fecha: st.fecha || '' };
+      if (st.cuentaModo === 'nueva') {
+        var cn = String(st.cuentaNueva || '').trim() || 'Bolsillo ' + nombre;
+        dato.cuentaNueva = cn;
+      } else {
+        if (!st.cuenta) throw new Error('Elige la cuenta donde guardas la meta.');
+        dato.cuenta = st.cuenta;
+      }
+      if (nuevo || st.fotoCambio) dato.foto = st.foto || '';
+      return dato;
+    }, nuevo ? null : function () { return '<button type="button" class="btn adm-btn rojo" data-accion="quitar">🗂️ Quitar esta meta</button>'; });
+    var pintarFoto = function (cual, btn) {
+      elegirFoto(cual === 'camara').then(function (f) {
+        if (f) { st.foto = f; st.fotoCambio = true; st.errorFoto = ''; }
+      }).catch(function (e) { st.errorFoto = e.message; }).then(function () { ctl.repintar(); });
+    };
+    ctl.alAccion(function (btn) {
+      var a = btn.dataset.accion;
+      if (a === 'camara' || a === 'galeria') { pintarFoto(a, btn); return; }
+      if (a === 'sinfoto') { st.foto = ''; st.fotoCambio = true; ctl.repintar(); return; }
+      if (a !== 'quitar' || nuevo) return;
+      MF.abrirHoja('<div class="sheet-h"><div><h2>¿Quitar "' + esc(m.nombre) + '"?</h2></div><button class="icon-btn" type="button" data-cerrar aria-label="Cerrar">' + ICON.close + '</button></div>' +
+        '<p class="adm-nota">Tu plata no se toca: el bolsillo "' + esc(m.cuenta) + '" y su saldo siguen igual. Solo dejas de ver esta meta.</p>' +
+        '<div class="reg-err" hidden></div><button type="button" class="btn adm-btn rojo" data-quitar>Sí, quitar la meta</button><button type="button" class="btn adm-btn" data-cerrar>No, volver</button>', function (h) {
+          h.querySelector('[data-quitar]').addEventListener('click', function (e) { ejecutar(h.querySelector('.sheet'), e.currentTarget, { accion: 'metaadmin', op: 'quitar', nombre: m.nombre }); });
+        });
+    });
+  }
+
   /* =================== AÑADIR REGISTRO (Favores) =================== */
   function anadirRegistro(sentido) {
     var les = sentido === 'les', d = MF.datos();
@@ -615,5 +741,5 @@
     });
   }
 
-  window.MFAdmin = { fijo: fijo, fijos: fijos, cuentas: cuentas, movimiento: movimiento, deudaAntigua: deudaAntigua, anadirRegistro: anadirRegistro, limites: limites };
+  window.MFAdmin = { fijo: fijo, fijos: fijos, cuentas: cuentas, movimiento: movimiento, deudaAntigua: deudaAntigua, anadirRegistro: anadirRegistro, limites: limites, metas: metas };
 })();
