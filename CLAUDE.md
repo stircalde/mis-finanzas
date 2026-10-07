@@ -32,7 +32,7 @@ de *Propiedades de script → CLAVE*.
 5. Si algo falla: Gestionar implementaciones → Editar → elige la versión anterior.
 
 ## Estado
-- Backend desplegado: versión 24 (ajuste de saldo va a la siguiente factura; hash b830bde783a4; clave en Propiedades de script). App: ver `VERSION` en `sw.js`.
+- Backend desplegado: versión 25 (categorías nuevas y límites editables; hash 54b518af7b71; clave en Propiedades de script). App: ver `VERSION` en `sw.js`.
 - Apariencia (tema, 8 colores, Original/Cristal/Mate, OLED) publicada: ver DEVELOPMENT.md.
 - Pendientes conocidos: `tests/conocidos.json`. Intereses de tarjeta Opción A ya en línea (v21); falta confirmar
   la fórmula de Nubank en cuotas siguientes con el extracto de noviembre.
@@ -49,7 +49,7 @@ de *Propiedades de script → CLAVE*.
   Nota del 9: Hector quiere hacerlo la semana del 5-oct-2026 (con el extracto de Davibank del 16-oct a mano para validar). Corrige solo el interés estimado; no explica el ajuste de +$16.450 del 1-oct (queda por revisar con el extracto).
   Prioridad que fijó Hector (7-oct-2026), con sus apuntes; los números 1-9 de arriba siguen valiendo:
   A. HECHO y publicado el 7-oct (PR #7, app mf-v5-59, backend v22): (a) editar movimientos; (b) agregar desde Favores lo que me debían desde antes; (c) bug de fecha.
-  B. Después: límites de gasto editables (idea 2) y Metas de ahorro en Más (idea 4).
+  B. HECHO 7-oct (backend v25, app mf-v5-62): límites de gasto editables + 15 categorías nuevas + Favores "Añadir registro" (nuevo favor / antiguo). Falta: Metas de ahorro en Más (idea 4).
   C. Luego: "Próximos pagos" a la altura de las vecinas (idea 1) y logo dinámico coherente con color y estilo (idea 3).
   D. Al final, estudios: registro automático por notificaciones (notificación → transacción detectada → verificación → registro; incluye compras a cuotas y conciliar transferencias entre cuentas; Android), compartir la app (datos independientes, actualizaciones, novedades por versión) e iOS (limitaciones frente a Android).
   E. HECHO y publicado el 7-oct (PR #8, app mf-v5-60, backend v23): editar "para quién" (varias personas) y borrar movimientos con doble confirmación; filas ligadas (apartado, comisión, aporte de mamá) se borran juntas y avisa si el bolsillo queda ≠ $0; los borrados pasan a una pestaña "Eliminados" (recuperables); los "hist:" de extractos prevalecen y no se tocan.
