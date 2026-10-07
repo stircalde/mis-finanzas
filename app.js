@@ -52,6 +52,7 @@
     check: '<svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M3.5 8.5l3 3 6-7"/></svg>',
     auto: '<svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M13 8a5 5 0 1 1-1.5-3.6M13 2.5v3h-3"/></svg>',
     scissors: '<svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><circle cx="4" cy="4" r="2"/><circle cx="4" cy="12" r="2"/><path d="M5.6 5.2L14 12M5.6 10.8L14 4"/></svg>',
+    bell: '<svg viewBox="0 0 24 24"><path d="M6 9a6 6 0 0 1 12 0c0 5 2 6.5 2 6.5H4S6 14 6 9zM10 19a2 2 0 0 0 4 0"/></svg>',
     back: '<svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10 3L5 8l5 5"/></svg>',
     refresh: '<svg viewBox="0 0 24 24"><path d="M20 12a8 8 0 1 1-2.4-5.7M20 4v4.5h-4.5"/></svg>',
     eye: '<svg viewBox="0 0 24 24"><path d="M2 12s3.6-7 10-7 10 7 10 7-3.6 7-10 7S2 12 2 12z"/><circle cx="12" cy="12" r="3"/></svg>',
@@ -309,7 +310,7 @@
     var r = ruta();
     indexarPlanes();
     cerrarHoja();
-    var vistaNav = r.v === 'cuenta' ? 'inicio' : r.v === 'credito' ? 'creditos' : r.v;
+    var vistaNav = r.v === 'cuenta' ? 'inicio' : r.v === 'credito' ? 'creditos' : r.v === 'avisos' ? 'mas' : r.v;
     var enMas = window.innerWidth < 900 && (vistaNav === 'calendario' || vistaNav === 'medeben');
     nav.querySelectorAll('a').forEach(function (a) { a.classList.toggle('on', a.dataset.v === vistaNav || (enMas && a.dataset.v === 'mas')); });
     app.innerHTML = '';
@@ -321,6 +322,7 @@
     if (r.v === 'medeben') return vistaMeDeben();
     if (r.v === 'calendario') return vistaCalendario();
     if (r.v === 'mas') return vistaMas();
+    if (r.v === 'avisos' && window.MFAvisos) return MFAvisos.vista(app, datos);
     return inicio();
   }
 
@@ -356,10 +358,14 @@
     var n = el('<div class="top"><div class="hello"><h1>' + saludo + '</h1>' +
       '<p>' + cap(DIAS[fecha(d.hoy).getDay()]) + ' ' + fechaCorta(d.hoy) + ' · <span class="sync ' + sync + '"><i class="dot"></i><span></span></span></p></div>' +
       '<div class="controls">' + (conMes ? '<select id="mes" class="select" aria-label="Mes">' + opts + '</select>' : '') +
+      (!titulo && d.avisos ? '<button class="icon-btn campana" id="campana" type="button" aria-label="Por confirmar' + (d.avisos.pendientes ? ': ' + d.avisos.pendientes + ' por revisar' : '') + '">' + ICON.bell +
+        (d.avisos.pendientes ? '<span class="campana-n">' + (d.avisos.pendientes > 9 ? '9+' : d.avisos.pendientes) + '</span>' : '') + '</button>' : '') +
       '<button class="icon-btn" id="ojo" type="button" aria-label="' + (oculto ? 'Mostrar montos' : 'Ocultar montos') + '" aria-pressed="' + oculto + '">' + (oculto ? ICON.eyeOff : ICON.eye) + '</button>' +
       '</div></div>');
     var m = n.querySelector('#mes');
     if (m) m.addEventListener('change', function (e) { cargar(e.target.value); });
+    var campana = n.querySelector('#campana');
+    if (campana) campana.addEventListener('click', function () { ir('#/avisos'); });
     n.querySelector('#ojo').addEventListener('click', function () { oculto = !oculto; guardarLocal('ocultar', oculto ? '1' : '0'); repintar(); });
     setTimeout(marcarSync, 0);
     return n;
@@ -1025,6 +1031,7 @@
     };
     var n = el('<div class="mas">' +
       '<section class="card"><div class="card-h"><h2>Secciones</h2></div><div class="mas-lista">' +
+      (d.avisos ? fila('avisos', '🔔', 'Por confirmar', d.avisos.pendientes ? d.avisos.pendientes + (d.avisos.pendientes === 1 ? ' aviso por revisar' : ' avisos por revisar') : 'Notificaciones de tus bancos · todo al día', d.avisos.pendientes ? '<span class="mas-n">' + d.avisos.pendientes + '</span>' : '') : '') +
       fila('calendario', '📅', 'Calendario', 'Pagos y movimientos día a día') +
       fila('medeben', '🤝', 'Favores', 'Te deben ' + pesos(d.totalMeDeben || 0) + ' · Les debes ' + pesos(totalLes)) +
       fila('metas', '🏁', 'Metas de ahorro', resumenMetas(d)) +
@@ -1039,7 +1046,7 @@
     n.querySelectorAll('.mas-fila').forEach(function (b) {
       b.addEventListener('click', function () {
         var k = b.dataset.k;
-        if (k === 'calendario' || k === 'medeben') ir('#/' + k);
+        if (k === 'calendario' || k === 'medeben' || k === 'avisos') ir('#/' + k);
         else if (k === 'cuentas' && window.MFAdmin) MFAdmin.cuentas();
         else if (k === 'fijos' && window.MFAdmin) MFAdmin.fijos();
         else if (k === 'limites' && window.MFAdmin) MFAdmin.limites();

@@ -72,8 +72,8 @@
     return campo(label, '<input class="in" data-k="' + k + '" type="text" autocomplete="off" enterkeyhint="next" placeholder="' + esc(ph || '') + '" value="' + esc(st[k] || '') + '">', nota, k);
   }
   function fMonto(k, label, nota, grande) {
-    return campo(label, '<div class="money' + (grande ? ' big' : '') + '"><span>$</span><input class="in" data-k="' + k + '" data-money="1" inputmode="numeric" autocomplete="off" placeholder="0" value="' +
-      (st[k] == null || isNaN(st[k]) ? '' : miles(st[k])) + '"></div>', nota, k);
+    return campo(label, '<div class="money' + (grande ? ' big' : '') + '"><span>$</span><input class="in" data-k="' + k + '" data-money="1" inputmode="numeric" autocomplete="off" placeholder="0"' + (avisoCtx && k === 'monto' ? ' readonly' : '') + ' value="' +
+      (st[k] == null || isNaN(st[k]) ? '' : miles(st[k])) + '"></div>', avisoCtx && k === 'monto' ? 'Es el monto exacto que avisó el banco.' : nota, k);
   }
   function fSelect(k, label, ops, ph, nota) {
     var h = '<select class="in" data-k="' + k + '">';
@@ -119,6 +119,8 @@
     monedas: { t: '🪙 Monedas', titulo: 'Regalé monedas' }
   };
   var tipo = 'gasto', st = {};
+  // Aviso del banco que se está resolviendo con este formulario (monto, cuenta y fecha vienen de la notificación).
+  var avisoCtx = null;
   // Qué se borra cuando cambia un dato del que depende.
   var DEPENDE = {
     cuenta: ['cuotas', 'cuotasOtro', 'valorCuota', 'apartar', 'mama', 'exterior'],
@@ -140,11 +142,23 @@
     var ult = MF.leerLocal('regCuenta');
     if (tipo === 'gasto' && ult && (plata(ult) || deuda(ult))) st.cuenta = ult;
     if (tipo === 'monedas') st.monto = (cfg.efectivo || 0) % 1000 || NaN;
+    if (avisoCtx) aplicarAviso();
+  }
+  // Lo que ya sabe el aviso se pone en el formulario del tipo elegido (también al cambiar de pestaña).
+  function aplicarAviso() {
+    var a = avisoCtx;
+    st.monto = a.monto; st._montoAuto = false;
+    if (a.fecha) st.fecha = a.fecha;
+    if (tipo === 'gasto') { if (a.cuenta) st.cuenta = a.cuenta; if (a.quien && !st.desc) st.desc = a.quien; }
+    if (tipo === 'ingreso' && a.cuenta) st.cuenta = a.cuenta;
+    if (tipo === 'pagar' && a.cuenta && !a.entrada) st.origen = a.cuenta;
+    if (tipo === 'mover' && a.cuenta) { if (a.entrada) st.hacia = a.cuenta; else st.desde = a.cuenta; }
   }
 
   function pendientesFijos() { return (cfg && cfg.fijos) || []; }
   function tiposVisibles() {
     return Object.keys(TIPOS).filter(function (k) {
+      if (avisoCtx) return k === 'gasto' || k === 'ingreso' || k === 'pagar' || k === 'mover';   // un aviso se resuelve con uno de estos
       if (k === 'fijo') return pendientesFijos().length > 0;
       if (k === 'monedas') return (cfg.efectivo || 0) % 1000 > 0;
       return true;
@@ -238,7 +252,7 @@
       if (d.pm > 0) rap.push(['<b>' + pesos(d.pm) + '</b> próximo pago (' + esc(d.pf) + ')', d.pm]);
       if (d.s > 0 && d.s !== d.pm) rap.push(['<b>' + pesos(d.s) + '</b> ' + (d.mama || d.persona ? 'todo lo que le debes' : 'todo lo que debes'), d.s]);
       h += fMonto('monto', '¿Cuánto vas a pagar?', '', true);
-      if (rap.length) h += '<div class="rapidos">' + rap.map(function (r) { return '<button type="button" class="op" data-llenar="' + r[1] + '" aria-pressed="' + (st.monto === r[1]) + '">' + r[0] + '</button>'; }).join('') + '</div>';
+      if (rap.length && !avisoCtx) h += '<div class="rapidos">' + rap.map(function (r) { return '<button type="button" class="op" data-llenar="' + r[1] + '" aria-pressed="' + (st.monto === r[1]) + '">' + r[0] + '</button>'; }).join('') + '</div>';
       var ori = [];
       if (d.bolsillo && !d.persona) { var b = plata(d.bolsillo); if (b) ori.push([b.n, '🎯 ' + b.n + ' · tiene ' + pesos(b.s)]); }
       cfg.plata.forEach(function (c) { if (!ori.some(function (o) { return o[0] === c.n; })) ori.push([c.n, c.e + ' ' + c.n + ' · tiene ' + pesos(c.s)]); });
@@ -405,7 +419,7 @@
   }
   function cerrar(desdeAtras) {
     if (!hoja) return;
-    var h = hoja; hoja = null; cuerpo = null;
+    var h = hoja; hoja = null; cuerpo = null; avisoCtx = null;
     if (!desdeAtras && !window.matchMedia('(prefers-reduced-motion: reduce)').matches) { h.classList.add('cerrando'); h.style.pointerEvents = 'none'; setTimeout(function () { h.remove(); }, 320); }
     else h.remove();
     document.body.classList.remove('con-reg');
@@ -418,6 +432,8 @@
     if (!cuerpo) return;
     if (tiposVisibles().indexOf(tipo) < 0) { tipo = 'gasto'; reiniciar(true); }
     var y = hoja.querySelector('.reg-sheet').scrollTop;
+    var kindEl = hoja.querySelector('.reg-sheet .sheet-h .kind');
+    if (kindEl) kindEl.textContent = avisoCtx ? '🔔 Aviso del banco · ' + pesos(avisoCtx.monto) + (avisoCtx.quien ? ' · ' + avisoCtx.quien : '') : 'Se guarda directo en tu hoja';
     cuerpo.innerHTML = '<div class="reg-tipos" role="tablist">' + tiposVisibles().map(function (k) {
       var n = k === 'fijo' ? ' (' + pendientesFijos().length + ')' : '';
       return '<button type="button" role="tab" class="op" data-tipo="' + k + '" aria-selected="' + (k === tipo) + '" aria-pressed="' + (k === tipo) + '">' + TIPOS[k].t + n + '</button>';
@@ -445,6 +461,7 @@
     if (k === 'tipoIng' || k === 'credito' || k === 'fijo') st._montoAuto = undefined;
     if (k === 'aplica' || k === 'compra') st._montoAuto = undefined;
     if (k === 'cat') st._catManual = true;
+    if (avisoCtx) { st.monto = avisoCtx.monto; st._montoAuto = false; }   // el monto del aviso no cambia
     pintar();
   }
 
@@ -489,16 +506,19 @@
     var err = form.querySelector('.reg-err'), datos;
     try { datos = armar(); } catch (e) { err.textContent = e.message; err.hidden = false; err.scrollIntoView({ block: 'nearest' }); return; }
     err.hidden = true;
+    var orig = datos, aviso_ = avisoCtx;
+    if (aviso_) datos = { accion: 'avisoresolver', id: aviso_.id, como: orig.accion, datos: JSON.stringify(orig) };   // el aviso queda resuelto junto con el registro
     // Identificador del envío: si se reintenta lo mismo (doble toque o corte de internet), la hoja no lo duplica.
     var firma = JSON.stringify(datos);
     if (st._firma !== firma) { st._firma = firma; st._rid = Date.now().toString(36) + Math.random().toString(36).slice(2, 8); }
     datos.rid = st._rid;
     if (cola.some(function (x) { return x.datos.rid === datos.rid; })) { listo(); return; }   // doble toque: ya va en camino
-    if (datos.cuenta && tipo === 'gasto') MF.guardarLocal('regCuenta', datos.cuenta);
+    if (orig.cuenta && tipo === 'gasto' && !aviso_) MF.guardarLocal('regCuenta', orig.cuenta);
     // Registrar instantáneo: queda en la cola y se guarda en tu hoja en segundo plano.
-    cola.push({ datos: datos, tipo: tipo, st: JSON.parse(JSON.stringify(st)), titulo: tituloDe(datos) });
+    cola.push({ datos: datos, tipo: tipo, st: JSON.parse(JSON.stringify(st)), titulo: tituloDe(orig), aviso: aviso_ });
     guardarCola();
-    listo(favorDe(datos));
+    avisoCtx = null;
+    listo(favorDe(orig));
     procesar();
   }
 
@@ -576,7 +596,7 @@
     if (ms) tAviso = setTimeout(ocultarAviso, ms);
   }
   function corregir(it, msg) {
-    tipo = it.tipo; st = it.st || {};
+    tipo = it.tipo; st = it.st || {}; avisoCtx = it.aviso || null;
     if (hoja) pintar(); else abrir();
     setTimeout(function () { var e = hoja && hoja.querySelector('.reg-err'); if (e) { e.textContent = msg; e.hidden = false; } }, 60);
   }
@@ -655,10 +675,13 @@
   // Botón central de la barra (celular): toque = Registrar; mantener presionado = elegir Gasto, Ingreso o Pagar.
   function abrirTipo(t) { if (t && TIPOS[t] && t !== tipo) { tipo = t; reiniciar(); } abrir(); }
   MF.abrirRegistro = abrirTipo;
+  MF.cfgRegistro = function () { return cfg; };
+  MF.cargarCfgRegistro = pedirCfg;
   // Abre el formulario ya llenado (p. ej. desde Favores: quién te pagó y qué compra).
-  MF.registrarCon = function (t, pre) {
+  MF.registrarCon = function (t, pre, ctx) {
     if (!TIPOS[t]) return;
     if (formularioConDatos()) { aviso('error', 'Primero guarda o cierra el registro que tienes abierto.', null, null, 4000); return; }
+    avisoCtx = ctx || null;
     tipo = t; reiniciar(); Object.keys(pre || {}).forEach(function (k) { st[k] = pre[k]; });
     if (hoja) pintar(); else abrir();
   };
