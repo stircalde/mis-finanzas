@@ -187,6 +187,8 @@ A.fin('mi_caso');
   para mover ese saldo. Luego exige escribir ELIMINAR. Nada se pierde: las filas pasan a la hoja "Eliminados" con un `lote`
   y "Deshacer" las devuelve. Los "hist:" de extractos nunca se borran (prevalecen); los registros viejos sin `rid` se
   borran solos (no hay forma segura de ligarlos).
+- **Ajuste de saldo en una tarjeta ya cortada**: un ajuste positivo se suma a la **siguiente** factura (como una compra
+  de ese día), no al extracto ya emitido, cuyo mínimo y total fija el banco (`tests/auditoria/ajuste.js`).
 - **Registro**: la fecha elegida se conserva al cambiar de tipo de movimiento; solo "Registrar otro" vuelve a hoy.
 - **Calendario → Lo que viene / día**: un gasto fijo o suscripción abre su detalle (`MFAdmin.fijo`); un crédito
   sigue llevando al crédito.
