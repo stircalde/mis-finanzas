@@ -57,6 +57,7 @@ ok(r.ok && deb('Pedro').saldo === 200000, 'un pago posterior baja el saldo actua
 // 6) Les debes: favor antiguo con valor inicial y saldo actual
 r = P({ accion: 'ledebiaantes', persona: 'Camila', concepto: 'Préstamo', monto: '400000', saldoActual: '250000', fecha: '2026-08-01' }); A.tic();
 ok(r.ok && les('Camila') && les('Camila').saldo === 250000, 'les debes: queda el saldo actual (250.000): ' + (les('Camila') && les('Camila').saldo) + ' ' + r.mensaje);
+ok(les('Camila').prestamos.reduce((a, x) => a + x.monto, 0) === 400000 && les('Camila').devoluciones.reduce((a, x) => a + x.monto, 0) === 150000, 'les debes: prestado = valor inicial (400.000) y devuelto = diferencia (150.000)');
 r = P({ accion: 'ledebiaantes', persona: 'Camila', concepto: 'Otro', monto: '100000', saldoActual: '200000', fecha: '2026-08-01' }); ok(!r.ok, 'les debes: saldo mayor al inicial no sirve');
 
 A.fin('favores_fechas');

@@ -521,8 +521,9 @@ function agregarLeDebiaAntes(p, cfg) {
   const saldo = saldoTxt === '' ? monto : aNumero(saldoTxt);
   if (saldoTxt !== '' && !(saldo > 0)) throw new Error('El saldo actual debe ser mayor que cero (si ya se lo pagaste todo, no hace falta registrarlo).');
   if (saldo > monto) throw new Error('El saldo actual no puede ser mayor que el valor inicial.');
-  const descMov = saldo < monto ? concepto + ' (valor inicial ' + pesos(monto) + ')' : concepto;
-  agregarMovimiento([fecha, TIPO.MEPRESTARON, descMov, saldo, '', '', '', persona, '', '', '']);
+  // Se anota el valor inicial completo como préstamo y la diferencia como lo ya devuelto (ambos sin cuenta: no mueven saldos).
+  agregarMovimiento([fecha, TIPO.MEPRESTARON, concepto, monto, '', '', '', persona, '', '', '']);
+  if (saldo < monto) agregarMovimiento([fecha, TIPO.LEPAGUE, 'Pagado antes de usar la app · ' + concepto, monto - saldo, '', '', '', persona, '', '', '']);
   const est = calcular(leerMovimientos(), cfg, hoy());
   const x = est.lesDebo.find(function (y) { return y.persona === persona; });
   return '🙋 Anotado: le debes ' + pesos(saldo) + ' a ' + persona + ' (' + concepto + ').\nAhora le debes ' + pesos(x ? x.saldo : saldo) + '. Cuando se lo pagues, regístralo con ↩️ Le pagué.';
