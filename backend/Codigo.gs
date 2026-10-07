@@ -99,7 +99,7 @@ function doPost(e) {
     if (conLock) lock.releaseLock();
   }
 }
-let RID_ = '', RID_N_ = 0, PEND_ = null, EXTRA_ = null;   // EXTRA_: datos estructurados que algunas acciones devuelven junto al mensaje
+let RID_ = '', RID_N_ = 0, PEND_ = null, EXTRA_ = null, ULT_ID_ = '';   // EXTRA_: datos estructurados que algunas acciones devuelven junto al mensaje
 
 function registrarGasto(p, cfg) {
   const monto = aNumero(p.monto);
@@ -113,11 +113,15 @@ function registrarGasto(p, cfg) {
   const f = financiacion(cta, monto, p.cuotas, aNumero(p.valorCuota));
   const fecha = leerFechaMov(p.fecha);
   agregarMovimiento([fecha, TIPO.GASTO, desc, monto, cat, cta.nombre, '', para, f.cuotas, f.valorCuota, f.costo]);
+  const idGasto = ULT_ID_;
+  const fechaPago = para ? leerFechaPago(p.fechaPago, fecha) : null;
+  if (fechaPago) guardarFechaFavor(idGasto, fechaPago, para);
 
   let linea1 = '✅ ' + pesos(monto) + ' · ' + cat + ' (' + cta.nombre + ')';
   if (f.cuotas) linea1 += f.cuotas === 1 ? ' · 1 cuota' : esTarjeta(cta) ? ' · ' + f.cuotas + ' cuotas de ' + pesos(f.valorCuota) + ' + intereses (≈ ' + pesos(f.costo) + ' en total)'
     : ' · ' + f.cuotas + ' × ' + pesos(f.valorCuota);
   if (para) linea1 += ' · para ' + para;
+  if (fechaPago) linea1 += ' · te paga el ' + fmtCorta_(fechaPago);
   // Compra en el exterior con tarjeta: la franquicia cobra una comisión única que no genera intereses (Mastercard/Nu: 0,45 %).
   if (p.exterior === 'si' && esTarjeta(cta)) {
     const com = Math.round(monto * COMISION_EXTERIOR);
@@ -429,22 +433,75 @@ function editarMovimiento(p, cfg) {
  * Agrega a "ME DEBEN DESDE ANTES" (Configuración) algo que una persona ya te debía y se había olvidado registrar.
  * No mueve ninguna cuenta: solo suma a lo que esa persona te debe. Cuando te pague, se registra con "Me pagaron".
  */
+/** Fecha de pago opcional de un favor (texto yyyy-mm-dd): vacía = sin fecha; no puede ser anterior a la fecha del favor. */
+function leerFechaPago(v, desde) {
+  const t = limpiar(v);
+  if (!t) return null;
+  const m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(t);
+  if (!m) throw new Error('La fecha de pago no es válida.');
+  const d = new Date(+m[1], +m[2] - 1, +m[3]);
+  if (d.getFullYear() !== +m[1] || d.getMonth() !== +m[2] - 1 || d.getDate() !== +m[3]) throw new Error('La fecha de pago no es válida.');
+  if (desde && d < soloFecha(desde)) throw new Error('La fecha de pago no puede ser anterior a la del favor.');
+  return d;
+}
+function fmtCorta_(d) { return ('0' + d.getDate()).slice(-2) + '/' + ('0' + (d.getMonth() + 1)).slice(-2) + '/' + d.getFullYear(); }
+
+/** Tabla "Fechas de pago de favores" (se crea sola al guardar la primera): ID del movimiento → fecha en que te pagan. */
+function guardarFechaFavor(id, fecha, persona) {
+  const h = hojaConfig();
+  let v = h.getDataRange().getValues();
+  if (filaEncabezado(v, 'ID favor') < 0) {
+    const f = h.getLastRow() + 2;
+    h.getRange(f, 1).setValue('▸ FECHAS DE PAGO DE FAVORES').setFontWeight('bold').setFontColor('#0b3d91').setFontSize(12);
+    h.getRange(f + 1, 1, 1, 3).setValues([['ID favor', 'Fecha de pago', 'Persona']]).setFontWeight('bold').setBackground('#dbe8ff');
+    v = h.getDataRange().getValues();
+  }
+  const fila = filaLibre(h, v, 'ID favor');
+  h.getRange(fila, 1, 1, 3).setValues([[id, fecha, persona]]);
+  try { h.getRange(fila, 2).setNumberFormat('dd/mm/yyyy'); } catch (e) { /* cosmético */ }
+  CACHE_CFG_ = null;
+}
+
 function agregarDeudaAntigua(p, cfg) {
   const concepto = limpiar(p.concepto);
-  const monto = aNumero(p.monto);
+  const monto = aNumero(p.monto);                       // valor inicial
   let persona = limpiar(p.persona);
   if (!persona) throw new Error('Falta la persona.');
   if (!concepto) throw new Error('Falta el concepto.');
-  if (!(monto > 0)) throw new Error('El monto no es válido.');
+  if (!(monto > 0)) throw new Error('El valor inicial no es válido.');
+  // Saldo actual (opcional): lo que todavía te deben. Lo que falta para llegar al valor inicial ya te lo pagaron.
+  const saldoTxt = limpiar(p.saldoActual);
+  const saldo = saldoTxt === '' ? monto : aNumero(saldoTxt);
+  if (saldoTxt !== '' && !(saldo > 0)) throw new Error('El saldo actual debe ser mayor que cero (si ya te lo pagaron todo, no hace falta registrarlo).');
+  if (saldo > monto) throw new Error('El saldo actual no puede ser mayor que el valor inicial.');
+  const yaPagado = Math.round((monto - saldo) * 100) / 100;
+  const vence = leerFechaPago(p.fechaPago, null);
   persona = personaCanonica(cfg, persona);
-  if ((cfg.deudoresIniciales || []).some(function (x) { return x.persona === persona && x.concepto === concepto && x.monto === monto; }))
+  if ((cfg.deudoresIniciales || []).some(function (x) { return x.persona === persona && x.concepto === concepto && x.monto === monto && (x.pagado || 0) === yaPagado; }))
     return '👌 Ya tenías anotado "' + concepto + '" de ' + persona + ' por ' + pesos(monto) + '. No lo dupliqué.';
   const h = hojaConfig();
+  asegurarColumnasPersona_(h);
   const fila = filaLibre(h, h.getDataRange().getValues(), 'Persona');
-  h.getRange(fila, 1, 1, 3).setValues([[persona, concepto, monto]]);
-  try { h.getRange(fila, 3).setNumberFormat('$#,##0'); } catch (e) { /* cosmético */ }
+  h.getRange(fila, 1, 1, 5).setValues([[persona, concepto, monto, yaPagado || '', vence || '']]);
+  try { h.getRange(fila, 3, 1, 2).setNumberFormat('$#,##0'); if (vence) h.getRange(fila, 5).setNumberFormat('dd/mm/yyyy'); } catch (e) { /* cosmético */ }
   CACHE_CFG_ = null;
-  return '🤝 Anotado: ' + persona + ' te debía ' + pesos(monto) + ' (' + concepto + ').\nCuando te pague, regístralo con 🤝 Me pagaron.';
+  return '🤝 Anotado: ' + persona + ' te debía ' + pesos(monto) + ' (' + concepto + ').' +
+    (yaPagado > 0 ? '\n💵 Ya te pagó ' + pesos(yaPagado) + ': hoy te debe ' + pesos(saldo) + '.' : '') +
+    (vence ? '\n📅 Te paga el ' + fmtCorta_(vence) + '.' : '') +
+    '\nCuando te pague, regístralo con 🤝 Me pagaron.';
+}
+
+/** La tabla "Persona" nació con 3 columnas; agrega "Ya pagado" y "Fecha de pago" (a la derecha) si faltan. */
+function asegurarColumnasPersona_(h) {
+  const v = h.getDataRange().getValues();
+  const i = filaEncabezado(v, 'Persona');
+  if (i < 0) throw new Error('No encontré la tabla "Persona" en Configuración.');
+  const enc = v[i].map(function (x) { return String(x).trim(); });
+  const falta = ['Ya pagado', 'Fecha de pago'].filter(function (k) { return enc.indexOf(k) < 0; });
+  if (!falta.length) return;
+  if (enc.length > 3 && enc.slice(3).some(function (x) { return x; })) throw new Error('La tabla "Persona" tiene otras columnas a la derecha; no pude agregar "Ya pagado" y "Fecha de pago".');
+  h.getRange(i + 1, 4, 1, 2).setValues([['Ya pagado', 'Fecha de pago']]).setFontWeight('bold').setBackground('#dbe8ff');
+  CACHE_CFG_ = null;
 }
 
 /**
@@ -459,10 +516,16 @@ function agregarLeDebiaAntes(p, cfg) {
   if (!concepto) throw new Error('Falta el concepto.');
   if (!(monto > 0)) throw new Error('El monto no es válido.');
   const fecha = leerFechaMov(p.fecha);
-  agregarMovimiento([fecha, TIPO.MEPRESTARON, concepto, monto, '', '', '', persona, '', '', '']);
+  // Saldo actual (opcional): lo que todavía le debes; se anota el valor inicial en el concepto.
+  const saldoTxt = limpiar(p.saldoActual);
+  const saldo = saldoTxt === '' ? monto : aNumero(saldoTxt);
+  if (saldoTxt !== '' && !(saldo > 0)) throw new Error('El saldo actual debe ser mayor que cero (si ya se lo pagaste todo, no hace falta registrarlo).');
+  if (saldo > monto) throw new Error('El saldo actual no puede ser mayor que el valor inicial.');
+  const descMov = saldo < monto ? concepto + ' (valor inicial ' + pesos(monto) + ')' : concepto;
+  agregarMovimiento([fecha, TIPO.MEPRESTARON, descMov, saldo, '', '', '', persona, '', '', '']);
   const est = calcular(leerMovimientos(), cfg, hoy());
   const x = est.lesDebo.find(function (y) { return y.persona === persona; });
-  return '🙋 Anotado: le debías ' + pesos(monto) + ' a ' + persona + ' (' + concepto + ').\nAhora le debes ' + pesos(x ? x.saldo : monto) + '. Cuando se lo pagues, regístralo con ↩️ Le pagué.';
+  return '🙋 Anotado: le debes ' + pesos(saldo) + ' a ' + persona + ' (' + concepto + ').\nAhora le debes ' + pesos(x ? x.saldo : saldo) + '. Cuando se lo pagues, regístralo con ↩️ Le pagué.';
 }
 
 /* ---------- Eliminar movimientos (con vista previa, doble confirmación y deshacer) ---------- */
@@ -907,7 +970,10 @@ function calcular(movs, cfg, hoyF) {
 
   const personas = {};
   function persona(n) { return personas[n] = personas[n] || { persona: n, prestado: 0, pagado: 0, recibido: 0, devuelto: 0, conceptos: [], abonos: [], prestamos: [], devoluciones: [] }; }
-  (cfg.deudoresIniciales || []).forEach(function (x, i) { const p = persona(x.persona); p.prestado += x.monto; p.conceptos.push({ m: null, v: x.monto, concepto: x.concepto, key: 'ini:' + i }); });
+  (cfg.deudoresIniciales || []).forEach(function (x, i) {
+    const p = persona(x.persona); p.prestado += x.monto; p.conceptos.push({ m: null, v: x.monto, concepto: x.concepto, key: 'ini:' + i, vence: x.vence || null });
+    if (x.pagado > 0) { p.pagado += x.pagado; p.abonos.push({ fecha: '', monto: x.pagado, desc: 'Pagado antes de usar la app', aplica: 'ini:' + i }); }
+  });
 
   movs.forEach(function (m) {
     if (m.tipo === TIPO.MEPAGARON) persona(m.para).abonos.push({ fecha: fmt(m.fecha), monto: m.monto, desc: m.desc, aplica: String(m.destino || '').indexOf('c:') === 0 ? m.destino.slice(2) : '' });
@@ -1447,14 +1513,15 @@ function detallePersona(p, cuenta, cfg, hoyF) {
         return { key: x.key, fecha: null, desc: x.concepto || q.detalle, cuenta: q.credito, total: x.v, cuotas: q.cuotas, valorCuota: vq, plan: 'prev:' + idx,
           unidades: fs.map(function (f, k) { return { f: f, v: k < q.cuotas - 1 ? vq : x.v - vq * (q.cuotas - 1), pagado: 0 }; }) };
       }
-      return { key: x.key, fecha: null, desc: x.concepto || 'Saldo que ya te debía', cuenta: '', total: x.v, cuotas: 1, valorCuota: x.v, plan: '', unidades: [{ f: null, v: x.v, pagado: 0 }] };
+      return { key: x.key, fecha: null, vence: x.vence || null, desc: x.concepto || 'Saldo que ya te debía', cuenta: '', total: x.v, cuotas: 1, valorCuota: x.v, plan: '', unidades: [{ f: x.vence || null, v: x.v, pagado: 0 }] };
     }
     const c = cuenta(m.cuenta);
     const n = x.montos ? x.montos.length : 1;
-    const fechas = n > 1 ? fechasCuotas(c, m.fecha, n, cfg) : [m.fecha];
+    const vence = n > 1 ? null : ((cfg.fechasFavor || {})[m.id] || null);   // fecha de pago pactada del favor (opcional)
+    const fechas = n > 1 ? fechasCuotas(c, m.fecha, n, cfg) : [vence || m.fecha];
     const vc = Math.round(x.v / n);
     return {
-      key: x.key, fecha: m.fecha, desc: m.desc, cuenta: m.cuenta, total: x.v, cuotas: n, valorCuota: vc, plan: n > 1 ? m.id : '',
+      key: x.key, fecha: m.fecha, vence: vence, desc: m.desc, cuenta: m.cuenta, total: x.v, cuotas: n, valorCuota: vc, plan: n > 1 ? m.id : '',
       unidades: fechas.map(function (f, k) { return { f: f || m.fecha, v: x.montos ? x.montos[k] : x.v, pagado: 0 }; })
     };
   });
@@ -1480,7 +1547,7 @@ function detallePersona(p, cuenta, cfg, hoyF) {
     const delMes = pend.filter(function (u) { return !u.f || u.f <= finMes; }).reduce(function (s, u) { return s + u.v - u.pagado; }, 0);
     return {
       key: c.key, delMes: Math.round(delMes),
-      fecha: c.fecha ? fmt(c.fecha) : '', desc: c.desc, cuenta: c.cuenta, total: Math.round(c.total), cuotas: c.cuotas, plan: c.plan,
+      fecha: c.fecha ? fmt(c.fecha) : '', vence: c.vence ? fmt(c.vence) : '', desc: c.desc, cuenta: c.cuenta, total: Math.round(c.total), cuotas: c.cuotas, plan: c.plan,
       detalle: c.cuotas > 1 ? c.unidades.map(function (u) { return { fecha: u.f ? fmt(u.f) : '', monto: Math.round(u.v), pagado: Math.round(u.pagado) }; }) : [],
       valorCuota: c.cuotas > 1 ? Math.round(c.unidades[0].v) : Math.round(c.total),
       cuotasPagadas: c.unidades.length - pend.length,
@@ -2513,6 +2580,7 @@ function agregarMovimiento(fila, id) {
   // Un texto que empieza por = + - @ se volvería fórmula en Sheets: se guarda como texto.
   fila = fila.map(function (x) { return typeof x === 'string' && /^[=+\-@]/.test(x) && !/^-?\d[\d.,]*$/.test(x) ? "'" + x : x; });
   const completa = fila.slice(0, ENC_MOV.length - 2).concat([new Date(), id || Utilities.getUuid().slice(0, 8)]);
+  ULT_ID_ = completa[completa.length - 1];
   while (completa.length < ENC_MOV.length) completa.splice(completa.length - 2, 0, '');
   CACHE_MOVS_ = null;
   if (PEND_) { PEND_.push(completa); return; }   // dentro de doPost: se escribe al final, todo junto
@@ -2712,10 +2780,11 @@ function hojaConfig() {
 
   // ---- Me deben desde antes ----
   seccion('ME DEBEN DESDE ANTES', 'Plata que alguien te debía al empezar. Cuando te pague, regístralo con 🤝 Me pagaron.');
-  const tM = tabla(['Persona', 'Concepto', 'Monto'], [
-    ['Ana', 'Boletas de cine', 60000]
-  ], 4);
-  h.getRange(tM.ini, 3, tM.n, 1).setNumberFormat('$#,##0');
+  const tM = tabla(['Persona', 'Concepto', 'Monto', 'Ya pagado', 'Fecha de pago'], [
+    ['Ana', 'Boletas de cine', 60000, '', '']
+  ], 6);
+  h.getRange(tM.ini, 3, tM.n, 2).setNumberFormat('$#,##0');
+  h.getRange(tM.ini, 5, tM.n, 1).setNumberFormat('dd/mm/yyyy');
 
   // ---- Gastos fijos ----
   seccion('GASTOS FIJOS Y SUSCRIPCIONES', 'Frecuencia: Mensual (usa "Día"), Anual o Una vez (usan "Próximo cobro"). Cobro: Automático (se registra solo ese día) o Manual (lo pagas desde el botón: 📌). ' +
@@ -2875,8 +2944,11 @@ function leerConfig() {
       desde: parseInt(r['Va en la cuota'], 10) || 0, de: parseInt(r['De'], 10) || 0, capital: Number(r['Capital pendiente']) || 0 };
   }).filter(function (p) { return p.valor > 0; });
   const deudoresIniciales = leerTabla(v, 'Persona').map(function (r) {
-    return { persona: String(r['Persona']).trim(), concepto: String(r['Concepto'] || '').trim(), monto: Number(r['Monto']) || 0 };
+    return { persona: String(r['Persona']).trim(), concepto: String(r['Concepto'] || '').trim(), monto: Number(r['Monto']) || 0,
+      pagado: Number(r['Ya pagado']) || 0, vence: fecha(r['Fecha de pago']) };
   }).filter(function (x) { return x.persona && x.monto > 0; });
+  const fechasFavor = {};
+  leerTabla(v, 'ID favor').forEach(function (r) { const f = fecha(r['Fecha de pago']); const id = String(r['ID favor']).trim(); if (id && f) fechasFavor[id] = f; });
   const fijos = leerTabla(v, 'Gasto fijo').map(function (r) {
     const frec = String(r['Frecuencia'] || 'Mensual').trim();
     return {
@@ -2922,7 +2994,7 @@ function leerConfig() {
     .map(function (r) { return { corte: soloFecha(r['Corte Davibank']), limite: soloFecha(r['Límite de pago']) }; });
 
   CACHE_CFG_ = { cuentas: cuentas, previas: previas, deudoresIniciales: deudoresIniciales, fijos: fijos, categorias: categorias, presupuestos: presupuestos,
-    ingresos: ingresos, ajustes: ajustes, davi: davi, metas: metas };
+    ingresos: ingresos, ajustes: ajustes, davi: davi, metas: metas, fechasFavor: fechasFavor };
   return CACHE_CFG_;
 }
 

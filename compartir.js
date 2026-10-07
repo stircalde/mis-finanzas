@@ -32,8 +32,8 @@
         if (ev.tipo === 'nuevo') { saldo = ev.saldoAntes + ev.monto; prestado = (ev.prestadoAntes || 0) + ev.monto; pagado = ev.pagadoAntes || 0; }
       }
       r.saldo = saldo; r.titulo = saldo > 0 ? 'Te debe' : 'Está al día';
-      r.filas = [['Le cubriste', pesos(prestado)], ['Te ha pagado', pesos(pagado)], ['Pendiente', pesos(saldo)]];
-      (p && p.conceptos || []).forEach(function (c) { r.lineas.push([c.desc, pesos(c.pendiente), (c.fecha ? fecha(c.fecha) : '') + (c.cuotas > 1 ? ' · ' + c.cuotasPagadas + ' de ' + c.cuotas + ' cuotas' : '')]); });
+      r.filas = [['Le prestaste', pesos(prestado)], ['Te ha pagado', pesos(pagado)], ['Pendiente', pesos(saldo)]];
+      (p && p.conceptos || []).forEach(function (c) { r.lineas.push([c.desc, pesos(c.pendiente), (c.vence ? 'Te paga el ' + fecha(c.vence) : c.fecha ? fecha(c.fecha) : '') + (c.cuotas > 1 ? ' · ' + c.cuotasPagadas + ' de ' + c.cuotas + ' cuotas' : '')]); });
       if (ev && ev.tipo === 'nuevo' && !r.lineas.some(function (l) { return norm(l[0]) === norm(ev.desc); })) r.lineas.unshift([ev.desc || 'Préstamo', pesos(ev.monto), fecha(ev.fecha)]);
     } else {
       var pr = p ? (p.prestamos || []).reduce(function (s, m) { return s + m.monto; }, 0) : 0, dv = p ? (p.devoluciones || []).reduce(function (s, m) { return s + m.monto; }, 0) : 0, sl = p ? p.saldo || 0 : 0;
@@ -48,7 +48,7 @@
     // Pagos ya hechos (más recientes primero); si se acaba de registrar uno, va de primero.
     r.pagos = [];
     var pagos = sentido === 'me' ? (p && p.abonos || []).slice().sort(function (a, b) { return a.fecha < b.fecha ? 1 : a.fecha > b.fecha ? -1 : 0; }) : (p && p.devoluciones || []);
-    pagos.forEach(function (m) { r.pagos.push([m.desc && sentido === 'me' ? m.desc : '', pesos(m.monto), fecha(m.fecha)]); });
+    pagos.forEach(function (m) { r.pagos.push([m.desc && sentido === 'me' ? m.desc : '', pesos(m.monto), m.fecha ? fecha(m.fecha) : 'Antes']); });
     if (ev && (ev.tipo === 'pago' || ev.tipo === 'devolucion')) r.pagos.unshift(['', pesos(ev.monto), fecha(ev.fecha)]);
     r.tituloPagos = sentido === 'me' ? 'PAGOS QUE TE HA HECHO' : 'PAGOS QUE LE HAS HECHO';
     // Tras un pago la lista por concepto aún no está al día (la hoja se actualiza después): se omite para no mostrar saldos viejos.

@@ -1127,7 +1127,7 @@
       if (c.cuotas > 1) {
         linea = c.cuotas + ' cuotas mensuales de ' + pesos(c.valorCuota) + ' · lleva ' + c.cuotasPagadas + ' de ' + c.cuotas;
         if (!pagado && c.proxima) linea += '<br>Próxima: <b>' + pesos(c.proxima.monto) + '</b> el ' + fechaCorta(c.proxima.fecha) + (c.ultima ? ' · última el ' + fechaCorta(c.ultima) : '');
-      } else linea = pagado ? 'Pagado' : 'De una sola vez' + (c.pendiente < c.total ? ' · te abonó ' + pesos(c.total - c.pendiente) : '');
+      } else linea = pagado ? 'Pagado' : 'De una sola vez' + (c.pendiente < c.total ? ' · te abonó ' + pesos(c.total - c.pendiente) : '') + (c.vence ? ' · te paga el <b>' + fechaCorta(c.vence) + '</b>' : '');
       var pct = c.total > 0 ? Math.round((c.total - c.pendiente) / c.total * 100) : 100;
       var h = '<div class="deb-c' + (pagado ? ' done' : '') + (abre ? ' abre' : '') + (abierto ? ' open' : '') + '"' + (abre ? ' data-debc="' + esc(k) + '" role="button" tabindex="0" aria-expanded="' + !!abierto + '"' : '') + '>' +
         '<div class="deb-t"><span>' + esc(c.desc) + (abre ? ' <span class="chev">' + ICON.chevron + '</span>' : '') + '</span><b class="num">' + pesos(pagado ? c.total : c.pendiente) + '</b></div>' +
@@ -1151,7 +1151,7 @@
       ((p.conceptos || []).length > 1 ? '<button type="button" class="btn deb-reg-todo" data-reg="mepagaron" data-persona="' + esc(p.persona) + '">🤝 Registrar un pago de ' + esc(p.persona) + '</button>' : '');
     if (p.vencido > 0) h += '<div class="deb-nota">A hoy ya debería haberte pagado <b>' + pesos(p.vencido) + '</b>.</div>';
     if (p.abonos && p.abonos.length) h += '<div class="deb-sub">Pagos que te ha hecho</div>' + p.abonos.map(function (a) {
-      return '<div class="deb-t deb-ab"><span>' + fechaCorta(a.fecha) + ' · ' + esc(a.desc || 'Abono') + '</span><b class="num">+' + pesos(a.monto) + '</b></div>'; }).join('');
+      return '<div class="deb-t deb-ab"><span>' + (a.fecha ? fechaCorta(a.fecha) : 'Antes') + ' · ' + esc(a.desc || 'Abono') + '</span><b class="num">+' + pesos(a.monto) + '</b></div>'; }).join('');
     if (p.pagados && p.pagados.length) h += '<div class="deb-sub">Ya saldado</div>' + p.pagados.map(function (c, i) { return concepto(c, true, 'p' + i); }).join('');
     h += '<button type="button" class="btn link deb-reg" data-compartir="me" data-persona="' + esc(p.persona) + '">📤 Compartir resumen</button>';
     return h + '</div>';
@@ -1201,7 +1201,7 @@
     var html = d.meDeben.map(function (p, i) {
       var abierto = abiertos['deb:' + p.persona];
       return '<div class="owed-item' + (abierto ? ' open' : '') + '"><div class="owed-row" role="button" tabindex="0" aria-expanded="' + !!abierto + '" data-i="' + i + '"><div><div class="p">' + esc(p.persona) +
-        ' <span class="chev">' + ICON.chevron + '</span></div><div class="s">Le cubriste ' + pesos(p.prestado) +
+        ' <span class="chev">' + ICON.chevron + '</span></div><div class="s">Le prestaste ' + pesos(p.prestado) +
         (p.pagado ? ' · te pagó ' + pesos(p.pagado) : '') + (p.vencido > 0 ? ' · <b class="venc">vencido ' + pesos(p.vencido) + '</b>' : '') +
         (tambienLeDebo(d, p.persona) ? ' · <b class="lede">tú le debes ' + pesos(tambienLeDebo(d, p.persona)) + '</b>' : '') + '</div></div><div class="v">' + pesos(p.saldo) + '</div></div>' +
         '<div class="plegable' + (abierto ? ' abierta' : '') + '"><div class="plegable-in">' + detalleDeudor(p) + '</div></div></div>';
