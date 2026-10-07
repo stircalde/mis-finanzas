@@ -331,5 +331,84 @@
     });
   }
 
-  window.MFAdmin = { fijo: fijo, fijos: fijos, cuentas: cuentas };
+  /* =================== CORREGIR UN MOVIMIENTO =================== */
+  function hoyISO() { var d = new Date(); return d.getFullYear() + '-' + ('0' + (d.getMonth() + 1)).slice(-2) + '-' + ('0' + d.getDate()).slice(-2); }
+  function opsConActual(actual) {
+    var ops = opsCuentas();
+    var hay = ops.some(function (o) { return o[0] === actual; });
+    return actual && !hay ? ops.concat([[actual, actual]]) : ops;
+  }
+  function movimiento(id) {
+    var d = MF.datos();
+    var m = (d.movimientos || []).find(function (x) { return x.id === id; });
+    if (!m) return;
+    if (m.hist || m.tipo === 'Ajuste') {
+      MF.abrirHoja('<div class="sheet-h"><div><h2>' + esc(m.desc) + '</h2><div class="kind">' + esc(m.tipo) + '</div></div>' +
+        '<button class="icon-btn" type="button" data-cerrar aria-label="Cerrar">' + ICON.close + '</button></div>' +
+        '<p class="adm-nota">' + (m.hist ? 'Viene de un extracto y ya está incluido en el saldo inicial: no se edita.' : 'Un ajuste de saldo no se edita. Si quedó mal, usa "Ajustar saldo" otra vez.') + '</p>');
+      return;
+    }
+    var esGasto = m.tipo === 'Gasto', esIng = m.tipo === 'Ingreso', esTr = m.tipo === 'Transferencia';
+    var conCuotas = esGasto && m.cuotas > 0;
+    var orig = { fecha: m.fecha, desc: m.desc, monto: m.monto, cat: m.cat, cuenta: m.cuenta, destino: m.destino || '', cuotas: m.cuotas || '', valorCuota: m.valorCuota || '' };
+    var st = { fecha: orig.fecha, desc: orig.desc, monto: orig.monto, cat: orig.cat, cuenta: orig.cuenta, destino: orig.destino, cuotas: orig.cuotas, valorCuota: orig.valorCuota };
+    hojaFormulario('Corregir movimiento', esc(m.tipo) + ' · lo que cambies se actualiza en tu hoja y en tus saldos', st, function (st) {
+      var h = campo('Fecha', '<input class="in" data-k="fecha" type="date" max="' + hoyISO() + '" value="' + esc(st.fecha) + '">');
+      h += fTexto(st, 'desc', 'Descripción', '');
+      h += fMonto(st, 'monto', 'Monto');
+      if (esGasto) h += fSelect(st, 'cat', 'Categoría', (d.listaCategorias || []).map(function (c) { return [c.nombre, (c.emoji ? c.emoji + ' ' : '') + c.nombre]; }).concat((d.listaCategorias || []).some(function (c) { return c.nombre === orig.cat; }) ? [] : [[orig.cat, orig.cat]]));
+      if (esIng) h += fSelect(st, 'cat', 'Tipo de ingreso', (d.tiposIngreso || []).map(function (c) { return [c.nombre, (c.emoji ? c.emoji + ' ' : '') + c.nombre]; }).concat((d.tiposIngreso || []).some(function (c) { return c.nombre === orig.cat; }) ? [] : [[orig.cat, orig.cat]]));
+      if (orig.cuenta || !esTr) h += fSelect(st, 'cuenta', esTr ? 'Sale de' : 'Cuenta', opsConActual(orig.cuenta));
+      if (esTr) h += fSelect(st, 'destino', 'Llega a', opsConActual(orig.destino));
+      if (conCuotas) {
+        h += fNumero(st, 'cuotas', 'Número de cuotas', '1');
+        h += fMonto(st, 'valorCuota', 'Valor de la cuota', 'Si cambias el monto o las cuotas y dejas este valor igual, se recalcula solo.');
+      }
+      return h;
+    }, function (st) {
+      var datos = { accion: 'editarmov', id: id };
+      var desc = String(st.desc || '').trim();
+      if (!desc) throw new Error('Escribe la descripción.');
+      if (!(st.monto > 0)) throw new Error('Escribe el monto.');
+      if (!st.fecha) throw new Error('Elige la fecha.');
+      if (st.fecha !== orig.fecha) datos.fecha = st.fecha;
+      if (desc !== orig.desc) datos.descripcion = desc;
+      if (st.monto !== orig.monto) datos.monto = st.monto;
+      if ((esGasto || esIng) && st.cat !== orig.cat) datos.categoria = st.cat;
+      if (st.cuenta !== orig.cuenta) datos.cuenta = st.cuenta;
+      if (esTr && st.destino !== orig.destino) datos.destino = st.destino;
+      if (esTr && (st.cuenta || orig.cuenta) && (st.destino || orig.destino) && (st.cuenta || orig.cuenta) === (st.destino || orig.destino)) throw new Error('El origen y el destino no pueden ser la misma cuenta.');
+      if (conCuotas) {
+        var n = parseInt(st.cuotas, 10);
+        if (!(n >= 1)) throw new Error('Escribe cuántas cuotas.');
+        if (n !== Number(orig.cuotas)) datos.cuotas = n;
+        if (st.valorCuota !== orig.valorCuota) datos.valorCuota = st.valorCuota;
+      }
+      if (Object.keys(datos).length === 2) throw new Error('No cambiaste nada.');
+      return datos;
+    });
+  }
+
+  /* =================== ALGO QUE ME DEBÍAN DESDE ANTES =================== */
+  function deudaAntigua() {
+    var d = MF.datos();
+    var nombres = {};
+    (d.meDeben || []).forEach(function (x) { nombres[x.persona] = 1; });
+    (d.lesDebo || []).forEach(function (x) { nombres[x.persona] = 1; });
+    var st = { persona: '', concepto: '', monto: NaN };
+    hojaFormulario('Algo que me debían desde antes', 'Para lo que se te olvidó anotar al empezar. No mueve tus cuentas: solo suma a lo que te deben.', st, function (st) {
+      return campo('¿Quién te lo debe?', '<input class="in" data-k="persona" list="dl-personas" type="text" autocomplete="off" placeholder="Nombre" value="' + esc(st.persona) + '">' +
+          '<datalist id="dl-personas">' + Object.keys(nombres).map(function (n) { return '<option value="' + esc(n) + '">'; }).join('') + '</datalist>') +
+        fTexto(st, 'concepto', '¿Por qué te lo debe?', 'Ej: Mercado de agosto, entradas del concierto') +
+        fMonto(st, 'monto', '¿Cuánto es?', 'Cuando te pague, lo registras con 🤝 Me pagaron y se descuenta.');
+    }, function (st) {
+      var persona = String(st.persona || '').trim(), concepto = String(st.concepto || '').trim();
+      if (!persona) throw new Error('Escribe quién te lo debe.');
+      if (!concepto) throw new Error('Escribe el concepto.');
+      if (!(st.monto > 0)) throw new Error('Escribe cuánto es.');
+      return { accion: 'deudaantigua', persona: persona, concepto: concepto, monto: st.monto };
+    });
+  }
+
+  window.MFAdmin = { fijo: fijo, fijos: fijos, cuentas: cuentas, movimiento: movimiento, deudaAntigua: deudaAntigua };
 })();

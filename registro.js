@@ -133,8 +133,10 @@
     paraQuien: ['paraNueva']
   };
 
-  function reiniciar() {
-    st = { fecha: hoyISO() };
+  /** Deja el formulario en blanco. Con `conservarFecha`, la fecha que ya eligió el usuario no vuelve a "hoy". */
+  function reiniciar(conservarFecha) {
+    var f = conservarFecha && st && st.fecha;
+    st = { fecha: f || hoyISO() };
     var ult = MF.leerLocal('regCuenta');
     if (tipo === 'gasto' && ult && (plata(ult) || deuda(ult))) st.cuenta = ult;
     if (tipo === 'monedas') st.monto = (cfg.efectivo || 0) % 1000 || NaN;
@@ -394,7 +396,7 @@
       var nuevo = !cfg;
       guardarCfg(c);
       if (!hoja) return;
-      if (nuevo) { reiniciar(); pintar(); }
+      if (nuevo) { reiniciar(true); pintar(); }
       else if (!hoja.contains(document.activeElement) || document.activeElement === hoja) pintar();
     }).catch(function (e) {
       if (hoja && !cfg) cuerpo.innerHTML = '<div class="reg-err">No pude leer tus cuentas. ' + esc(e && e.message || e) + '</div>';
@@ -413,7 +415,7 @@
 
   function pintar() {
     if (!cuerpo) return;
-    if (tiposVisibles().indexOf(tipo) < 0) { tipo = 'gasto'; reiniciar(); }
+    if (tiposVisibles().indexOf(tipo) < 0) { tipo = 'gasto'; reiniciar(true); }
     var y = hoja.querySelector('.reg-sheet').scrollTop;
     cuerpo.innerHTML = '<div class="reg-tipos" role="tablist">' + tiposVisibles().map(function (k) {
       var n = k === 'fijo' ? ' (' + pendientesFijos().length + ')' : '';
@@ -448,7 +450,7 @@
   function enlazar() {
     var form = cuerpo.querySelector('.reg-form');
     cuerpo.querySelectorAll('[data-tipo]').forEach(function (b) {
-      b.addEventListener('click', function () { if (tipo !== b.dataset.tipo) { tipo = b.dataset.tipo; reiniciar(); pintar(); } });
+      b.addEventListener('click', function () { if (tipo !== b.dataset.tipo) { tipo = b.dataset.tipo; reiniciar(true); pintar(); } });
     });
     form.querySelectorAll('input[data-k]').forEach(function (i) {
       var k = i.dataset.k;

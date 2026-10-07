@@ -44,11 +44,11 @@ de *Propiedades de script → CLAVE*.
   5. Estudiar registro automático de cobros enlazando apps bancarias (p. ej. notificaciones/MacroDroid).
   6. Compartir la app con otra persona: uso independiente, pero que reciba mis actualizaciones y un resumen de cambios (plantilla multiusuario + versiones/changelog).
   7. Que funcione en iOS (el registro automático probablemente no).
-  8. Registro: error — si primero pongo la fecha y luego el resto de la info, la fecha se reinicia a hoy (corregir para que conserve la fecha elegida).
+  8. (HECHO en PR editar-movimientos-fecha) Registro: la fecha elegida ya no se reinicia a hoy.
   9. Backend (Davibank): regla real del banco (2-oct-2026) — una compra a 1 cuota NO es sin interés si en el mismo extracto hay compras diferidas a más de 1 cuota, o si no se paga el total a tiempo: genera interés desde la fecha de compra hasta la fecha límite. Hoy `motorDiario` solo cobra ese interés retroactivo cuando el extracto anterior no se pagó completo. Además, compras internacionales = 36 cuotas automáticas con interés desde el día de compra. Requiere rama + PR + tests + aprobación de Hector.
   Nota del 9: Hector quiere hacerlo la semana del 5-oct-2026 (con el extracto de Davibank del 16-oct a mano para validar). Corrige solo el interés estimado; no explica el ajuste de +$16.450 del 1-oct (queda por revisar con el extracto).
   Prioridad que fijó Hector (7-oct-2026), con sus apuntes; los números 1-9 de arriba siguen valiendo:
-  A. Primero: (a) editar movimientos ya registrados para corregir errores [nuevo]; (b) registrar desde la app deudas/favores antiguos que se olvidaron al inicio (hoy solo existe la tabla "Me deben desde antes" en Configuración) [nuevo]; (c) bug de fecha del Registro (idea 8).
+  A. HECHO en el PR editar-movimientos-fecha (pendiente de desplegar el backend): (a) editar movimientos; (b) agregar desde Favores lo que me debían desde antes; (c) bug de fecha.
   B. Después: límites de gasto editables (idea 2) y Metas de ahorro en Más (idea 4).
   C. Luego: "Próximos pagos" a la altura de las vecinas (idea 1) y logo dinámico coherente con color y estilo (idea 3).
   D. Al final, estudios: registro automático por notificaciones (notificación → transacción detectada → verificación → registro; incluye compras a cuotas y conciliar transferencias entre cuentas; Android), compartir la app (datos independientes, actualizaciones, novedades por versión) e iOS (limitaciones frente a Android).

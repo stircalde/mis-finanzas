@@ -75,6 +75,8 @@ function doPost(e) {
       case 'lepague': mensaje = registrarLePague(p, cfg); break;
       case 'transferencia': mensaje = registrarTransferencia(p, cfg); break;
       case 'ajuste': mensaje = registrarAjuste(p, cfg); break;
+      case 'editarmov': mensaje = editarMovimiento(p, cfg); break;
+      case 'deudaantigua': mensaje = agregarDeudaAntigua(p, cfg); break;
       case 'fijoadmin': mensaje = administrarFijo(p, cfg); break;
       case 'cuentaadmin': mensaje = administrarCuenta(p, cfg); break;
       default: throw new Error('Acción desconocida: ' + p.accion);
@@ -332,6 +334,101 @@ function registrarAjuste(p, cfg) {
   agregarMovimiento([leerFechaMov(p.fecha), TIPO.AJUSTE, 'Ajuste de saldo', delta, cat, cta.nombre, '', '', '', '', '']);
   const verbo = cta.tipo === 'Deuda' ? 'Deuda de ' : 'Saldo de ';
   return '⚖️ ' + verbo + cta.nombre + ' ajustado a ' + pesos(real) + '\n(diferencia ' + (delta > 0 ? '+' : '−') + pesos(Math.abs(delta)) + ')';
+}
+
+/**
+ * Corrige un movimiento ya registrado (por su ID). Solo cambia lo que llega en la solicitud; el tipo nunca cambia.
+ * No toca los históricos de extractos ("hist:") ni los ajustes de saldo (esos se rehacen con "Ajustar saldo").
+ * Campos por tipo: fecha, descripcion, monto siempre; categoria (Gasto, Ingreso); cuenta (todos menos Transferencia sin origen);
+ * destino (Transferencia); cuotas y valorCuota (Gasto en tarjeta o crédito).
+ */
+function editarMovimiento(p, cfg) {
+  const id = limpiar(p.id);
+  if (!id) throw new Error('Falta el identificador del movimiento.');
+  if (id.indexOf('hist:') === 0) throw new Error('Los movimientos cargados de extractos no se editan: ya están incluidos en el saldo inicial.');
+  const h = hojaMovimientos();
+  const n = h.getLastRow() - 1;
+  if (n < 1) throw new Error('No encontré ese movimiento.');
+  const ids = h.getRange(2, 13, n, 1).getValues();
+  const filas = [];
+  ids.forEach(function (r, i) { if (String(r[0]) === id) filas.push(i + 2); });
+  if (filas.length !== 1) throw new Error(filas.length ? 'Hay más de un movimiento con ese identificador; edítalo directo en la hoja.' : 'No encontré ese movimiento. Puede que ya se haya borrado.');
+  const fila = filas[0];
+  const ant = h.getRange(fila, 1, 1, 11).getValues()[0];
+  const tipo = String(ant[1]).trim();
+  if (tipo === TIPO.AJUSTE) throw new Error('Un ajuste de saldo no se edita: usa "Ajustar saldo" otra vez.');
+  const tiene = function (k) { return p[k] !== undefined && p[k] !== null; };
+  const nuevo = ant.slice();
+  const cambios = [];
+  const marca = function (nombre, antes, ahora) { if (String(antes) !== String(ahora)) cambios.push(nombre); };
+  if (tiene('fecha')) { const f = leerFechaMov(p.fecha); if (f > hoy()) throw new Error('La fecha no puede ser futura.'); marca('fecha', soloFecha(ant[0]).getTime(), f.getTime()); nuevo[0] = f; }
+  if (tiene('descripcion')) { const d = limpiar(p.descripcion); if (!d) throw new Error('Falta la descripción.'); marca('descripción', ant[2], d); nuevo[2] = d; }
+  const monto = tiene('monto') ? aNumero(p.monto) : Number(ant[3]);
+  if (!(monto > 0)) throw new Error('El monto no es válido.');
+  marca('monto', ant[3], monto); nuevo[3] = monto;
+  if (tiene('categoria')) {
+    if (tipo !== TIPO.GASTO && tipo !== TIPO.INGRESO) throw new Error('Este tipo de movimiento no tiene categoría.');
+    const c = limpiar(p.categoria); if (!c) throw new Error('Elige la categoría.');
+    marca('categoría', ant[4], c); nuevo[4] = c;
+  }
+  let cta = null;
+  if (tiene('cuenta')) {
+    const nombre = limpiar(p.cuenta);
+    if (nombre !== String(ant[5]).trim()) cta = cuentaPorNombre(cfg, nombre);
+    marca('cuenta', ant[5], nombre); nuevo[5] = nombre;
+  }
+  if (tiene('destino')) {
+    if (tipo !== TIPO.TRANSF) throw new Error('Solo las transferencias tienen cuenta destino.');
+    const nombre = limpiar(p.destino);
+    if (nombre !== String(ant[6]).trim()) cuentaPorNombre(cfg, nombre);
+    marca('destino', ant[6], nombre); nuevo[6] = nombre;
+  }
+  if (tipo === TIPO.TRANSF && nuevo[5] && nuevo[5] === nuevo[6]) throw new Error('La cuenta de origen y la de destino no pueden ser la misma.');
+  if (tipo === TIPO.GASTO) {
+    // Las cuotas se recalculan con las mismas reglas del registro (tasa, máximo de cuotas, 1 cuota sin interés…).
+    const c = cuentaPorNombre(cfg, String(nuevo[5]).trim());
+    const toca = tiene('cuotas') || tiene('valorCuota') || monto !== Number(ant[3]) || cta;
+    if (toca) {
+      const cuotasTxt = tiene('cuotas') ? p.cuotas : ant[8];
+      const mismoPlan = !tiene('valorCuota') && !tiene('cuotas') && monto === Number(ant[3]);
+      const valor = tiene('valorCuota') ? aNumero(p.valorCuota) : mismoPlan ? Number(ant[9]) || 0 : 0;
+      const f = financiacion(c, monto, cuotasTxt, valor);
+      marca('cuotas', ant[8], f.cuotas); marca('valor de la cuota', ant[9], f.valorCuota);
+      nuevo[8] = f.cuotas; nuevo[9] = f.valorCuota; nuevo[10] = f.costo;
+    }
+  }
+  const limpio = nuevo.map(function (x) { return typeof x === 'string' && /^[=+\-@]/.test(x) && !/^-?\d[\d.,]*$/.test(x) ? "'" + x : x; });
+  if (!cambios.length) return '👌 No había nada que cambiar.';
+  h.getRange(fila, 1, 1, 11).setValues([limpio]);
+  try { formatoFilas_(h, fila, 1); } catch (e) { /* cosmético */ }
+  CACHE_MOVS_ = null;
+  let msg = '✏️ Movimiento corregido (' + cambios.join(', ') + ')';
+  const base = id.split('#')[0];
+  const hermanos = ids.filter(function (r) { const x = String(r[0]); return x !== id && x.split('#')[0] === base; }).length;
+  if (hermanos) msg += '\n⚠️ Este registro creó ' + hermanos + ' movimiento(s) más (apartado, comisión…). Revísalos si el cambio los afecta.';
+  return msg;
+}
+
+/**
+ * Agrega a "ME DEBEN DESDE ANTES" (Configuración) algo que una persona ya te debía y se había olvidado registrar.
+ * No mueve ninguna cuenta: solo suma a lo que esa persona te debe. Cuando te pague, se registra con "Me pagaron".
+ */
+function agregarDeudaAntigua(p, cfg) {
+  const concepto = limpiar(p.concepto);
+  const monto = aNumero(p.monto);
+  let persona = limpiar(p.persona);
+  if (!persona) throw new Error('Falta la persona.');
+  if (!concepto) throw new Error('Falta el concepto.');
+  if (!(monto > 0)) throw new Error('El monto no es válido.');
+  persona = personaCanonica(cfg, persona);
+  if ((cfg.deudoresIniciales || []).some(function (x) { return x.persona === persona && x.concepto === concepto && x.monto === monto; }))
+    return '👌 Ya tenías anotado "' + concepto + '" de ' + persona + ' por ' + pesos(monto) + '. No lo dupliqué.';
+  const h = hojaConfig();
+  const fila = filaLibre(h, h.getDataRange().getValues(), 'Persona');
+  h.getRange(fila, 1, 1, 3).setValues([[persona, concepto, monto]]);
+  try { h.getRange(fila, 3).setNumberFormat('$#,##0'); } catch (e) { /* cosmético */ }
+  CACHE_CFG_ = null;
+  return '🤝 Anotado: ' + persona + ' te debía ' + pesos(monto) + ' (' + concepto + ').\nCuando te pague, regístralo con 🤝 Me pagaron.';
 }
 
 function lineaPresupuesto(cfg, cat, fecha) {
