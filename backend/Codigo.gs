@@ -972,7 +972,7 @@ function calcular(movs, cfg, hoyF) {
       const c = cuenta(m.cuenta);
       if (c.tipo === 'Deuda') {
         if (m.monto < 0) pago(c.nombre, -m.monto);
-        else item(c.nombre, { fecha: facturaAbierta(c, m.fecha, cfg), monto: m.monto, desc: 'Ajuste según extracto' });
+        else item(c.nombre, { fecha: fechasCuotas(c, m.fecha, 1, cfg)[0], monto: m.monto, desc: 'Ajuste de saldo' });   // el extracto ya emitido no cambia: va al siguiente
       }
     }
   });
@@ -1711,15 +1711,6 @@ function fechasCuotas(cta, fecha, n, cfg) {
     return out;
   }
   return ciclos(cta, fecha, n, cfg).map(function (c) { return c.limite; });
-}
-
-/** Fecha de pago de la factura que ya se cortó y aún no vence (o la siguiente, si no hay ninguna abierta). */
-function facturaAbierta(cta, fecha, cfg) {
-  if (cta.modo === 'Corte mensual') {
-    const abierta = ciclos(cta, addDias(fecha, -45), 4, cfg).filter(function (c) { return c.corte <= fecha && c.limite >= fecha; }).pop();
-    if (abierta) return abierta.limite;
-  }
-  return fechasCuotas(cta, fecha, 1, cfg)[0] || null;
 }
 
 /** n fechas de pago empezando en "primera" (la siguiente según el ciclo de la cuenta). */

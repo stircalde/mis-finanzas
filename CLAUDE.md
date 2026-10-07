@@ -32,7 +32,7 @@ de *Propiedades de script → CLAVE*.
 5. Si algo falla: Gestionar implementaciones → Editar → elige la versión anterior.
 
 ## Estado
-- Backend desplegado: versión 23 (editar "para quién", eliminar con deshacer; hash 8bcf1af84de3; clave en Propiedades de script). App: ver `VERSION` en `sw.js`.
+- Backend desplegado: versión 23 (editar "para quién", eliminar con deshacer; hash 8bcf1af84de3; clave en Propiedades de script). Pendiente de desplegar (PR ajuste-no-suma-al-pago): el ajuste de saldo ya no se suma al extracto emitido. App: ver `VERSION` en `sw.js`.
 - Apariencia (tema, 8 colores, Original/Cristal/Mate, OLED) publicada: ver DEVELOPMENT.md.
 - Pendientes conocidos: `tests/conocidos.json`. Intereses de tarjeta Opción A ya en línea (v21); falta confirmar
   la fórmula de Nubank en cuotas siguientes con el extracto de noviembre.
@@ -53,3 +53,4 @@ de *Propiedades de script → CLAVE*.
   C. Luego: "Próximos pagos" a la altura de las vecinas (idea 1) y logo dinámico coherente con color y estilo (idea 3).
   D. Al final, estudios: registro automático por notificaciones (notificación → transacción detectada → verificación → registro; incluye compras a cuotas y conciliar transferencias entre cuentas; Android), compartir la app (datos independientes, actualizaciones, novedades por versión) e iOS (limitaciones frente a Android).
   E. HECHO y publicado el 7-oct (PR #8, app mf-v5-60, backend v23): editar "para quién" (varias personas) y borrar movimientos con doble confirmación; filas ligadas (apartado, comisión, aporte de mamá) se borran juntas y avisa si el bolsillo queda ≠ $0; los borrados pasan a una pestaña "Eliminados" (recuperables); los "hist:" de extractos prevalecen y no se tocan.
+  F. Davibank, ajuste +$16.450 (7-oct): NO es interés diario sin facturar (el cupo/pago total del banco no se movió del 1 al 7-oct: $3.769.905; el mínimo del banco hoy $977.234 no lo incluye). Origen desconocido: revisar con el extracto del 16-oct (¿renglón de $16.450?). Los intereses ya facturados sí ocupan cupo (extractos ago/sep). No eliminar el ajuste hasta entonces.
