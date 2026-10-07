@@ -32,7 +32,7 @@ de *Propiedades de script → CLAVE*.
 5. Si algo falla: Gestionar implementaciones → Editar → elige la versión anterior.
 
 ## Estado
-- Backend desplegado: versión 23 (editar "para quién", eliminar con deshacer; hash 8bcf1af84de3; clave en Propiedades de script). Pendiente de desplegar (PR ajuste-no-suma-al-pago): el ajuste de saldo ya no se suma al extracto emitido. App: ver `VERSION` en `sw.js`.
+- Backend desplegado: versión 24 (ajuste de saldo va a la siguiente factura; hash b830bde783a4; clave en Propiedades de script). App: ver `VERSION` en `sw.js`.
 - Apariencia (tema, 8 colores, Original/Cristal/Mate, OLED) publicada: ver DEVELOPMENT.md.
 - Pendientes conocidos: `tests/conocidos.json`. Intereses de tarjeta Opción A ya en línea (v21); falta confirmar
   la fórmula de Nubank en cuotas siguientes con el extracto de noviembre.
