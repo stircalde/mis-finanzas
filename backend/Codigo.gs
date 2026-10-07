@@ -77,6 +77,7 @@ function doPost(e) {
       case 'ajuste': mensaje = registrarAjuste(p, cfg); break;
       case 'editarmov': mensaje = editarMovimiento(p, cfg); break;
       case 'deudaantigua': mensaje = agregarDeudaAntigua(p, cfg); break;
+      case 'ledebiaantes': mensaje = agregarLeDebiaAntes(p, cfg); break;
       case 'fijoadmin': mensaje = administrarFijo(p, cfg); break;
       case 'cuentaadmin': mensaje = administrarCuenta(p, cfg); break;
       default: throw new Error('Acción desconocida: ' + p.accion);
@@ -429,6 +430,24 @@ function agregarDeudaAntigua(p, cfg) {
   try { h.getRange(fila, 3).setNumberFormat('$#,##0'); } catch (e) { /* cosmético */ }
   CACHE_CFG_ = null;
   return '🤝 Anotado: ' + persona + ' te debía ' + pesos(monto) + ' (' + concepto + ').\nCuando te pague, regístralo con 🤝 Me pagaron.';
+}
+
+/**
+ * Algo que TÚ le debías a alguien desde antes y no se registró. Queda como un "Me prestaron" sin cuenta: sube lo que le debes
+ * pero no mueve ningún saldo. Cuando se lo pagues, usa "Le pagué".
+ */
+function agregarLeDebiaAntes(p, cfg) {
+  const concepto = limpiar(p.concepto);
+  const monto = aNumero(p.monto);
+  const persona = personaCanonica(cfg, limpiar(p.persona));
+  if (!persona) throw new Error('Falta la persona.');
+  if (!concepto) throw new Error('Falta el concepto.');
+  if (!(monto > 0)) throw new Error('El monto no es válido.');
+  const fecha = leerFechaMov(p.fecha);
+  agregarMovimiento([fecha, TIPO.MEPRESTARON, concepto, monto, '', '', '', persona, '', '', '']);
+  const est = calcular(leerMovimientos(), cfg, hoy());
+  const x = est.lesDebo.find(function (y) { return y.persona === persona; });
+  return '🙋 Anotado: le debías ' + pesos(monto) + ' a ' + persona + ' (' + concepto + ').\nAhora le debes ' + pesos(x ? x.saldo : monto) + '. Cuando se lo pagues, regístralo con ↩️ Le pagué.';
 }
 
 function lineaPresupuesto(cfg, cat, fecha) {
@@ -811,7 +830,7 @@ function calcular(movs, cfg, hoyF) {
       const pr = persona(m.para);
       const reg = { fecha: fmt(m.fecha), monto: m.monto, desc: m.desc, cuenta: m.cuenta };
       if (m.tipo === TIPO.MEPRESTARON) { pr.recibido += m.monto; pr.prestamos.push(reg); } else { pr.devuelto += m.monto; pr.devoluciones.push(reg); }
-      if (!cuenta_(m, m.cuenta)) return;
+      if (!m.cuenta || !cuenta_(m, m.cuenta)) return;   // sin cuenta: deuda anotada "desde antes", no mueve saldos
       mover(m.cuenta, m.tipo === TIPO.MEPRESTARON ? m.monto : -m.monto);
       anotar(m.cuenta, m.fecha);
     } else if (m.tipo === TIPO.TRANSF) {

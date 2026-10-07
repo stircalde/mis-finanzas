@@ -173,6 +173,8 @@ A.fin('mi_caso');
 - **Favores**: cada compra que te deben tiene "Registrar que me pagó esto" (abre Ingreso → Me pagaron con la
   persona y la compra elegidas) y cada persona a la que le debes, "Registrar que le pagué" (Pagar → Devolverle a…).
   "Algo que me debían desde antes" agrega una fila a ME DEBEN DESDE ANTES (acción `deudaantigua`); no mueve cuentas.
+  "Algo que le debía desde antes" (acción `ledebiaantes`) guarda un "Me prestaron" sin cuenta: sube "Les debes" y no mueve
+  ningún saldo; se paga luego con "Le pagué".
 - **Corregir movimientos** (acción `editarmov`, por ID): tocar un movimiento en cualquier lista abre el formulario
   (fecha, descripción, monto, categoría, cuenta, destino en transferencias; cuotas y valor en gastos de crédito, que se
   recalculan con las reglas del registro). Las compras a cuotas se corrigen desde su hoja de plan. No se editan los

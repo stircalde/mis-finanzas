@@ -65,4 +65,17 @@ ok(r.ok && D().totalMeDeben === tot0 + 50000, 'misma persona con otro concepto s
 ok(!P({ accion: 'deudaantigua', persona: '', concepto: 'x', monto: '1000' }).ok && !P({ accion: 'deudaantigua', persona: 'Z', concepto: '', monto: '1000' }).ok && !P({ accion: 'deudaantigua', persona: 'Z', concepto: 'x', monto: '0' }).ok, 'datos incompletos deben fallar');
 const pedros = D().meDeben.filter(x => /pedro/i.test(x.persona)).length;
 ok(pedros === 1, 'no debe haber dos "Pedro": ' + pedros);
+
+// 8) Algo que yo debía desde antes: sube "Les debes" sin mover ninguna cuenta.
+const cuentasAntes = JSON.stringify(D().cuentas.map(c => [c.nombre, c.saldo]));
+const les0 = D().totalLesDebo;
+r = P({ accion: 'ledebiaantes', persona: 'Doña Rosa', concepto: 'Préstamo de julio', monto: '80000', fecha: '2026-07-15' }); A.tic();
+const dd = D();
+ok(r.ok && dd.totalLesDebo === les0 + 80000, 'les debes debe subir $80.000: ' + JSON.stringify(r) + ' ' + (dd.totalLesDebo - les0));
+ok(JSON.stringify(dd.cuentas.map(c => [c.nombre, c.saldo])) === cuentasAntes, 'no debe mover ninguna cuenta: ' + cuentasAntes + ' vs ' + JSON.stringify(dd.cuentas.map(c => [c.nombre, c.saldo])));
+ok(dd.lesDebo.some(x => x.persona === 'Doña Rosa' && x.saldo === 80000), 'Doña Rosa debe aparecer en Les debes');
+ok(!require('../base').raro(dd), 'el dashboard no debe traer NaN/undefined: ' + require('../base').raro(dd));
+r = P({ accion: 'lepague', persona: 'Doña Rosa', monto: '30000', cuenta: plata }); A.tic();
+ok(r.ok && D().lesDebo.find(x => x.persona === 'Doña Rosa').saldo === 50000, 'pagarle una parte baja lo que le debes: ' + r.mensaje);
+ok(!P({ accion: 'ledebiaantes', persona: '', concepto: 'x', monto: '5' }).ok && !P({ accion: 'ledebiaantes', persona: 'A', concepto: 'x', monto: '0' }).ok, 'datos incompletos deben fallar');
 A.fin('editar');

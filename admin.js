@@ -390,23 +390,28 @@
   }
 
   /* =================== ALGO QUE ME DEBÍAN DESDE ANTES =================== */
-  function deudaAntigua() {
-    var d = MF.datos();
+  function deudaAntigua(sentido) {
+    var d = MF.datos(), les = sentido === 'les';
     var nombres = {};
     (d.meDeben || []).forEach(function (x) { nombres[x.persona] = 1; });
     (d.lesDebo || []).forEach(function (x) { nombres[x.persona] = 1; });
-    var st = { persona: '', concepto: '', monto: NaN };
-    hojaFormulario('Algo que me debían desde antes', 'Para lo que se te olvidó anotar al empezar. No mueve tus cuentas: solo suma a lo que te deben.', st, function (st) {
-      return campo('¿Quién te lo debe?', '<input class="in" data-k="persona" list="dl-personas" type="text" autocomplete="off" placeholder="Nombre" value="' + esc(st.persona) + '">' +
+    var st = { persona: '', concepto: '', monto: NaN, fecha: hoyISO() };
+    hojaFormulario(les ? 'Algo que le debía desde antes' : 'Algo que me debían desde antes',
+      'Para lo que se te olvidó anotar al empezar. No mueve tus cuentas: solo suma a lo que ' + (les ? 'le debes.' : 'te deben.'), st, function (st) {
+      var h = campo(les ? '¿A quién se lo debías?' : '¿Quién te lo debe?', '<input class="in" data-k="persona" list="dl-personas" type="text" autocomplete="off" placeholder="Nombre" value="' + esc(st.persona) + '">' +
           '<datalist id="dl-personas">' + Object.keys(nombres).map(function (n) { return '<option value="' + esc(n) + '">'; }).join('') + '</datalist>') +
-        fTexto(st, 'concepto', '¿Por qué te lo debe?', 'Ej: Mercado de agosto, entradas del concierto') +
-        fMonto(st, 'monto', '¿Cuánto es?', 'Cuando te pague, lo registras con 🤝 Me pagaron y se descuenta.');
+        fTexto(st, 'concepto', les ? '¿Por qué se lo debías?' : '¿Por qué te lo debe?', 'Ej: Mercado de agosto, préstamo de julio') +
+        fMonto(st, 'monto', '¿Cuánto es?', les ? 'Cuando se lo pagues, lo registras con ↩️ Le pagué y se descuenta.' : 'Cuando te pague, lo registras con 🤝 Me pagaron y se descuenta.');
+      if (les) h += campo('¿Desde cuándo?', '<input class="in" data-k="fecha" type="date" max="' + hoyISO() + '" value="' + esc(st.fecha) + '">');
+      return h;
     }, function (st) {
       var persona = String(st.persona || '').trim(), concepto = String(st.concepto || '').trim();
-      if (!persona) throw new Error('Escribe quién te lo debe.');
+      if (!persona) throw new Error(les ? 'Escribe a quién se lo debías.' : 'Escribe quién te lo debe.');
       if (!concepto) throw new Error('Escribe el concepto.');
       if (!(st.monto > 0)) throw new Error('Escribe cuánto es.');
-      return { accion: 'deudaantigua', persona: persona, concepto: concepto, monto: st.monto };
+      if (les && !st.fecha) throw new Error('Elige la fecha.');
+      return les ? { accion: 'ledebiaantes', persona: persona, concepto: concepto, monto: st.monto, fecha: st.fecha }
+        : { accion: 'deudaantigua', persona: persona, concepto: concepto, monto: st.monto };
     });
   }
 

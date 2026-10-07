@@ -748,7 +748,7 @@
       if (ctx !== m.cuenta && m.cuenta !== 'Mamá (regalo)') meta.push(esDeuda(m.cuenta) ? '<span>pagó</span>' + etiqueta(m.cuenta) : etiqueta(m.cuenta));
       signo = '+'; cls = 'in';
     } else if (m.tipo === 'Me pagaron') { if (ctx !== m.cuenta) meta.push(etiqueta(m.cuenta)); signo = '+'; cls = 'in'; extra = '<small>devolución</small>'; }
-    else if (m.tipo === 'Me prestaron') { if (ctx !== m.cuenta) meta.push(etiqueta(m.cuenta)); signo = '+'; cls = 'mv'; extra = '<small>préstamo · le debes</small>'; }
+    else if (m.tipo === 'Me prestaron') { if (m.cuenta && ctx !== m.cuenta) meta.push(etiqueta(m.cuenta)); else if (!m.cuenta) meta.push('<span>de antes · no movió tus cuentas</span>'); signo = '+'; cls = 'mv'; extra = '<small>préstamo · le debes</small>'; }
     else if (m.tipo === 'Le pagué') { if (ctx !== m.cuenta) meta.push(etiqueta(m.cuenta)); signo = '−'; cls = 'mv'; extra = '<small>le devolviste</small>'; }
     else if (m.tipo === 'Transferencia') {
       meta.push(m.cuenta ? etiqueta(m.cuenta) + '<span>→</span>' + etiqueta(m.destino) : '<span>→</span>' + etiqueta(m.destino));
@@ -1173,9 +1173,9 @@
     var sec = el('<section class="card"><div class="card-h"><h2>Te deben</h2><span class="aside">Total <b>' + pesos(d.totalMeDeben) + '</b></span></div>' +
       '<div class="owed">' + (html || '<div class="empty">Nadie te debe plata en este momento.</div>') + '</div>' +
       '<p class="hint">Toca un nombre para ver por qué te debe; desde ahí puedes registrar lo que te pague.</p>' +
-      (window.MFAdmin ? '<button type="button" class="btn" data-deuda-antigua>➕ Algo que me debían desde antes</button>' : '') + '</section>');
+      '<button type="button" class="btn" data-deuda-antigua>➕ Algo que me debían desde antes</button>' + '</section>');
     sec.addEventListener('click', function (e) {
-      if (e.target.closest('[data-deuda-antigua]')) { MFAdmin.deudaAntigua(); return; }
+      if (e.target.closest('[data-deuda-antigua]')) { if (window.MFAdmin) MFAdmin.deudaAntigua('me'); return; }
       registrarDesdeFavores(e);
     });
     sec.querySelectorAll('.owed-row[data-i]').forEach(function (r) {
@@ -1201,7 +1201,7 @@
       var det = '';
       {
         var filas = [];
-        x.prestamos.forEach(function (m) { filas.push('<div class="deb-t deb-ab"><span>' + fechaCorta(m.fecha) + ' · ' + esc(m.desc) + ' → ' + esc(m.cuenta) + '</span><b class="num">' + pesos(m.monto) + '</b></div>'); });
+        x.prestamos.forEach(function (m) { filas.push('<div class="deb-t deb-ab"><span>' + fechaCorta(m.fecha) + ' · ' + esc(m.desc) + (m.cuenta ? ' → ' + esc(m.cuenta) : ' · de antes') + '</span><b class="num">' + pesos(m.monto) + '</b></div>'); });
         var h2 = '<div class="deb">' + (filas.length ? '<div class="deb-sub">Lo que te prestó</div>' + filas.join('') : '');
         if (x.devoluciones.length) h2 += '<div class="deb-sub">Lo que le has devuelto</div>' + x.devoluciones.map(function (m) { return '<div class="deb-t deb-ab"><span>' + fechaCorta(m.fecha) + ' · desde ' + esc(m.cuenta) + '</span><b class="num">−' + pesos(m.monto) + '</b></div>'; }).join('');
         if (x.aFavor) h2 += '<div class="deb-nota">Te pagó ' + pesos(x.aFavor) + ' de más; quedó como saldo a su favor.</div>';
@@ -1214,8 +1214,12 @@
     }).join('');
     var sl = el('<section class="card"><div class="card-h"><h2>Les debes</h2><span class="aside">Total <b>' + pesos(totLes) + '</b></span></div>' +
       '<div class="owed">' + (htmlL || '<div class="empty">No le debes plata a nadie. 🙌</div>') + '</div>' +
-      '<p class="hint">Toca un nombre para ver el detalle y registrar lo que le pagues. Si alguien te presta: botón ➕ → Ingreso → 🙋 Alguien me prestó plata.</p></section>');
-    sl.addEventListener('click', registrarDesdeFavores);
+      '<p class="hint">Toca un nombre para ver el detalle y registrar lo que le pagues. Si alguien te presta: botón ➕ → Ingreso → 🙋 Alguien me prestó plata.</p>' +
+      '<button type="button" class="btn" data-deuda-antigua="les">➕ Algo que le debía desde antes</button>' + '</section>');
+    sl.addEventListener('click', function (e) {
+      if (e.target.closest('[data-deuda-antigua]')) { if (window.MFAdmin) MFAdmin.deudaAntigua('les'); return; }
+      registrarDesdeFavores(e);
+    });
     sl.querySelectorAll('.owed-row[data-l]').forEach(function (r) {
       var tocarL = function () { plegar(r.parentNode, 'les:' + lesDebo[+r.dataset.l].persona, r); };
       r.addEventListener('click', tocarL);
@@ -1578,9 +1582,9 @@
       (p.capitalApp ? 'El capital sale de la app de Addi y baja a medida que pagas las cuotas. ' : '') +
       (p.estimado ? 'Fechas estimadas con el ciclo de la tarjeta. ' : '') + 'Las cuotas se marcan pagadas a medida que registras pagos al crédito.</p>' +
       '<button type="button" class="btn" data-ir>Ver ' + esc(p.cuenta) + '</button>' +
-      (p.mov && window.MFAdmin ? '<button type="button" class="btn" data-editar-mov>✏️ Corregir esta compra</button>' : '') + '</div></div>');
+      (p.mov ? '<button type="button" class="btn" data-editar-mov>✏️ Corregir esta compra</button>' : '') + '</div></div>');
     hoja.addEventListener('click', function (e) {
-      if (e.target.closest('[data-editar-mov]')) { MFAdmin.movimiento(p.mov); return; }
+      if (e.target.closest('[data-editar-mov]')) { if (window.MFAdmin) MFAdmin.movimiento(p.mov); return; }
       if (e.target === hoja || e.target.closest('[data-cerrar]')) cerrarHoja(true);
       else if (e.target.closest('[data-ir]')) irDesdeHoja('#/credito/' + encodeURIComponent(p.cuenta));
     });
