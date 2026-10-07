@@ -45,6 +45,12 @@
       r.filas = [['Te prestó', pesos(pr)], ['Le has devuelto', pesos(dv)], ['Pendiente', pesos(sl)]];
       (p && p.prestamos || []).slice(0, 6).forEach(function (m) { r.lineas.push([m.desc || 'Préstamo', pesos(m.monto), fecha(m.fecha)]); });
     }
+    // Pagos ya hechos (más recientes primero); si se acaba de registrar uno, va de primero.
+    r.pagos = [];
+    var pagos = sentido === 'me' ? (p && p.abonos || []).slice().sort(function (a, b) { return a.fecha < b.fecha ? 1 : a.fecha > b.fecha ? -1 : 0; }) : (p && p.devoluciones || []);
+    pagos.forEach(function (m) { r.pagos.push([m.desc && sentido === 'me' ? m.desc : '', pesos(m.monto), fecha(m.fecha)]); });
+    if (ev && (ev.tipo === 'pago' || ev.tipo === 'devolucion')) r.pagos.unshift(['', pesos(ev.monto), fecha(ev.fecha)]);
+    r.tituloPagos = sentido === 'me' ? 'PAGOS QUE TE HA HECHO' : 'PAGOS QUE LE HAS HECHO';
     // Tras un pago la lista por concepto aún no está al día (la hoja se actualiza después): se omite para no mostrar saldos viejos.
     if (ev && (ev.tipo === 'pago' || ev.tipo === 'devolucion')) r.lineas = [];
     return r;
@@ -77,9 +83,9 @@
     var C = { bg: color('var(--bg)'), card: color('var(--surface)'), ink: color('var(--ink)'), ink2: color('var(--ink-2)'), muted: color('var(--muted)'),
       line: color('var(--line-strong)'), acc: color('var(--accent)'), good: color('var(--good)'), crit: color('var(--crit)'), on: color('var(--on-accent)') };
     var F = function (peso, px, fam) { return peso + ' ' + px + 'px ' + (fam || 'Figtree') + ', "Segoe UI", system-ui, sans-serif'; };
-    var lineas = r.lineas.slice(0, 6), mas = r.lineas.length - lineas.length;
+    var lineas = r.lineas.slice(0, 6), mas = r.lineas.length - lineas.length, pg = (r.pagos || []).slice(0, 6), masP = (r.pagos || []).length - pg.length;
     var ev = r.evento;
-    var alto = PAD + 96 + 36 + 70 + 150 + (ev ? 190 : 0) + 3 * 76 + (lineas.length ? 70 + lineas.length * 96 + (mas > 0 ? 56 : 0) : 0) + 70 + PAD;
+    var alto = PAD + 96 + 36 + 70 + 150 + (ev ? 190 : 0) + 3 * 76 + (lineas.length ? 70 + lineas.length * 96 + (mas > 0 ? 56 : 0) : 0) + (pg.length ? 70 + pg.length * 64 + (masP > 0 ? 56 : 0) : 0) + 70 + PAD;
     cv.width = W; cv.height = alto; ctx.textBaseline = 'alphabetic';
     ctx.fillStyle = C.bg; ctx.fillRect(0, 0, W, alto);
     var y = PAD;
@@ -118,6 +124,15 @@
         ctx.fillStyle = C.muted; ctx.font = F(500, 28); ctx.fillText(l[2] || '', PAD, y + 78); y += 96;
       });
       if (mas > 0) { ctx.fillStyle = C.muted; ctx.font = F(500, 28); ctx.fillText('y ' + mas + (mas === 1 ? ' concepto más' : ' conceptos más'), PAD, y + 28); y += 56; }
+    }
+    if (pg.length) {
+      y += 24; ctx.fillStyle = C.muted; ctx.font = F(700, 28); ctx.fillText(r.tituloPagos.split('').join('\u200A'), PAD, y + 24); y += 46;
+      pg.forEach(function (l) {
+        ctx.fillStyle = C.ink; ctx.font = F(600, 34); ctx.fillText(l[2], PAD, y + 38);
+        if (l[0]) { ctx.fillStyle = C.muted; ctx.font = F(500, 28); var d0 = l[0]; while (ctx.measureText(d0).width > W - 2 * PAD - 520 && d0.length > 4) d0 = d0.slice(0, -2); ctx.fillText(d0 === l[0] ? d0 : d0.trim() + '…', PAD + 190, y + 38); }
+        ctx.fillStyle = r.sentido === 'me' ? C.good : C.crit; ctx.font = F(700, 34); ctx.textAlign = 'right'; ctx.fillText((r.sentido === 'me' ? '+' : '−') + l[1], W - PAD, y + 38); ctx.textAlign = 'left'; y += 64;
+      });
+      if (masP > 0) { ctx.fillStyle = C.muted; ctx.font = F(500, 28); ctx.fillText('y ' + masP + (masP === 1 ? ' pago más' : ' pagos más'), PAD, y + 28); y += 56; }
     }
     ctx.fillStyle = C.muted; ctx.font = F(500, 26); ctx.fillText('Al ' + fecha(MFx.hoy()) + ' · generado con Mis finanzas', PAD, alto - PAD - 4);
     return cv;
