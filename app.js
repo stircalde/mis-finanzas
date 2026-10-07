@@ -339,9 +339,9 @@
     g.appendChild(st);
     app.appendChild(g);
     if (pr._ajustar) pr._ajustar(g, st);
-    app.appendChild(categorias(d));
     var tms = tarjetaMetas(d);
     if (tms) app.appendChild(tms);
+    app.appendChild(categorias(d));
     var g3 = el('<div class="grid"></div>');
     g3.appendChild(historico(d));
     g3.appendChild(semanal(d));
