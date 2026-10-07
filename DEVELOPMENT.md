@@ -179,6 +179,14 @@ A.fin('mi_caso');
   (fecha, descripción, monto, categoría, cuenta, destino en transferencias; cuotas y valor en gastos de crédito, que se
   recalculan con las reglas del registro). Las compras a cuotas se corrigen desde su hoja de plan. No se editan los
   históricos de extractos ("hist:") ni los ajustes de saldo. Si el registro creó otras filas (apartado, comisión), avisa.
+- **"Para quién" editable** (en `editarmov`, campo `para`, mismo formato que el registro: `Ana` | `Ana:30000; Leo:20000`):
+  solo gastos; el reparto no puede superar el monto.
+- **Eliminar movimientos** (acciones `previsualizarborrado` → `borrarmov` → `restaurarmov`): el botón 🗑️ del formulario
+  muestra primero qué filas se van (las ligadas por el mismo `rid`: apartado, comisión, aporte), cómo quedan los saldos y
+  lo que cambia con cada persona (se simula `calcular` sin esas filas), y avisa si un bolsillo no queda en $0 con un botón
+  para mover ese saldo. Luego exige escribir ELIMINAR. Nada se pierde: las filas pasan a la hoja "Eliminados" con un `lote`
+  y "Deshacer" las devuelve. Los "hist:" de extractos nunca se borran (prevalecen); los registros viejos sin `rid` se
+  borran solos (no hay forma segura de ligarlos).
 - **Registro**: la fecha elegida se conserva al cambiar de tipo de movimiento; solo "Registrar otro" vuelve a hoy.
 - **Calendario → Lo que viene / día**: un gasto fijo o suscripción abre su detalle (`MFAdmin.fijo`); un crédito
   sigue llevando al crédito.

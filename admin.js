@@ -338,21 +338,75 @@
     var hay = ops.some(function (o) { return o[0] === actual; });
     return actual && !hay ? ops.concat([[actual, actual]]) : ops;
   }
+  // "Para quién": '' (mío) · 'Ana' (todo para ella) · 'Ana:30000; Leo:20000' (compartido; el resto es tuyo).
+  function leerPara(txt) {
+    txt = String(txt || '').trim();
+    if (!txt) return { modo: 'mio', uno: '', filas: [] };
+    if (txt.indexOf(':') < 0) return { modo: 'uno', uno: txt, filas: [] };
+    var filas = txt.split(';').map(function (s) { var x = s.split(':'); return { p: String(x[0]).trim(), v: aNum(x[1]) }; }).filter(function (x) { return x.p; });
+    return { modo: 'compartido', uno: '', filas: filas };
+  }
+  function nombresConocidos() {
+    var d = MF.datos(), n = {};
+    (d.meDeben || []).forEach(function (x) { n[x.persona] = 1; });
+    (d.lesDebo || []).forEach(function (x) { n[x.persona] = 1; });
+    (d.movimientos || []).forEach(function (m) { if (m.persona) n[m.persona] = 1; if (m.para) n[m.para] = 1; });
+    return Object.keys(n);
+  }
+  function fPersona(st, k, label, ph) {
+    return campo(label, '<input class="in" data-k="' + k + '" list="dl-personas" type="text" autocomplete="off" placeholder="' + esc(ph || 'Nombre') + '" value="' + esc(st[k] || '') + '">' +
+      '<datalist id="dl-personas">' + nombresConocidos().map(function (n) { return '<option value="' + esc(n) + '">'; }).join('') + '</datalist>');
+  }
+  function paraDeEstado(st) {
+    if (st.paraModo === 'mio') return '';
+    if (st.paraModo === 'uno') { var u = String(st.paraUno || '').trim(); if (!u) throw new Error('Escribe para quién fue el gasto.'); return u; }
+    var partes = [], suma = 0, n = Number(st.paraN) || 2;
+    for (var i = 0; i < n; i++) {
+      var p = String(st['pp' + i] || '').trim(), v = st['pv' + i];
+      if (!p && !(v > 0)) continue;
+      if (!p) throw new Error('Falta el nombre de una de las personas.');
+      if (!(v > 0)) throw new Error('Escribe cuánto le toca a ' + p + '.');
+      partes.push(p + ':' + v); suma += v;
+    }
+    if (!partes.length) throw new Error('Agrega al menos una persona o elige "Para mí".');
+    if (suma > st.monto) throw new Error('Lo que repartes (' + pesos(suma) + ') supera el monto del gasto (' + pesos(st.monto) + ').');
+    return partes.join('; ');
+  }
+  function bloquePara(st) {
+    var h = fChips(st, 'paraModo', '¿Para quién fue?', [['mio', '🙋 Para mí'], ['uno', '👤 Para otra persona'], ['compartido', '👥 Compartido']]);
+    if (st.paraModo === 'uno') h += fPersona(st, 'paraUno', '¿Para quién?');
+    if (st.paraModo === 'compartido') {
+      var n = Number(st.paraN) || 2, suma = 0;
+      for (var i = 0; i < n; i++) {
+        suma += st['pv' + i] > 0 ? st['pv' + i] : 0;
+        h += '<div class="fila-2">' + fPersona(st, 'pp' + i, i ? 'Persona ' + (i + 1) : 'Persona 1') + fMonto(st, 'pv' + i, 'Le toca') + '</div>';
+      }
+      h += fChips(st, 'paraN', '', [[String(n + 1), '➕ Agregar otra persona']], 'Te quedan a ti ' + pesos(Math.max(0, (st.monto || 0) - suma)) + '. Lo que no repartas es tuyo.');
+    }
+    return h;
+  }
+
   function movimiento(id) {
     var d = MF.datos();
     var m = (d.movimientos || []).find(function (x) { return x.id === id; });
     if (!m) return;
     if (m.hist || m.tipo === 'Ajuste') {
-      MF.abrirHoja('<div class="sheet-h"><div><h2>' + esc(m.desc) + '</h2><div class="kind">' + esc(m.tipo) + '</div></div>' +
+      MF.abrirHoja('<div class="sheet-h"><div><h2>' + esc(m.desc) + '</h2><div class="kind">' + esc(m.tipo) + ' · ' + pesos(m.monto) + '</div></div>' +
         '<button class="icon-btn" type="button" data-cerrar aria-label="Cerrar">' + ICON.close + '</button></div>' +
-        '<p class="adm-nota">' + (m.hist ? 'Viene de un extracto y ya está incluido en el saldo inicial: no se edita.' : 'Un ajuste de saldo no se edita. Si quedó mal, usa "Ajustar saldo" otra vez.') + '</p>');
+        '<p class="adm-nota">' + (m.hist ? 'Viene de un extracto y prevalece: ya está incluido en el saldo inicial, así que no se edita ni se elimina.' : 'Un ajuste de saldo no se edita. Si quedó mal, puedes eliminarlo y volver a usar "Ajustar saldo".') + '</p>' +
+        (m.hist ? '' : '<button type="button" class="btn adm-btn rojo" data-eliminar>🗑️ Eliminar este ajuste</button>'), function (h) {
+          var b = h.querySelector('[data-eliminar]'); if (b) b.addEventListener('click', function () { eliminarMov(m); });
+        });
       return;
     }
     var esGasto = m.tipo === 'Gasto', esIng = m.tipo === 'Ingreso', esTr = m.tipo === 'Transferencia';
     var conCuotas = esGasto && m.cuotas > 0;
-    var orig = { fecha: m.fecha, desc: m.desc, monto: m.monto, cat: m.cat, cuenta: m.cuenta, destino: m.destino || '', cuotas: m.cuotas || '', valorCuota: m.valorCuota || '' };
-    var st = { fecha: orig.fecha, desc: orig.desc, monto: orig.monto, cat: orig.cat, cuenta: orig.cuenta, destino: orig.destino, cuotas: orig.cuotas, valorCuota: orig.valorCuota };
-    hojaFormulario('Corregir movimiento', esc(m.tipo) + ' · lo que cambies se actualiza en tu hoja y en tus saldos', st, function (st) {
+    var para0 = leerPara(m.paraRaw);
+    var orig = { fecha: m.fecha, desc: m.desc, monto: m.monto, cat: m.cat, cuenta: m.cuenta, destino: m.destino || '', cuotas: m.cuotas || '', valorCuota: m.valorCuota || '', para: String(m.paraRaw || '').trim() };
+    var st = { fecha: orig.fecha, desc: orig.desc, monto: orig.monto, cat: orig.cat, cuenta: orig.cuenta, destino: orig.destino, cuotas: orig.cuotas, valorCuota: orig.valorCuota,
+      paraModo: para0.modo, paraUno: para0.uno, paraN: String(Math.max(2, para0.filas.length)) };
+    para0.filas.forEach(function (f, i) { st['pp' + i] = f.p; st['pv' + i] = f.v; });
+    var formulario = hojaFormulario('Corregir movimiento', esc(m.tipo) + ' · lo que cambies se actualiza en tu hoja y en tus saldos', st, function (st) {
       var h = campo('Fecha', '<input class="in" data-k="fecha" type="date" max="' + hoyISO() + '" value="' + esc(st.fecha) + '">');
       h += fTexto(st, 'desc', 'Descripción', '');
       h += fMonto(st, 'monto', 'Monto');
@@ -364,6 +418,7 @@
         h += fNumero(st, 'cuotas', 'Número de cuotas', '1');
         h += fMonto(st, 'valorCuota', 'Valor de la cuota', 'Si cambias el monto o las cuotas y dejas este valor igual, se recalcula solo.');
       }
+      if (esGasto) h += bloquePara(st);
       return h;
     }, function (st) {
       var datos = { accion: 'editarmov', id: id };
@@ -384,10 +439,70 @@
         if (n !== Number(orig.cuotas)) datos.cuotas = n;
         if (st.valorCuota !== orig.valorCuota) datos.valorCuota = st.valorCuota;
       }
+      if (esGasto) { var para = paraDeEstado(st); if (para !== orig.para) datos.para = para; }
       if (Object.keys(datos).length === 2) throw new Error('No cambiaste nada.');
       return datos;
+    }, function () { return '<button type="button" class="btn adm-btn rojo" data-accion="eliminar">🗑️ Eliminar</button>'; });
+    formulario.alAccion(function (b) { if (b.dataset.accion === 'eliminar') eliminarMov(m); });
+  }
+
+  /* =================== ELIMINAR UN MOVIMIENTO (vista previa → ELIMINAR → deshacer) =================== */
+  function eliminarMov(m) {
+    function cuerpoSimple(titulo, html) {
+      return '<div class="sheet-h"><div><h2>' + esc(titulo) + '</h2></div><button class="icon-btn" type="button" data-cerrar aria-label="Cerrar">' + ICON.close + '</button></div>' + html;
+    }
+    MF.abrirHoja(cuerpoSimple('Eliminar movimiento', '<div class="state"><div class="spinner"></div>Calculando qué cambiaría…</div>'));
+    MF.enviar({ accion: 'previsualizarborrado', id: m.id }).then(function (r) {
+      if (!r.ok) throw new Error(String(r.mensaje || '').replace(/^❌\s*/, ''));
+      var x = r.extra || {};
+      var lista = (x.movimientos || []).map(function (f) { return '<div class="deb-t"><span>' + MF.fechaCorta(f.fecha) + ' · ' + esc(f.desc) + (f.cuenta ? ' · ' + esc(f.cuenta) : '') + '</span><b class="num">' + pesos(f.monto) + '</b></div>'; }).join('');
+      var efectos = (x.efectos || []).map(function (e) { return '<div class="deb-t"><span>' + esc(e.cuenta) + '</span><b class="num">' + pesos(e.antes) + ' → ' + pesos(e.despues) + '</b></div>'; }).join('');
+      var pers = (x.personas || []).map(function (e) { return '<div class="deb-t"><span>' + esc(e.persona) + (e.despues < e.antes ? ' · te debe menos' : e.despues > e.antes ? ' · te debe más' : '') + '</span><b class="num">' + pesos(e.antes) + ' → ' + pesos(e.despues) + '</b></div>'; }).join('');
+      var avisos = (x.avisos || []).map(function (a) { return '<p class="adm-nota">⚠️ ' + esc(a) + '</p>'; }).join('');
+      var html = '<p class="adm-nota">Se eliminará' + ((x.movimientos || []).length > 1 ? 'n estos ' + x.movimientos.length + ' movimientos, que nacieron del mismo registro' : ' este movimiento') + ':</p><div class="deb">' + lista + '</div>' +
+        (efectos ? '<h3 class="adm-sub">Cómo quedan tus saldos</h3><div class="deb">' + efectos + '</div>' : '') +
+        (pers ? '<h3 class="adm-sub">Personas</h3><div class="deb">' + pers + '</div>' : '') + avisos +
+        '<p class="adm-nota">No se pierde: queda guardado en la pestaña "Eliminados" de tu hoja y podrás deshacerlo.</p>' +
+        '<div class="reg-err" hidden></div><button type="button" class="btn adm-btn rojo" data-sigue>🗑️ Continuar</button>';
+      MF.abrirHoja(cuerpoSimple('Eliminar movimiento', html), function (h) {
+        h.querySelector('[data-sigue]').addEventListener('click', function () { confirmar(m, x, cuerpoSimple); });
+      });
+    }).catch(function (e) {
+      MF.abrirHoja(cuerpoSimple('Eliminar movimiento', '<p class="adm-nota">' + esc(e instanceof TypeError ? 'No pude conectarme. Revisa tu internet.' : e.message) + '</p>'));
     });
   }
+  function confirmar(m, x, cuerpoSimple) {
+    var html = '<p class="adm-nota">Última confirmación. Para eliminar <b>' + esc(m.desc) + '</b> escribe <b>ELIMINAR</b>:</p>' +
+      '<input class="in" data-palabra type="text" autocomplete="off" autocapitalize="characters" placeholder="ELIMINAR">' +
+      '<div class="reg-err" hidden></div><button type="button" class="btn adm-btn rojo" data-borrar disabled>🗑️ Eliminar definitivamente</button>';
+    MF.abrirHoja(cuerpoSimple('Confirmar eliminación', html), function (h) {
+      var inp = h.querySelector('[data-palabra]'), btn = h.querySelector('[data-borrar]'), err = h.querySelector('.reg-err');
+      inp.addEventListener('input', function () { btn.disabled = inp.value.trim() !== 'ELIMINAR'; });
+      btn.addEventListener('click', function () {
+        if (btn.disabled) return;
+        btn.disabled = true; btn.textContent = 'Eliminando…';
+        MF.enviar({ accion: 'borrarmov', id: m.id, confirmo: inp.value.trim() }).then(function (r) {
+          if (!r.ok) throw new Error(String(r.mensaje || '').replace(/^❌\s*/, ''));
+          MF.refrescar();
+          var e = r.extra || {};
+          var acc = '<div class="reg-ok-acc">' + (e.mover ? '<button class="btn" type="button" data-mover>🔁 Mover ' + pesos(e.mover.monto) + ' de ' + esc(e.mover.desde) + ' a ' + esc(e.mover.hacia) + '</button>' : '') +
+            '<button class="btn" type="button" data-deshacer>↩️ Deshacer</button><button class="btn primary" type="button" data-cerrar>Listo</button></div>';
+          MF.abrirHoja('<div class="reg-ok"><div class="reg-ok-ico">✓</div><h3>Eliminado</h3><p>' + esc(r.mensaje || '').replace(/\n/g, '<br>') + '</p>' + acc + '</div>', function (h2) {
+            var mv = h2.querySelector('[data-mover]');
+            if (mv) mv.addEventListener('click', function () { MF.cerrarHoja(); if (MF.registrarCon) MF.registrarCon('mover', { desde: e.mover.desde, hacia: e.mover.hacia, monto: e.mover.monto }); });
+            h2.querySelector('[data-deshacer]').addEventListener('click', function (ev) {
+              var b = ev.currentTarget; b.disabled = true; b.textContent = 'Restaurando…';
+              MF.enviar({ accion: 'restaurarmov', lote: e.lote }).then(function (r2) {
+                if (!r2.ok) throw new Error(String(r2.mensaje || '').replace(/^❌\s*/, ''));
+                MF.refrescar(); b.textContent = '✓ ' + String(r2.mensaje || 'Restaurado').split('\n')[0]; b.classList.add('primary');
+              }).catch(function (er) { b.disabled = false; b.textContent = '↩️ Deshacer'; err2(h2, er); });
+            });
+          });
+        }).catch(function (er) { btn.disabled = inp.value.trim() !== 'ELIMINAR'; btn.textContent = '🗑️ Eliminar definitivamente'; err.textContent = er instanceof TypeError ? 'No pude conectarme. Revisa tu internet.' : er.message; err.hidden = false; });
+      });
+    });
+  }
+  function err2(h, er) { var p = document.createElement('p'); p.className = 'adm-nota'; p.textContent = er.message; h.appendChild(p); }
 
   /* =================== ALGO QUE ME DEBÍAN DESDE ANTES =================== */
   function deudaAntigua(sentido) {

@@ -1251,3 +1251,7 @@ button.util.mini { background: none; border: 0; padding: 4px 0; border-radius: 8
 .deb-reg-todo { width: 100%; margin-top: 10px; font-weight: 600; }
 .tx-ed { cursor: pointer; border-radius: var(--r-sm); }
 .tx-ed:hover { background: var(--accent-soft); }
+.fila-2 { display: grid; gap: 10px; grid-template-columns: minmax(0, 1.2fr) minmax(0, 1fr); align-items: end; }
+.eliminar-lista { display: grid; gap: 4px; margin: 6px 0; }
+.reg-cola[hidden] { display: none; }
+.reg-cola:not(.ver) { pointer-events: none; }
