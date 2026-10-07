@@ -172,7 +172,8 @@ A.fin('mi_caso');
 - **Título de la pantalla**: el saludo ("Buenas noches, Hector") solo en Inicio; en las demás, el nombre de la sección.
 - **Favores**: cada compra que te deben tiene "Registrar que me pagó esto" (abre Ingreso → Me pagaron con la
   persona y la compra elegidas) y cada persona a la que le debes, "Registrar que le pagué" (Pagar → Devolverle a…).
-  "Algo que me debían desde antes" agrega una fila a ME DEBEN DESDE ANTES (acción `deudaantigua`); no mueve cuentas.
+  Favores → "➕ Añadir registro" ofrece "Registrar nuevo favor" (abre el registro: en Te deben, un gasto "para otra persona" con la categoría Préstamos a personas; en Les debes, "Alguien me prestó plata") y "Registrar favor antiguo" (lo de abajo). Un préstamo que haces es un gasto y su devolución un ingreso (decisión de Hector).
+  El favor antiguo "Algo que me debían desde antes" agrega una fila a ME DEBEN DESDE ANTES (acción `deudaantigua`); no mueve cuentas.
   "Algo que le debía desde antes" (acción `ledebiaantes`) guarda un "Me prestaron" sin cuenta: sube "Les debes" y no mueve
   ningún saldo; se paga luego con "Le pagué".
 - **Corregir movimientos** (acción `editarmov`, por ID): tocar un movimiento en cualquier lista abre el formulario
@@ -189,6 +190,10 @@ A.fin('mi_caso');
   borran solos (no hay forma segura de ligarlos).
 - **Ajuste de saldo en una tarjeta ya cortada**: un ajuste positivo se suma a la **siguiente** factura (como una compra
   de ese día), no al extracto ya emitido, cuyo mínimo y total fija el banco (`tests/auditoria/ajuste.js`).
+- **Límites de gasto** (Más → Límites de gasto; acción `limiteadmin`: `guardar` con `anterior`, `nombre`, `tope`, `categorias` separadas por `|`, y `quitar`):
+  escribe en las tablas "Presupuesto" y "Categoría" (columna Presupuesto) de Configuración. Una categoría cuenta en un solo
+  límite: asignarla a uno la saca del otro. Quitar un límite libera sus categorías y no toca movimientos
+  (`tests/auditoria/limites.js`).
 - **Registro**: la fecha elegida se conserva al cambiar de tipo de movimiento; solo "Registrar otro" vuelve a hoy.
 - **Calendario → Lo que viene / día**: un gasto fijo o suscripción abre su detalle (`MFAdmin.fijo`); un crédito
   sigue llevando al crédito.
@@ -207,3 +212,5 @@ A.fin('mi_caso');
 - Si puedes, el caso escrito como prueba (formato de arriba).
 
 Antes de reportar, revisa `tests/conocidos.json`: ahí están los hallazgos que ya se conocen y su estado.
+
+- **Categorías (7-oct-2026)**: Mercado, Comidas afuera, Entretenimiento y videojuegos, Ropa, Suscripciones, Gimnasio y suplementos, Transporte (gasolina + parqueadero), Servicios públicos, Hogar y enseres, Salud y farmacia, Mascotas, Regalos y detalles, Tecnología y accesorios, Préstamos a personas, Otros. "Compras en línea" ya no existe (es dónde, no qué); lo viejo no se reclasifica y conserva su nombre.

@@ -9838,24 +9838,28 @@
    "gastos": 8707261,
    "categorias": [
     [
-     "Otros",
-     2627400
-    ],
-    [
-     "Gasolina",
-     1588000
+     "Transporte",
+     2053100
     ],
     [
      "Entretenimiento y videojuegos",
      1387500
     ],
     [
-     "Comida rápida y restaurantes",
+     "Salud y farmacia",
+     1369400
+    ],
+    [
+     "Comidas afuera",
      1215600
     ],
     [
      "Mercado",
      1123200
+    ],
+    [
+     "Otros",
+     792900
     ],
     [
      "Ropa",
@@ -9870,7 +9874,7 @@
      120000
     ],
     [
-     "Servicios y hogar",
+     "Servicios públicos",
      107000
     ],
     [
@@ -9903,20 +9907,20 @@
      2191200
     ],
     [
-     "Otros",
-     1733700
+     "Comidas afuera",
+     1425400
     ],
     [
-     "Comida rápida y restaurantes",
-     1425400
+     "Otros",
+     1233300
     ],
     [
      "Entretenimiento y videojuegos",
      1208000
     ],
     [
-     "Gasolina",
-     962400
+     "Transporte",
+     1146500
     ],
     [
      "Ropa",
@@ -9925,6 +9929,10 @@
     [
      "Intereses y cargos",
      338907
+    ],
+    [
+     "Salud y farmacia",
+     316300
     ],
     [
      "Gimnasio y suplementos",
@@ -9956,28 +9964,32 @@
      2454400
     ],
     [
-     "Otros",
-     1783700
-    ],
-    [
      "Entretenimiento y videojuegos",
      1274900
     ],
     [
-     "Comida rápida y restaurantes",
+     "Comidas afuera",
      1050000
+    ],
+    [
+     "Salud y farmacia",
+     966200
+    ],
+    [
+     "Otros",
+     813400
     ],
     [
      "Ropa",
      679000
     ],
     [
-     "Servicios y hogar",
+     "Servicios públicos",
      321000
     ],
     [
-     "Gasolina",
-     198400
+     "Transporte",
+     202500
     ],
     [
      "Intereses y cargos",
@@ -10021,20 +10033,24 @@
      1746000
     ],
     [
-     "Otros",
-     1375700
+     "Comidas afuera",
+     1043000
     ],
     [
-     "Comida rápida y restaurantes",
-     1043000
+     "Transporte",
+     767400
+    ],
+    [
+     "Otros",
+     478600
     ],
     [
      "Ropa",
      455700
     ],
     [
-     "Gasolina",
-     322100
+     "Salud y farmacia",
+     451800
     ],
     [
      "Intereses y cargos",
@@ -10070,16 +10086,12 @@
    "gastos": 661800,
    "categorias": [
     [
+     "Transporte",
+     395700
+    ],
+    [
      "Mercado",
      266100
-    ],
-    [
-     "Gasolina",
-     220300
-    ],
-    [
-     "Otros",
-     175400
     ]
    ],
    "presupuestos": [

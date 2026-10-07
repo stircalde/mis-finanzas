@@ -545,7 +545,7 @@
         '<div class="meter big ' + cls + '" role="img" aria-label="' + pct + ' % del presupuesto"><i style="width:' + Math.min(100, pct) + '%"></i></div>' +
         '<div class="rows">' + filas + '</div></div>';
     }).join('<hr style="border:0;border-top:1px solid var(--line);margin:6px 0">');
-    return el('<section class="card o3">' + (html || '<div class="empty">Define un tope en la pestaña Configuración.</div>') + '</section>');
+    return el('<section class="card o3">' + (html || '<div class="empty">Aún no tienes límites. Créalos en Más → Límites de gasto.</div>') + '</section>');
   }
 
   function ultimoMovimiento(d) {
@@ -996,6 +996,7 @@
       '<section class="card"><div class="card-h"><h2>Configuración</h2></div><div class="mas-lista">' +
       fila('cuentas', '💳', 'Mis cuentas y tarjetas', 'Agregar, editar, imagen de la tarjeta, archivar') +
       fila('fijos', '📌', 'Gastos fijos y suscripciones', 'Agregar, pagar, cancelar') +
+      fila('limites', '🎯', 'Límites de gasto', resumenLimites(d)) +
       fila('apariencia', '🎨', 'Apariencia', resumenApariencia()) +
       '</div></section>' +
       '<p class="hint mas-pie">Próximamente aquí: metas de ahorro e inversiones.</p></div>');
@@ -1005,6 +1006,7 @@
         if (k === 'calendario' || k === 'medeben') ir('#/' + k);
         else if (k === 'cuentas' && window.MFAdmin) MFAdmin.cuentas();
         else if (k === 'fijos' && window.MFAdmin) MFAdmin.fijos();
+        else if (k === 'limites' && window.MFAdmin) MFAdmin.limites();
         else if (k === 'apariencia') abrirApariencia();
       });
     });
@@ -1173,9 +1175,9 @@
     var sec = el('<section class="card"><div class="card-h"><h2>Te deben</h2><span class="aside">Total <b>' + pesos(d.totalMeDeben) + '</b></span></div>' +
       '<div class="owed">' + (html || '<div class="empty">Nadie te debe plata en este momento.</div>') + '</div>' +
       '<p class="hint">Toca un nombre para ver por qué te debe; desde ahí puedes registrar lo que te pague.</p>' +
-      '<button type="button" class="btn" data-deuda-antigua>➕ Algo que me debían desde antes</button>' + '</section>');
+      '<button type="button" class="btn" data-deuda-antigua>➕ Añadir registro</button>' + '</section>');
     sec.addEventListener('click', function (e) {
-      if (e.target.closest('[data-deuda-antigua]')) { if (window.MFAdmin) MFAdmin.deudaAntigua('me'); return; }
+      if (e.target.closest('[data-deuda-antigua]')) { if (window.MFAdmin) MFAdmin.anadirRegistro('me'); return; }
       registrarDesdeFavores(e);
     });
     sec.querySelectorAll('.owed-row[data-i]').forEach(function (r) {
@@ -1214,10 +1216,10 @@
     }).join('');
     var sl = el('<section class="card"><div class="card-h"><h2>Les debes</h2><span class="aside">Total <b>' + pesos(totLes) + '</b></span></div>' +
       '<div class="owed">' + (htmlL || '<div class="empty">No le debes plata a nadie. 🙌</div>') + '</div>' +
-      '<p class="hint">Toca un nombre para ver el detalle y registrar lo que le pagues. Si alguien te presta: botón ➕ → Ingreso → 🙋 Alguien me prestó plata.</p>' +
-      '<button type="button" class="btn" data-deuda-antigua="les">➕ Algo que le debía desde antes</button>' + '</section>');
+      '<p class="hint">Toca un nombre para ver el detalle y registrar lo que le pagues. Si alguien te presta, usa ➕ Añadir registro.</p>' +
+      '<button type="button" class="btn" data-deuda-antigua="les">➕ Añadir registro</button>' + '</section>');
     sl.addEventListener('click', function (e) {
-      if (e.target.closest('[data-deuda-antigua]')) { if (window.MFAdmin) MFAdmin.deudaAntigua('les'); return; }
+      if (e.target.closest('[data-deuda-antigua]')) { if (window.MFAdmin) MFAdmin.anadirRegistro('les'); return; }
       registrarDesdeFavores(e);
     });
     sl.querySelectorAll('.owed-row[data-l]').forEach(function (r) {
@@ -1443,6 +1445,10 @@
     if (AP.oled) h.setAttribute('data-oled', ''); else h.removeAttribute('data-oled');
     var m = document.querySelector('meta[name="theme-color"]');
     if (m) m.setAttribute('content', colorPlano(getComputedStyle(h).backgroundColor) || (claro ? '#f3f5fb' : '#050912'));
+  }
+  function resumenLimites(d) {
+    var l = d.presupuestos || [];
+    return l.length ? l.length + (l.length === 1 ? ' límite' : ' límites') + ' · ' + l.map(function (b) { return esc(b.grupo); }).join(', ') : 'Crea un tope mensual por categorías';
   }
   function resumenApariencia() {
     var col = AP_COLORES.filter(function (c) { return c[0] === AP.color; })[0] || AP_COLORES[0];

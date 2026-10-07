@@ -42,7 +42,7 @@ ok(!d.movimientos.some(m => m.desc === 'Gimnasio' && m.fecha === '2026-10-18'), 
 A.reloj(2026, 10, 18, 9); d = D(); ok(d.movimientos.filter(m => m.desc === 'Gimnasio' && m.fecha === '2026-11-18').length === 1, 'Gimnasio no se cobró en noviembre tras reactivar');
 // 6) Fijo con día 31: meses de 30 y febrero
 A.reloj(2026, 10, 18, 10);
-P({ accion: 'fijoadmin', op: 'guardar', nombre: 'Arriendo', valor: '800000', frecuencia: 'Mensual', dia: '31', categoria: 'Servicios y hogar', cuenta: 'Nequi', cobro: 'Automático' });
+P({ accion: 'fijoadmin', op: 'guardar', nombre: 'Arriendo', valor: '800000', frecuencia: 'Mensual', dia: '31', categoria: 'Servicios públicos', cuenta: 'Nequi', cobro: 'Automático' });
 const fechasArr = [];
 for (let m = 10; m <= 14; m++) { A.reloj(2026, m + 1, 1, 8); fechasArr.push(...D().movimientos.filter(x => x.desc === 'Arriendo').map(x => x.fecha)); }
 const unicas = [...new Set(fechasArr)].sort(); console.log('Arriendo día 31 →', unicas.join(', '));

@@ -84,6 +84,7 @@ function doPost(e) {
       case 'ledebiaantes': mensaje = agregarLeDebiaAntes(p, cfg); break;
       case 'fijoadmin': mensaje = administrarFijo(p, cfg); break;
       case 'cuentaadmin': mensaje = administrarCuenta(p, cfg); break;
+      case 'limiteadmin': mensaje = administrarLimite(p, cfg); break;
       default: throw new Error('Acción desconocida: ' + p.accion);
     }
     guardarPendientes_();
@@ -628,15 +629,19 @@ function palabrasClave(t) { return normalizarTexto(t).split(' ').filter(function
 /** Diccionario base (palabra → categoría), solo con las categorías que existen en tu hoja. */
 function diccionarioCategorias(cfg) {
   const base = [
-    ['\\b(temu|shein|amazon|aliexpress|mercado ?libre)\\b', 'Compras en línea'],
-    ['\\b(terpel|eds|gasolina|primax|biomax|texaco|combustible|tanqueo)\\b', 'Gasolina'],
+    ['\\b(terpel|eds|gasolina|primax|biomax|texaco|combustible|tanqueo|parqueadero|peaje|peajes|uber|didi|cabify|taxi)\\b', 'Transporte'],
     ['\\b(d1|ara|exito|metro|makro|jumbo|carulla|olimpica|isimo|mercado|supermercado|fruver|carniceria|panaderia|huevos|leche)\\b', 'Mercado'],
-    ['\\b(rappi|qbano|mcdonalds?|automac|sushi|pizza|hamburguesa|almuerzo|desayuno|cena|restaurante|cafe|kfc|frisby|corral|comida|helado|empanada)\\b', 'Comida rápida y restaurantes'],
-    ['\\b(koaj|movies|calzatodo|arturo calle|zara|ropa|zapatos|tenis|camisa|camiseta|pantalon|jean|saraluz)\\b', 'Ropa'],
+    ['\\b(rappi|qbano|mcdonalds?|automac|sushi|pizza|hamburguesa|almuerzo|desayuno|cena|restaurante|cafe|kfc|frisby|corral|comida|helado|empanada|alitas|salchipapa|pollo)\\b', 'Comidas afuera'],
+    ['\\b(koaj|movies|calzatodo|arturo calle|zara|ropa|zapatos|tenis|camisa|camiseta|pantalon|jean|saraluz|shein)\\b', 'Ropa'],
     ['\\b(smart ?fit|gimnasio|gym|proteina|creatina|suplementos?|whey)\\b', 'Gimnasio y suplementos'],
     ['\\b(youtube|netflix|spotify|google one|claude|disney|hbo|max|prime video|icloud|hevy|chatgpt|suscripcion)\\b', 'Suscripciones'],
     ['\\b(cine|cinemark|procinal|steam|playstation|xbox|nintendo|videojuegos?|juego|concierto|boleta|boletas)\\b', 'Entretenimiento y videojuegos'],
-    ['\\b(luz|agua|gas|internet|movistar|claro|tigo|arriendo|servicios|epm|centrales electricas|aseo)\\b', 'Servicios y hogar']
+    ['\\b(luz|agua|gas|internet|movistar|claro|tigo|arriendo|servicios|epm|centrales electricas|aseo)\\b', 'Servicios públicos'],
+    ['\\b(drogueria|farmacia|farmatel|cruz verde|locatel|medicamentos?|medico|cita medica|odontologo|examenes?)\\b', 'Salud y farmacia'],
+    ['\\b(perras?|perros?|gatos?|mascotas?|veterinari[ao]|concentrado|petco)\\b', 'Mascotas'],
+    ['\\b(regalo|regalos|detalle|cumpleanos|obsequio)\\b', 'Regalos y detalles'],
+    ['\\b(homecenter|dollarcity|colchon|edredon|almohadas?|sillas?|muebles?|cortinas?|ikea|easy|decoracion)\\b', 'Hogar y enseres'],
+    ['\\b(amazon|temu|aliexpress|mercado ?libre|cargador|audifonos|celular|computador|teclado|mouse|cable|accesorios?)\\b', 'Tecnología y accesorios']
   ];
   const hay = {};
   cfg.categorias.forEach(function (c) { hay[c.nombre] = true; });
@@ -1915,6 +1920,74 @@ function guardarFilaConfig(encabezado, clave, valores, crear) {
   CACHE_CFG_ = null;
 }
 
+/**
+ * Límites de gasto (presupuestos mensuales): un nombre, un tope y las categorías que cuentan para él.
+ * Una categoría solo cuenta en un límite: asignarla a este la saca del otro. Quitar un límite no borra categorías ni movimientos.
+ * guardar: anterior (nombre actual, vacío si es nuevo), nombre, tope, categorias ("Mercado|Ropa"). quitar: nombre.
+ */
+function administrarLimite(p, cfg) {
+  const op = limpiar(p.op) || 'guardar';
+  const h = hojaConfig();
+  const grupos = Object.keys(cfg.presupuestos);
+  const catsDe = function (g) { return cfg.categorias.filter(function (c) { return c.grupo === g; }).map(function (c) { return c.nombre; }); };
+  if (op === 'quitar') {
+    const nombre = limpiar(p.nombre);
+    if (grupos.indexOf(nombre) < 0) throw new Error('El límite "' + nombre + '" no existe.');
+    catsDe(nombre).forEach(function (c) { guardarFilaConfig('Categoría', c, { 'Presupuesto': '' }, false); });
+    // La fila del límite se elimina al final: así no se corre ninguna fila que aún falte por editar.
+    const v = h.getDataRange().getValues();
+    const i = filaEncabezado(v, 'Presupuesto');
+    for (let j = i + 1; j < v.length && String(v[j][0]).trim().indexOf('▸') !== 0; j++) {
+      if (String(v[j][0]).trim() === nombre) { h.deleteRow(j + 1); break; }
+    }
+    CACHE_CFG_ = null;
+    return '🗂️ Quité el límite "' + nombre + '". Las categorías y tus movimientos siguen igual.';
+  }
+  if (op !== 'guardar') throw new Error('Acción de límite desconocida.');
+  const anterior = limpiar(p.anterior);
+  const nombre = limpiar(p.nombre);
+  if (!nombre) throw new Error('Escribe el nombre del límite.');
+  if (nombre.length > 40) throw new Error('El nombre es muy largo (máximo 40 letras).');
+  if (anterior && grupos.indexOf(anterior) < 0) throw new Error('El límite "' + anterior + '" ya no existe.');
+  if (nombre !== anterior) {
+    nombreValido(nombre);
+    const igual = grupos.find(function (g) { return normalizarTexto(g) === normalizarTexto(nombre); });
+    if (igual) throw new Error('Ya tienes un límite llamado "' + igual + '".');
+  }
+  const tope = aNumero(p.tope);
+  if (!(tope > 0)) throw new Error('El tope mensual no es válido.');
+  const elegidas = String(p.categorias || '').split('|').map(limpiar).filter(String);
+  if (!elegidas.length) throw new Error('Elige al menos una categoría para este límite.');
+  elegidas.forEach(function (c) { if (!cfg.categorias.some(function (x) { return x.nombre === c; })) throw new Error('La categoría "' + c + '" no existe.'); });
+  const movidas = [];
+  // 1) Categorías: las elegidas pasan a este límite; las que tenía y ya no elige, quedan sin límite.
+  cfg.categorias.forEach(function (c) {
+    const eligio = elegidas.indexOf(c.nombre) >= 0;
+    const era = anterior && c.grupo === anterior;
+    if (eligio && c.grupo !== nombre) {
+      if (c.grupo && c.grupo !== anterior) movidas.push(c.nombre + ' (antes en "' + c.grupo + '")');
+      guardarFilaConfig('Categoría', c.nombre, { 'Presupuesto': nombre }, false);
+    } else if (!eligio && era) guardarFilaConfig('Categoría', c.nombre, { 'Presupuesto': '' }, false);
+  });
+  // 2) El límite mismo (si cambia de nombre, se renombra su fila).
+  if (anterior && nombre !== anterior) {
+    const v = h.getDataRange().getValues();
+    const i = filaEncabezado(v, 'Presupuesto');
+    for (let j = i + 1; j < v.length && String(v[j][0]).trim().indexOf('▸') !== 0; j++) {
+      if (String(v[j][0]).trim() === anterior) { h.getRange(j + 1, 1).setValue(nombre); break; }
+    }
+  }
+  guardarFilaConfig('Presupuesto', nombre, { 'Tope mensual': tope }, !anterior);
+  try {
+    const v2 = h.getDataRange().getValues(), i2 = filaEncabezado(v2, 'Presupuesto');
+    for (let j = i2 + 1; j < v2.length && String(v2[j][0]).trim().indexOf('▸') !== 0; j++)
+      if (String(v2[j][0]).trim() === nombre) { h.getRange(j + 1, 2).setNumberFormat('$#,##0'); break; }
+  } catch (e) { /* cosmético */ }
+  CACHE_CFG_ = null;
+  return (anterior ? '✏️ Actualicé ' : '🎯 Creé ') + 'el límite "' + nombre + '": ' + pesos(tope) + ' al mes · ' + elegidas.join(', ') +
+    (movidas.length ? '\nPasaron a este límite: ' + movidas.join(', ') + '.' : '');
+}
+
 function administrarFijo(p, cfg) {
   const op = limpiar(p.op);
   const nombre = limpiar(p.nombre);
@@ -2418,7 +2491,7 @@ function migrarVersionAnterior(mov) {
   const ancho = vieja.getLastColumn();
   const enc = vieja.getRange(1, 1, 1, ancho).getValues()[0].map(String);
   const col = function (nombre) { return enc.indexOf(nombre); };
-  const mapaCat = { 'Ropa y compras en línea': 'Compras en línea', 'Deudas': 'Otros', 'Salud': 'Otros' };
+  const mapaCat = { 'Ropa y compras en línea': 'Tecnología y accesorios', 'Deudas': 'Otros', 'Salud': 'Otros' };
   const filas = vieja.getRange(2, 1, n, ancho).getValues()
     .filter(function (r) { return r[0] instanceof Date && Number(r[col('Monto')]) > 0; })
     .map(function (r) {
@@ -2549,8 +2622,8 @@ function hojaConfig() {
     fj('Google One', 19900, 'Mensual', 22, '', 'Suscripciones', 'TC Davibank', 'Automático', '', '', '', 'one.google.com', '#4285F4', '#FFFFFF'),
     fj('Spotify', 300000, 'Anual', '', '2027-07-22', 'Suscripciones', 'TC Davibank', 'Automático', '', '', '', 'spotify.com', '#1DB954', '#FFFFFF'),
     fj('Streaming familiar', 42000, 'Mensual', 9, '', 'Suscripciones', 'TC Davibank', 'Automático', 'Ana, Carlos, Luisa', 7000, '', 'netflix.com', '#E50914', '#FFFFFF'),
-    fj('Internet y TV', 107000, 'Mensual', 21, '', 'Servicios y hogar', 'Nequi', 'Manual', '', '', '', '', '#019DF4', '#FFFFFF'),
-    fj('Plan celular familiar', 32000, 'Mensual', 26, '', 'Servicios y hogar', 'Nequi', 'Manual', '', '', '', '', '#019DF4', '#FFFFFF'),
+    fj('Internet y TV', 107000, 'Mensual', 21, '', 'Servicios públicos', 'Nequi', 'Manual', '', '', '', '', '#019DF4', '#FFFFFF'),
+    fj('Plan celular familiar', 32000, 'Mensual', 26, '', 'Servicios públicos', 'Nequi', 'Manual', '', '', '', '', '#019DF4', '#FFFFFF'),
     fj('Suscripción de apps', 66000, 'Mensual', 28, '', 'Suscripciones', 'TC Nubank', 'Automático', '', '', '', '', '#D97757', '#FFFFFF'),
     fj('Prueba gratis', 24490, 'Una vez', '', '2026-10-20', 'Suscripciones', 'Nequi', 'Manual', '', '', 'Cancelar', '', '#FF441F', '#FFFFFF'),
     fj('Cuota de manejo Nubank', 12000, 'Mensual', 1, '', CAT_INTERESES, 'TC Nubank', 'Automático', '', '', '', 'nu.com.co', '#820AD1', '#FFFFFF'),
@@ -2569,14 +2642,19 @@ function hojaConfig() {
   seccion('CATEGORÍAS DE GASTO', 'La columna "Presupuesto" agrupa categorías bajo un tope mensual (tabla siguiente).');
   tabla(['Categoría', 'Emoji', 'Presupuesto'], [
     ['Mercado', '🛒', ''],
-    ['Comida rápida y restaurantes', '🍔', 'Ocio'],
+    ['Comidas afuera', '🍔', 'Ocio'],
     ['Entretenimiento y videojuegos', '🎮', 'Ocio'],
-    ['Compras en línea', '🛍️', 'Ocio'],
     ['Ropa', '👕', ''],
     ['Suscripciones', '📺', ''],
     ['Gimnasio y suplementos', '💪', ''],
-    ['Gasolina', '⛽', ''],
-    ['Servicios y hogar', '💡', ''],
+    ['Transporte', '🚗', ''],
+    ['Servicios públicos', '💡', ''],
+    ['Hogar y enseres', '🏠', ''],
+    ['Salud y farmacia', '💊', ''],
+    ['Mascotas', '🐕', ''],
+    ['Regalos y detalles', '🎁', ''],
+    ['Tecnología y accesorios', '💻', ''],
+    ['Préstamos a personas', '🤝', ''],
     ['Otros', '🔖', '']
   ], 5);
 

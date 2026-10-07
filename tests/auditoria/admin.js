@@ -46,7 +46,7 @@ console.log('crear "NEQUI":', r.mensaje);
 ok(!r.ok, 'el backend acepta "NEQUI" como cuenta distinta de "Nequi"');
 // 5) Fijo con ":" en el nombre (el id usa ":" como separador)
 A.fresco(); A.reloj(2026, 8, 30, 11);
-P({ accion: 'fijoadmin', op: 'guardar', nombre: 'Plan: datos', valor: '30000', frecuencia: 'Mensual', dia: '2', categoria: 'Servicios y hogar', cuenta: 'Nequi', cobro: 'Automático' }); A.tic();
+P({ accion: 'fijoadmin', op: 'guardar', nombre: 'Plan: datos', valor: '30000', frecuencia: 'Mensual', dia: '2', categoria: 'Servicios públicos', cuenta: 'Nequi', cobro: 'Automático' }); A.tic();
 A.reloj(2026, 9, 3, 9); d = D(); const mv = d.movimientos.find(m => m.desc === 'Plan: datos');
 ok(mv && mv.fijo === 'Plan: datos', 'fijo con ":" en el nombre no queda enlazado en el historial (fijo="' + (mv && mv.fijo) + '")');
 // 6) Nombre de cuenta que empieza por "▸" (marca de sección)

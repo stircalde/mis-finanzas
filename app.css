@@ -1255,3 +1255,16 @@ button.util.mini { background: none; border: 0; padding: 4px 0; border-radius: 8
 .eliminar-lista { display: grid; gap: 4px; margin: 6px 0; }
 .reg-cola[hidden] { display: none; }
 .reg-cola:not(.ver) { pointer-events: none; }
+/* Límites de gasto */
+.adm-item.lim { grid-template-columns: minmax(0, 1fr) auto auto; }
+.adm-item.lim .adm-info { gap: 4px; }
+.adm-item.lim .adm-info b { white-space: normal; }
+.adm-item.lim .adm-info > span { font-size: .78rem; color: var(--muted); line-height: 1.35; }
+.adm-item.lim .meter { margin-top: 4px; }
+.adm-v { text-align: right; font-weight: 600; }
+.adm-v small { display: block; font-size: .72rem; font-weight: 400; color: var(--muted); }
+.cat-lista .cat-op { display: inline-flex; flex-direction: column; align-items: flex-start; gap: 1px; border-radius: 14px; }
+.cat-lista .cat-op small { font-size: .7rem; font-weight: 500; opacity: .8; }
+.adm-item.lim .adm-info > span { white-space: normal; overflow: visible; text-overflow: clip; }
+.adm-btn small { display: block; margin-top: 3px; font: 400 .78rem var(--font-body); color: var(--muted); line-height: 1.35; }
+.adm-lista .adm-btn { text-align: left; }
