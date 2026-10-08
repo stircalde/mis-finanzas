@@ -8,8 +8,8 @@ android {
         minSdkVersion rootProject.ext.minSdkVersion
         targetSdkVersion rootProject.ext.targetSdkVersion
         // En GitHub Actions el número de compilación sube solo, así cada APK nuevo instala encima del anterior.
-        versionCode (System.getenv("MF_VERSION_CODE") ?: "1").toInteger()
-        versionName System.getenv("MF_VERSION_NAME") ?: "1.0"
+        versionCode = Integer.parseInt(System.getenv("MF_VERSION_CODE") ?: "1")
+        versionName = System.getenv("MF_VERSION_NAME") ?: "1.0"
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
         aaptOptions {
              // Files and dirs to omit from the packaged assets dir, modified to accommodate modern web apps.
