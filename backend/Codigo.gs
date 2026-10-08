@@ -3182,11 +3182,24 @@ const AV = (function () {
     if (SALE.indexOf(m.tipo) < 0) return false;            // gasto, salida o retiro
     return cuentaOk(m.cuenta);
   }
+  /* ¿El movimiento m puede ser el mismo hecho que avisó el banco a la hora ev.t?
+     - Debe ser del mismo día del aviso (o el día vecino solo si lo registraste a menos de 3 horas del aviso, por la medianoche).
+     - Si lo registraste a mano MÁS de 2 horas ANTES de que llegara el aviso, es otro movimiento (el banco avisa al instante).
+     - Si lo registraste después del aviso (mismo día), sí puede ser: lo anotaste más tarde.
+     - Los movimientos sin hora de registro (extractos "hist:") solo se comparan por día (±1). */
+  function mismaHora(ev, m) {
+    const dia = 86400000, H = 3600000;
+    const dias = Math.round((soloFecha(new Date(ev.t)).getTime() - m.fecha.getTime()) / dia);
+    if (!(m.registrado instanceof Date)) return Math.abs(dias) <= 1;
+    const antes = ev.t - m.registrado.getTime();            // > 0: lo registraste antes del aviso
+    if (antes > 2 * H) return false;
+    if (dias === 0) return true;
+    return Math.abs(dias) === 1 && Math.abs(antes) <= 3 * H;
+  }
   function yaRegistrado(ev, movimientos, libre) {
-    const dia = 86400000;
     return movimientos.find(function (m) {
       if (Math.abs(m.monto - ev.monto) > 0.5) return false;
-      if (Math.abs(m.fecha.getTime() + 12 * 3600000 - ev.t) > 1.6 * dia) return false;
+      if (!mismaHora(ev, m)) return false;
       if (!compatible(ev, m)) return false;
       return !libre || libre(m);
     }) || null;
