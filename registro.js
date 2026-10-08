@@ -130,7 +130,6 @@
     credito: ['monto', 'origen', 'mama', 'exceso', '_montoAuto'],
     origen: ['mama'],
     fijo: ['monto', 'cuenta', 'mama', '_montoAuto'],
-    desde: ['hacia'],
     para: ['paraQuien', 'paraNueva', 'fechaPago'],
     paraQuien: ['paraNueva']
   };
@@ -458,6 +457,7 @@
     var antes = st[k];
     st[k] = v;
     if (antes !== v) (DEPENDE[k] || []).forEach(function (x) { delete st[x]; });
+    if (k === 'desde' && st.hacia === v) delete st.hacia;   // el destino solo se borra si quedó igual al origen
     if (k === 'tipoIng' || k === 'credito' || k === 'fijo') st._montoAuto = undefined;
     if (k === 'aplica' || k === 'compra') st._montoAuto = undefined;
     if (k === 'cat') st._catManual = true;
