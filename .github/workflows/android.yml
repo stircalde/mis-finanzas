@@ -1,5 +1,6 @@
 # Compila el APK de Android (Capacitor) y lo publica en Releases.
-# Necesita el secreto MF_FIRMA (línea 1: contraseña; línea 2: llave en base64). Nunca va en el repo.
+# Necesita el secreto MF_FIRMA (contraseña de 32 caracteres + llave en base64). Nunca va en el repo.
+# Si falla, deja el final del registro como comentario en el commit (para revisarlo sin abrir Actions).
 name: APK Android
 
 on:
@@ -16,57 +17,25 @@ permissions:
 jobs:
   apk:
     runs-on: ubuntu-latest
-    defaults:
-      run:
-        working-directory: android-app
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
 
       - uses: actions/setup-java@v5
         with:
           distribution: temurin
           java-version: '21'
 
-      - uses: actions/setup-node@v4
+      - uses: actions/setup-node@v5
         with:
           node-version: '22'
 
-      - name: Instalar Capacitor
-        run: npm ci --no-audit --no-fund
-
-      - name: Sincronizar Android
-        run: npx cap sync android
-
-      - name: Preparar la llave de firma
+      - name: Compilar APK firmado
         env:
           MF_FIRMA: ${{ secrets.MF_FIRMA }}
-        run: |
-          if [ -z "$MF_FIRMA" ]; then
-            echo "::error::Falta el secreto MF_FIRMA (Settings > Secrets and variables > Actions)."; exit 1
-          fi
-          # Tolerante a cómo se pegó: se quitan espacios y saltos; los primeros 32 caracteres son la contraseña y el resto la llave.
-          TODO=$(printf '%s' "$MF_FIRMA" | tr -d ' \r\n\t')
-          echo "Largo del secreto sin espacios: ${#TODO} (esperado 5796)"
-          printf '%s' "${TODO:0:32}" > "$RUNNER_TEMP/pass"
-          if ! printf '%s' "${TODO:32}" | base64 -d > "$RUNNER_TEMP/mf.jks" 2>"$RUNNER_TEMP/b64err"; then
-            echo "::error::La llave del secreto MF_FIRMA no es base64 válido (largo ${#TODO}). Vuelve a pegar todo el archivo."; cat "$RUNNER_TEMP/b64err"; exit 1
-          fi
-          echo "Llave: $(stat -c %s "$RUNNER_TEMP/mf.jks") bytes (esperado 4322)"
-          echo "MF_KEYSTORE=$RUNNER_TEMP/mf.jks" >> "$GITHUB_ENV"
-          echo "MF_KEYSTORE_PASSWORD=$(cat "$RUNNER_TEMP/pass")" >> "$GITHUB_ENV"
-          echo "MF_KEY_PASSWORD=$(cat "$RUNNER_TEMP/pass")" >> "$GITHUB_ENV"
-          echo "MF_KEY_ALIAS=misfinanzas" >> "$GITHUB_ENV"
-          echo "::add-mask::$(cat "$RUNNER_TEMP/pass")"
-
-      - name: Compilar APK firmado
-        working-directory: android-app/android
-        env:
           MF_VERSION_CODE: ${{ github.run_number }}
           MF_VERSION_NAME: 1.${{ github.run_number }}
-        run: |
-          chmod +x gradlew
-          ./gradlew --no-daemon assembleRelease
-          cp app/build/outputs/apk/release/app-release.apk "$RUNNER_TEMP/mis-finanzas-1.${{ github.run_number }}.apk"
+        run: bash android-app/compilar.sh 2>&1 | tee "$RUNNER_TEMP/log.txt"
+        shell: bash -o pipefail {0}
 
       - name: Publicar en Releases
         env:
@@ -75,3 +44,11 @@ jobs:
           gh release create "android-1.${{ github.run_number }}" "$RUNNER_TEMP/mis-finanzas-1.${{ github.run_number }}.apk" \
             --title "Mis finanzas Android 1.${{ github.run_number }}" \
             --notes "APK para instalar en el celular. Commit ${GITHUB_SHA::7}." --latest
+
+      - name: Dejar el error en el commit
+        if: failure()
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          { echo "❌ Falló la compilación del APK (run ${{ github.run_number }}). Últimas líneas:"; echo '```'; tail -n 60 "$RUNNER_TEMP/log.txt" 2>/dev/null || echo "(sin registro)"; echo '```'; } > "$RUNNER_TEMP/c.md"
+          gh api "repos/${{ github.repository }}/commits/${{ github.sha }}/comments" -F body=@"$RUNNER_TEMP/c.md"
