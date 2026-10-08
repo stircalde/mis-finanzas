@@ -3280,9 +3280,10 @@ function registrarAviso(p, cfg) {
   });
   if (par) {
     const salida = sentido === 'salida' ? par : nuevo, entrada = sentido === 'salida' ? nuevo : par;
+    const desde = { t: salida.t, banco: salida.banco, cuenta: salida.cuenta }, hacia = entrada.cuenta;   // se copian antes de tocar `par` (puede ser la entrada)
     par.tipo = 'transferencia';
-    par.t = salida.t;
-    par.banco = salida.banco; par.cuenta = salida.cuenta; par.destino = entrada.cuenta; par.quien = 'Tú';
+    par.t = desde.t;
+    par.banco = desde.banco; par.cuenta = desde.cuenta; par.destino = hacia; par.quien = 'Tú';
     par.n++;
     if (par.fuentes.indexOf(ev.fuente) < 0) par.fuentes.push(ev.fuente);
     par.texto = (par.texto + ' | ' + ev.crudo).slice(0, 600);
