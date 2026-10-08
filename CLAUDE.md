@@ -32,7 +32,7 @@ de *Propiedades de script → CLAVE*.
 5. Si algo falla: Gestionar implementaciones → Editar → elige la versión anterior.
 
 ## Estado
-- Backend desplegado: avisos de bancos con lector sin tildes y variantes `||` (PR #18–#22; hash 22755511c024, PR #22 = Billetera de Google por nombre de app, pendiente de que Hector lo despliegue; Hector hizo los últimos despliegues a mano — v30 = primera versión de avisos; v29 = favor antiguo con pagos anteriores con fecha; clave en Propiedades de script). App: ver `VERSION` en `sw.js`.
+- Backend desplegado: avisos de bancos con lector sin tildes y variantes `||` (PR #18–#23; hash 3952000b2b2e = PR #23, correcciones de la auditoría externa del 7-oct, guardado en el editor y pendiente de que Hector lo despliegue; Hector hizo los últimos despliegues a mano — v30 = primera versión de avisos; v29 = favor antiguo con pagos anteriores con fecha; clave en Propiedades de script). App: ver `VERSION` en `sw.js`.
 - Apariencia (tema, 8 colores, Original/Cristal/Mate, OLED) publicada: ver DEVELOPMENT.md.
 - Pendientes conocidos: `tests/conocidos.json`. Intereses de tarjeta Opción A ya en línea (v21); falta confirmar
   la fórmula de Nubank en cuotas siguientes con el extracto de noviembre.
