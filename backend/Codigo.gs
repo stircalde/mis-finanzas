@@ -3139,6 +3139,8 @@ const AV = (function () {
     if (/Pago exitoso por PSE/i.test(t)) return null;
     if ((m = /de plata por \$?([\d.,]+) fue exitoso/i.exec(t)))
       return ev({ banco: 'nequi', tipo: 'salida', persona: '', monto: num(m[1]) });
+    if ((m = /Te enviaron\s+\$?([\d.,]+)/i.exec(t)))                       // Nequi por Bre-B: no dice quién
+      return ev({ banco: /daviplata/i.test(n.app || '') ? 'daviplata' : /falabella/i.test(n.app || '') ? 'falabella' : 'nequi', tipo: 'entrada', persona: '', monto: num(m[1]) });
     if ((m = /^(.+?) te envi\S{0,2}\s+\$?([\d.,]+)/i.exec(t.replace(/^Env\S{0,2}o\s+/i, ''))))
       return ev({ banco: 'nequi', tipo: 'entrada', persona: limpio(m[1]), monto: num(m[2]) });
 
@@ -3169,14 +3171,16 @@ const AV = (function () {
   // Solo cuenta como "ya registrado" un movimiento del mismo sentido: una entrada nunca es duplicado de un gasto.
   const SALE = ['Gasto', 'Transferencia', 'Le pagué'], ENTRA = ['Ingreso', 'Me pagaron', 'Me prestaron', 'Transferencia'];
   function compatible(ev, m) {
+    // Sin cuenta asignada (p. ej. dos cuentas con el nombre del banco), la del movimiento debe ser al menos de ese banco.
+    const cuentaOk = function (c) { return ev.cuenta ? c === ev.cuenta : (!ev.banco || norm(c).indexOf(norm(ev.banco)) >= 0); };
     if (ev.tipo === 'transferencia') return m.tipo === 'Transferencia' && (!ev.cuenta || m.cuenta === ev.cuenta) && (!ev.destino || m.destino === ev.destino);
     if (ev.tipo === 'entrada') {
       if (ENTRA.indexOf(m.tipo) < 0) return false;
-      const c = m.tipo === 'Transferencia' ? m.destino : m.cuenta;
-      return !ev.cuenta || c === ev.cuenta;
+      if (m.tipo === 'Transferencia' && ev.quien && ev.mio === false) return false;   // si te la mandó otra persona, no es un movimiento entre tus cuentas
+      return cuentaOk(m.tipo === 'Transferencia' ? m.destino : m.cuenta);
     }
     if (SALE.indexOf(m.tipo) < 0) return false;            // gasto, salida o retiro
-    return !ev.cuenta || m.cuenta === ev.cuenta;
+    return cuentaOk(m.cuenta);
   }
   function yaRegistrado(ev, movimientos, libre) {
     const dia = 86400000;
@@ -3268,7 +3272,9 @@ function avCuenta_(cfg, banco, tc) {
   const c = cfg.cuentas.filter(function (x) {
     return x.activa !== false && AV.norm(x.nombre).indexOf(AV.norm(banco)) >= 0 && ((x.tipo === 'Deuda') === !!tc);
   });
-  return c.length === 1 ? c[0].nombre : '';
+  if (c.length === 1) return c[0].nombre;
+  const exacta = c.filter(function (x) { return AV.norm(x.nombre) === AV.norm(banco) || AV.norm(x.nombre) === AV.norm('TC ' + banco); });
+  return exacta.length === 1 ? exacta[0].nombre : '';   // "Daviplata" gana sobre "Bolsillo Daviplata …"
 }
 
 function avTs_(v) {
@@ -3378,6 +3384,7 @@ function avNoReconocido_(p, titulo, variantes, t, origen) {
 /** Decide qué pasa con un aviso recién creado o recién emparejado: ya estaba, se registra solo o queda pendiente. */
 function avAsentar_(r, cfg, recientes, titulo) {
   const enl = avEnlazados_(recientes);
+  r.mio = r.tipo === 'entrada' ? AV.esMio(r.quien, cfg.ajustes.nombre) : undefined;
   const ya = AV.yaRegistrado(r, leerMovimientos(), function (m) { return (enl[m.id] || 0) < (m.tipo === TIPO.TRANSF ? 2 : 1); });
   if (ya) {
     r.estado = 'Ya estaba'; r.idMov = ya.id; r.nota = 'Coincide con "' + ya.desc + '" que ya registraste';
@@ -3412,8 +3419,8 @@ function resolverAviso(p, cfg) {
   if (!r) throw new Error('No encontré ese aviso (¿ya es muy antiguo?).');
   const como = limpiar(p.como);
   if (como === 'reabrir') {
-    if (r.estado !== 'Ignorado') throw new Error('Solo se pueden reabrir los avisos ignorados.');
-    r.estado = 'Pendiente'; r.nota = '';
+    if (r.estado !== 'Ignorado' && r.estado !== 'Ya estaba') throw new Error('Solo se pueden reabrir los avisos ignorados o los que coincidieron con otro movimiento.');
+    r.estado = 'Pendiente'; r.nota = ''; r.idMov = '';
     avDiferir_(function () { avGuardar_(r); });
     return '↩️ El aviso volvió a "Por confirmar".';
   }

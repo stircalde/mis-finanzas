@@ -182,4 +182,22 @@ AV_({ app: 'nequi colombia', titulo: 'Compra exitosa', texto: 'Compra exitosa co
 const cmp = av().comparacion;
 ok(cmp && cmp.ambos === 1 && cmp.app === 1 && cmp.macro === 0 && av().items.find(x => x.quien === 'SOLO APP').origen === 'app', 'comparación desde el primer aviso de la app: ' + JSON.stringify(cmp));
 ok(A.sheets['Avisos'].grid[0][19] === 'Origen', 'la hoja tiene la columna Origen');
+// 14) Correcciones 8-oct: una entrada de otra persona no es "ya estaba" por una transferencia entre tus cuentas;
+//     sin cuenta asignada, el movimiento debe ser del mismo banco; Bre-B de Nequi; "Ya estaba" se puede reabrir
+P({ accion: 'transferencia', desde: 'Nequi', hacia: 'Falabella', monto: 3100, fecha: '2026-10-07' }); A.tic();
+let c1 = AV_({ app: 'banco falabella', titulo: '¡Transferencia recibida!', texto: 'JUAN EJEMPLO te ha enviado $3.100,00 a tu cuenta. 2026-10-07. 23:30.', ts: T(23, 30) });
+const cIt = () => av().items.find(x => x.monto === 3100 && x.tipo === 'entrada');
+ok(cIt() && cIt().estado === 'Pendiente', 'entrada de otra persona no coincide con una transferencia propia: ' + c1.mensaje);
+P({ accion: 'transferencia', desde: 'Nequi', hacia: 'Falabella', monto: 1700, fecha: '2026-10-07' }); A.tic();
+c1 = AV_({ app: 'sms', texto: 'Recibiste 1.700. Para saber mas, consulta tus movimientos.', ts: T(23, 35) });
+const dIt = av().items.find(x => x.monto === 1700 && x.tipo === 'entrada');
+ok(dIt && dIt.estado === 'Pendiente', 'Daviplata (sin cuenta clara) no coincide con una transferencia a Falabella: ' + c1.mensaje + JSON.stringify(dIt));
+let br = AV.parse({ app: 'nequi colombia', titulo: 'Te enviaron plata por Bre-B', texto: 'Te enviaron $200. Entra a tu app y revisa tu saldo.' });
+ok(br && br.tipo === 'entrada' && br.monto === 200 && br.banco === 'nequi', 'Bre-B de Nequi: ' + JSON.stringify(br));
+P({ accion: 'transferencia', desde: 'Nequi', hacia: 'Falabella', monto: 2300, fecha: '2026-10-07' }); A.tic();
+AV_({ app: 'nequi colombia', titulo: 'Envío de plata exitoso', texto: 'Te contamos que el envío de plata por $2.300 fue exitoso.', ts: T(23, 40) });
+const eIt = () => av().items.find(x => x.monto === 2300);
+ok(eIt() && eIt().estado === 'Ya estaba', 'salida propia sí coincide: ' + JSON.stringify(eIt()));
+c1 = P({ accion: 'avisoresolver', id: eIt().id, como: 'reabrir' }); A.tic();
+ok(c1.ok && eIt().estado === 'Pendiente', '"Ya estaba" se puede reabrir: ' + c1.mensaje);
 A.fin('avisos');
