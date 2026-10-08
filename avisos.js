@@ -147,7 +147,7 @@
     } else {
       h += '<div class="av-nota">' + (a.estado === 'Registrado' ? '✓ ' + (/^Autom/.test(a.nota) ? esc(a.nota) : 'Registrado') : a.estado === 'Ignorado' ? '🙈 Ignorado' : '👌 ' + esc(a.nota || 'Ya lo tenías registrado')) +
         (a.idMov && a.estado === 'Registrado' && window.MFAdmin ? ' <button type="button" class="av-link" data-editar="' + esc(a.idMov) + '">Ver / editar</button>' : '') +
-        (a.estado === 'Ignorado' ? ' <button type="button" class="av-link" data-reabrir>Volver a revisar</button>' : '') + '</div>';
+        (a.estado === 'Ignorado' ? ' <button type="button" class="av-link" data-reabrir>Volver a revisar</button>' : a.estado === 'Ya estaba' ? ' <button type="button" class="av-link" data-reabrir>No es ese</button>' : '') + '</div>';
     }
     var nodo = el(h + '</div>');
     nodo.querySelectorAll('[data-abrir]').forEach(function (b) { b.addEventListener('click', function () { abierto = abierta ? null : a.id; repintar(); }); });
