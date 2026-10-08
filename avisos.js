@@ -179,13 +179,13 @@
       (!e.notificaciones ? '<b class="av-warn">Sin activar</b>' : e.activo ? '<b class="av-on">● Activo</b>' : '<b>Pausado</b>') + '</span></div>' +
       '<p class="nota">La app lee sola las notificaciones y los SMS de tus bancos y los manda aquí, igual que MacroDroid. No lee nada de otras apps.</p>' +
       '<div class="av-perms">' +
-      fila(e.notificaciones, '🔔', 'Acceso a notificaciones', 'Nequi, Daviplata, Davibank, Nu, Falabella y Billetera', 'notif', 'Activar') +
+      fila(e.notificaciones, '🔔', 'Acceso a notificaciones', e.apps && e.apps.length ? 'Solo lee: ' + e.apps.map(esc).join(', ') : 'Nequi, Daviplata, Davibank, Nu, Falabella y Billetera', 'notif', 'Activar') +
       (!e.notificaciones || !e.sms ? '<p class="nota av-xi">¿Android dice “se le negó el acceso”? Ve a Ajustes → Apps → Mis finanzas → <b>⋮</b> (arriba a la derecha) → <b>Permitir ajustes restringidos</b>, y vuelve a intentarlo. <button type="button" class="av-link" data-l="ajustes">Abrir ajustes</button></p>' : '') +
       fila(e.sms, '✉️', 'SMS de los bancos', 'Solo 899979, 85888, 85954 y 890806', 'sms', 'Permitir') +
       fila(e.bateria, '🔋', 'Batería sin restricciones', 'Para que no se duerma en segundo plano', 'bat', 'Permitir') +
       '</div><p class="nota av-xi">En Xiaomi, activa también <b>Inicio automático</b> en los ajustes de la app. <button type="button" class="av-link" data-l="ajustes">Abrir ajustes</button></p>';
     if (e.notificaciones) {
-      h += '<div class="av-cont"><b>' + (e.enviados || 0) + '</b> avisos enviados' + (e.cola ? ' · <b class="av-warn">' + e.cola + ' en cola</b> (sin internet; se reintentan solos)' : '') + '</div>';
+      h += '<div class="av-cont"><b>' + (e.enviados || 0) + '</b> avisos enviados' + (e.cola ? ' · <b class="av-warn">' + e.cola + ' en cola</b> (se reintentan solos cuando haya internet)' : '') + '</div>';
       var hist = (e.historial || []).slice(-3).reverse();
       if (hist.length) h += '<ul class="av-hist">' + hist.map(function (x) {
         return '<li><span>' + esc(hora(x.hora || '')) + ' · ' + esc(x.app || '') + '</span><small>' + esc(String(x.r || '').slice(0, 90)) + '</small></li>'; }).join('') + '</ul>';

@@ -36,6 +36,7 @@ public class LectorPlugin extends Plugin {
         String url = call.getString("url", ""), clave = call.getString("clave", "");
         if (!url.startsWith("https://")) { call.reject("URL no válida"); return; }
         Envio.prefs(getContext()).edit().putString("url", url).putString("clave", clave).apply();
+        Bancos.resolver(getContext());
         call.resolve(estadoObj());
     }
 
@@ -101,6 +102,9 @@ public class LectorPlugin extends Plugin {
         try { o.put("cola", new org.json.JSONArray(p.getString("cola", "[]")).length()); } catch (Exception e) { o.put("cola", 0); }
         o.put("error", p.getString("error", ""));
         try { o.put("historial", new JSArray(p.getString("historial", "[]"))); } catch (Exception e) { o.put("historial", new JSArray()); }
+        JSArray apps = new JSArray();
+        for (String nombre : Bancos.resolver(c).values()) apps.put(nombre);
+        o.put("apps", apps);
         return o;
     }
 }
