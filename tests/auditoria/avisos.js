@@ -209,4 +209,20 @@ ok(hIt && hIt.estado === 'Pendiente', 'registrado 11 h antes del aviso: no es el
 AV_({ app: 'nequi colombia', titulo: 'Envío de plata exitoso', texto: 'Te contamos que el envío de plata por $5.500 fue exitoso.', ts: ahora0 - 3 * 3600000 });
 P({ accion: 'transferencia', desde: 'Nequi', hacia: 'Falabella', monto: 5500, fecha: '2026-10-07' }); A.tic();
 ok(AV.yaRegistrado(Object.assign({}, av().items.find(x => x.monto === 5500), { t: ahora0 - 3 * 3600000, cuenta: 'Nequi', tipo: 'salida' }), leerMovimientos()), 'registrado 3 h después del aviso (mismo día): sí es el mismo');
+// 16) Auditoría Gemini 8-oct: compra de noche anotada a la mañana siguiente; "No reconocido" repetido después de 30 min;
+//     dos movimientos iguales registrados por error y un solo aviso
+const H_ = 3600000;
+const noche = new Date(2026, 9, 6, 23, 30).getTime();
+ok(AV.yaRegistrado({ tipo: 'gasto', monto: 7700, t: noche, cuenta: 'Nequi', banco: 'nequi' },
+  [{ monto: 7700, tipo: 'Gasto', cuenta: 'Nequi', fecha: new Date(2026, 9, 7), registrado: new Date(noche + 8.5 * H_) }]), 'compra 11:30 p. m. anotada a las 8 a. m. con fecha del día siguiente: sí es la misma');
+ok(!AV.yaRegistrado({ tipo: 'gasto', monto: 7700, t: noche, cuenta: 'Nequi', banco: 'nequi' },
+  [{ monto: 7700, tipo: 'Gasto', cuenta: 'Nequi', fecha: new Date(2026, 9, 7), registrado: new Date(noche + 20 * H_) }]), '…pero no si la anotas 20 h después con otro día');
+const tNr = Date.now() + 2 * H_;
+AV_({ app: 'davibank', texto: 'DAVIbank: Abono recibido a tu tarjeta por $61.000', ts: tNr });
+AV_({ app: 'davibank', texto: 'DAVIbank: Abono recibido a tu tarjeta por $61.000', ts: tNr + 31 * 60000 });
+ok(av().items.filter(x => x.monto === 61000 && x.tipo === 'noreconocido').length === 2, 'No reconocido igual a los 31 min: son dos avisos');
+const dos = [{ id: 'a', monto: 8800, tipo: 'Gasto', cuenta: 'Nequi', fecha: new Date(2026, 9, 7), registrado: new Date(2026, 9, 7, 10) },
+  { id: 'b', monto: 8800, tipo: 'Gasto', cuenta: 'Nequi', fecha: new Date(2026, 9, 7), registrado: new Date(2026, 9, 7, 10, 1) }];
+const usados = { a: 1 };
+ok(AV.yaRegistrado({ tipo: 'gasto', monto: 8800, t: new Date(2026, 9, 7, 10, 5).getTime(), cuenta: 'Nequi' }, dos, m => !usados[m.id]).id === 'b', 'con dos registros iguales, el segundo aviso se enlaza al movimiento libre');
 A.fin('avisos');

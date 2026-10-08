@@ -21,8 +21,12 @@ public class SmsReceptor extends BroadcastReceiver {
             String de = String.valueOf(ms[0].getOriginatingAddress()).replaceAll("\\D", "");
             if (!REMITENTES.contains(de)) return;
             StringBuilder sb = new StringBuilder();
-            for (SmsMessage m : ms) sb.append(m.getMessageBody());
-            Envio.avisar(c, "sms", "", sb.toString().replaceAll("\\s+", " ").trim(), ms[0].getTimestampMillis());
+            for (SmsMessage m : ms) sb.append(m.getDisplayMessageBody());
+            // goAsync(): Android no da por terminado el receptor hasta que el envío acabe (si no, puede matar el proceso a mitad).
+            final PendingResult fin = goAsync();
+            Envio.avisar(c, "sms", "", sb.toString().replaceAll("\\s+", " ").trim(), ms[0].getTimestampMillis(), new Runnable() {
+                public void run() { fin.finish(); }
+            });
         } catch (Exception ignored) { }
     }
 }
