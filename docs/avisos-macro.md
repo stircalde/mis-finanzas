@@ -17,6 +17,12 @@ y lo deja en la hoja **Avisos** como *Pendiente*. En la app aparece en **Más �
 | `texto` | texto de la notificación o del SMS. Para notificaciones, manda varias versiones separadas por `||`: texto, texto grande y ticker (Nequi pone el monto en el texto grande); el servidor usa la primera que entienda |
 | `ts` | hora en milisegundos (en MacroDroid: la variable de hora del sistema en ms) |
 
+## Cuerpo probado (MacroDroid, 7-oct-2026)
+
+`accion=aviso&clave=TU_CLAVE&app={not_app_name}&titulo={not_title}&texto={notification}||{not_text_big}||{not_ticker}`
+
+MacroDroid pierde tildes y signos como "¡" al enviar: el lector del backend ya no depende de ellos.
+
 ## Macros sugeridas
 
 1. **Notificaciones**: disparador *Notificación recibida* de Nequi, Nubank, Falabella y Billetera de Google (`app` = `wallet`).
