@@ -1488,6 +1488,17 @@
 
   // ---- Logo de la marca (SVG dinámico). Toma los colores de la Apariencia vía CSS (.mf-logo en app.css);
   // la geometría es la misma siempre. Los íconos de la PWA (manifest/favicon) son archivos estáticos aparte. ----
+  // En la app Android, el ícono del lanzador sigue el color de Apariencia (plugin nativo Icono; en la web no hace nada).
+  var iconoT = 0, iconoUlt = null;
+  function iconoApp() {
+    var C = window.Capacitor; if (!C || !C.isNativePlatform || !C.isNativePlatform() || !C.registerPlugin) return;
+    clearTimeout(iconoT);
+    iconoT = setTimeout(function () {
+      if (iconoUlt === AP.color) return;
+      try { C.registerPlugin('Icono').poner({ color: AP.color }).then(function () { iconoUlt = AP.color; }, function () {}); } catch (e) {}
+    }, 1200);
+  }
+  setTimeout(iconoApp, 4000);
   var logoN = 0;
   function logoMarca(px) {
     var k = 'mfl' + (++logoN), u = function (i) { return 'url(#' + k + i + ')'; };
@@ -1637,7 +1648,7 @@
       var cambio = function () {
         guardarLocal('tema', temaGuardado); guardarLocal('apColor', AP.color === 'azul' ? null : AP.color);
         guardarLocal('apEstilo', AP.estilo === 'original' ? null : AP.estilo); guardarLocal('apOled', AP.oled ? '1' : null);
-        aplicarTema();
+        aplicarTema(); iconoApp();
         var y = cuerpoP.scrollTop; cuerpoP.innerHTML = panel(); cuerpoP.scrollTop = y;
         var fila = document.querySelector('.mas-fila[data-k="apariencia"] small'); if (fila) fila.textContent = resumenApariencia();
       };
