@@ -5,7 +5,26 @@
   var MF = window.MF;
   if (!MF) return;
   var esc = MF.esc, el = MF.el, pesos = MF.pesos, ICON = MF.icon;
-  var abierto = null, verRevisados = false, confirmandoAuto = false, ocupado = {}, error = '';
+  var abierto = null, verRevisados = false, confirmandoAuto = false, ocupado = {}, error = '', mostrarOrigen = false;
+
+  /* ---------- lector nativo (solo en la app Android): notificaciones + SMS de los bancos ---------- */
+  function lector() {
+    var C = window.Capacitor;
+    try { return C && C.isNativePlatform && C.isNativePlatform() && C.Plugins && C.Plugins.Lector && C.Plugins.Lector.estado ? C.Plugins.Lector : null; } catch (e) { return null; }
+  }
+  var lecEstado = null, lecConfig = '';
+  function configurarLector() {
+    var L = lector(), clave = MF.clave && MF.clave();
+    if (!L || !clave || !MF.API) return Promise.resolve(null);
+    var firma = MF.API + '|' + clave;
+    var p = lecConfig === firma ? L.estado() : L.configurar({ url: MF.API, clave: clave });
+    return p.then(function (e) { lecConfig = firma; lecEstado = e; return e; }, function () { return null; });
+  }
+  setTimeout(configurarLector, 3000);
+  document.addEventListener('visibilitychange', function () {   // al volver de los ajustes del celular
+    if (!document.hidden && lector()) configurarLector().then(function () { repintar(); });
+  });
+  var ORIGEN = { app: '📲 App', macro: '🤖 MacroDroid', ambos: '📲🤖 Ambos' };
 
   var BANCOS = { nequi: ['🩷', 'Nequi'], daviplata: ['❤️', 'Daviplata'], davibank: ['🔴', 'Davibank'], nubank: ['🟣', 'Nubank'], falabella: ['🟢', 'Falabella'] };
   function datosAv() { var d = MF.datos(); return (d && d.avisos) || { modo: 'avisar', pendientes: 0, items: [] }; }
@@ -37,6 +56,7 @@
   function etiquetas(a) {
     var e = [];
     if (a.tipo === 'noreconocido') e.push('❓ el lector no lo entendió · revisa el texto');
+    if (mostrarOrigen && ORIGEN[a.origen]) e.push(ORIGEN[a.origen]);
     if (a.tc) e.push('💳 tarjeta · entra a 1 cuota');
     if (a.recurrente) e.push('🔁 recurrente');
     if (a.n > 1) e.push(a.n + ' avisos del mismo movimiento');
@@ -145,10 +165,57 @@
     return s;
   }
 
+  function tarjetaLector(av) {
+    var L = lector(), e = lecEstado;
+    if (!L) return null;
+    var c = av.comparacion;
+    if (!e) return el('<section class="card av-lector"><div class="card-h"><h2>📲 Lector del celular</h2></div><p class="nota">Revisando permisos…</p></section>');
+    function fila(ok, ico, t, sub, acc, btn) {
+      return '<div class="av-perm"><span class="av-pi">' + ico + '</span><span class="av-pt"><b>' + t + '</b><small>' + sub + '</small></span>' +
+        (ok ? '<span class="av-ok">✓</span>' : '<button type="button" class="btn av-pb" data-l="' + acc + '">' + btn + '</button>') + '</div>';
+    }
+    var listo = e.notificaciones && e.activo;
+    var h = '<section class="card av-lector"><div class="card-h"><h2>📲 Lector del celular</h2><span class="aside">' +
+      (!e.notificaciones ? '<b class="av-warn">Sin activar</b>' : e.activo ? '<b class="av-on">● Activo</b>' : '<b>Pausado</b>') + '</span></div>' +
+      '<p class="nota">La app lee sola las notificaciones y los SMS de tus bancos y los manda aquí, igual que MacroDroid. No lee nada de otras apps.</p>' +
+      '<div class="av-perms">' +
+      fila(e.notificaciones, '🔔', 'Acceso a notificaciones', 'Nequi, Daviplata, Davibank, Nu, Falabella y Billetera', 'notif', 'Activar') +
+      fila(e.sms, '✉️', 'SMS de los bancos', 'Solo 899979, 85888, 85954 y 890806', 'sms', 'Permitir') +
+      fila(e.bateria, '🔋', 'Batería sin restricciones', 'Para que no se duerma en segundo plano', 'bat', 'Permitir') +
+      '</div><p class="nota av-xi">En Xiaomi, activa también <b>Inicio automático</b> en los ajustes de la app. <button type="button" class="av-link" data-l="ajustes">Abrir ajustes</button></p>';
+    if (e.notificaciones) {
+      h += '<div class="av-cont"><b>' + (e.enviados || 0) + '</b> avisos enviados' + (e.cola ? ' · <b class="av-warn">' + e.cola + ' en cola</b> (sin internet; se reintentan solos)' : '') + '</div>';
+      var hist = (e.historial || []).slice(-3).reverse();
+      if (hist.length) h += '<ul class="av-hist">' + hist.map(function (x) {
+        return '<li><span>' + esc(hora(x.hora || '')) + ' · ' + esc(x.app || '') + '</span><small>' + esc(String(x.r || '').slice(0, 90)) + '</small></li>'; }).join('') + '</ul>';
+      if (e.error && e.cola) h += '<p class="nota av-warn">' + esc(e.error) + '</p>';
+    }
+    if (c) h += '<div class="av-comp"><b>Comparación con MacroDroid</b> (desde que el lector empezó, máx. 7 días)<div class="av-comp-n">' +
+      '<span><b>' + c.ambos + '</b> por ambos</span><span><b>' + c.macro + '</b> solo MacroDroid</span><span><b>' + c.app + '</b> solo App</span></div>' +
+      '<small>' + (c.macro === 0 && c.ambos > 0 ? 'Hasta ahora el lector no se ha perdido ninguno. Si sigue así varios días, ya puedes apagar MacroDroid.' :
+        c.macro > 0 ? 'Hay avisos que solo vio MacroDroid: no lo apagues todavía.' : 'Aún no hay suficientes avisos para comparar.') + '</small></div>';
+    if (e.notificaciones) h += '<div class="av-cta"><button type="button" class="btn" data-l="pausa">' + (e.activo ? '⏸ Pausar lector' : '▶️ Reanudar lector') + '</button></div>';
+    var n = el(h + '</section>');
+    n.querySelectorAll('[data-l]').forEach(function (b) {
+      b.addEventListener('click', function () {
+        var k = b.dataset.l, p;
+        if (k === 'notif') p = L.abrirNotificaciones();
+        else if (k === 'sms') p = L.pedirSms();
+        else if (k === 'bat') p = L.pedirBateria();
+        else if (k === 'ajustes') p = L.abrirAjustesApp();
+        else if (k === 'pausa') p = L.activar({ activo: !e.activo });
+        Promise.resolve(p).then(function () { return configurarLector(); }).then(function () { repintar(); }, function () { repintar(); });
+      });
+    });
+    return n;
+  }
+
   function vista(app, d, silencioso) {
     raiz = app; ultimoD = d;
     var av = datosAv();
     var items = av.items || [];
+    mostrarOrigen = !!av.comparacion;
+    if (lector() && !lecEstado) configurarLector().then(function () { repintar(); });
     var pend = items.filter(function (a) { return a.estado === 'Pendiente'; });
     var auto = items.filter(function (a) { return a.estado === 'Registrado' && /^Autom/.test(a.nota); });
     var ya = items.filter(function (a) { return a.estado === 'Ya estaba'; });
@@ -181,9 +248,10 @@
     var si = modo.querySelector('[data-si]'); if (si) si.addEventListener('click', function () { confirmandoAuto = false; cambiarModo('auto'); });
     var no = modo.querySelector('[data-no]'); if (no) no.addEventListener('click', function () { confirmandoAuto = false; repintar(); });
     app.appendChild(modo);
+    var tl = tarjetaLector(av); if (tl) app.appendChild(tl);
 
     app.appendChild(seccion('Necesitan tu decisión', pend.length ? '<b>' + pend.length + '</b>' : '', pend, 'pend',
-      items.length ? 'No tienes avisos pendientes. 🙌' : 'Todavía no ha llegado ningún aviso. Cuando la macro de tu celular reenvíe una notificación o SMS del banco, aparecerá aquí.'));
+      items.length ? 'No tienes avisos pendientes. 🙌' : 'Todavía no ha llegado ningún aviso. Cuando llegue una notificación o SMS de tu banco, aparecerá aquí.'));
     if (auto.length) app.appendChild(seccion('Registrados automáticamente', '<b>' + auto.length + '</b>', auto, 'otros', ''));
     if (ya.length) app.appendChild(seccion('Ya estaban en tu app', '<b>' + ya.length + '</b>', ya, 'otros', ''));
     if (rev.length) {
