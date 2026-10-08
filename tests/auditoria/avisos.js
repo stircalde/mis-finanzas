@@ -51,6 +51,8 @@ ok(tr && tr.cuenta === 'Nequi' && tr.destino === 'Falabella' && tr.monto === 150
 AV_({ app: 'falabella', titulo: '¡Transferencia recibida!', texto: 'HECTOR EJEMPLO te ha enviado $80.000,00 a tu cuenta. 2026-10-03. 10:00.', ts: T(10, 0, 3) });
 AV_({ app: 'nequi', titulo: 'Envío de plata exitoso', texto: 'Te contamos que el envío de plata por $80.000 fue exitoso.', ts: T(10, 1, 3) });
 ok(pend().filter(x => x.tipo === 'transferencia').length === 2, 'también si la entrada llega primero');
+const t80 = pend().find(x => x.tipo === 'transferencia' && x.monto === 80000);
+ok(t80 && t80.cuenta === 'Nequi' && t80.destino === 'Falabella', 'entrada primero: origen Nequi y destino Falabella: ' + JSON.stringify(t80));
 // Lo que manda otra persona NO se empareja nunca
 AV_({ app: 'nequi', titulo: 'Envío', texto: 'NURY EJEMPLO te envió 700000, ¡lo mejor!', ts: T(9, 50) });
 AV_({ app: 'nequi', titulo: 'Envío de plata exitoso', texto: 'Te contamos que el envío de plata por $700.000 fue exitoso.', ts: T(9, 51) });
