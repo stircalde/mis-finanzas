@@ -172,4 +172,14 @@ nr = P({ accion: 'avisoresolver', id: nrIt()[0].id, como: 'gasto', datos: JSON.s
 ok(nr.ok && nMov() === nMovNr + 1 && A.movs().some(m => m[2] === 'Prueba NR' && Number(m[3]) === 470000) && nrIt()[0].estado === 'Registrado', 'no reconocido se registra con el monto que escribiste: ' + nr.mensaje);
 ok(/no es un movimiento/.test(AV_({ app: 'nequi', texto: 'Nequi: tu clave dinámica es 445566', ts: T(22, 5) }).mensaje), 'clave dinámica sigue siendo ruido');
 ok(!A.raro(D().avisos), 'sin NaN/undefined con no reconocidos');
+// 13) Origen: MacroDroid (sin "origen") vs. lector de la app (origen=app); el mismo hecho por ambos queda "ambos"
+ok(!av().comparacion, 'sin avisos de la app no hay comparación');
+let o1 = AV_({ app: 'nequi colombia', titulo: 'Compra exitosa', texto: 'Compra exitosa con Tarjeta Nequi Pagaste 9.900,00 en TIENDA ORIGEN', ts: T(23, 0) });
+o1 = AV_({ app: 'nequi colombia', titulo: 'Compra exitosa', texto: 'Compra exitosa con Tarjeta Nequi Pagaste 9.900,00 en TIENDA ORIGEN', ts: T(23, 0), origen: 'app' });
+const oIt = av().items.find(x => x.quien === 'TIENDA ORIGEN');
+ok(/repetido/.test(o1.mensaje) && oIt && oIt.origen === 'ambos', 'el mismo aviso por MacroDroid y por la app queda "ambos": ' + JSON.stringify(oIt));
+AV_({ app: 'nequi colombia', titulo: 'Compra exitosa', texto: 'Compra exitosa con Tarjeta Nequi Pagaste 3.300,00 en SOLO APP', ts: T(23, 5), origen: 'app' });
+const cmp = av().comparacion;
+ok(cmp && cmp.ambos === 1 && cmp.app === 1 && cmp.macro === 0 && av().items.find(x => x.quien === 'SOLO APP').origen === 'app', 'comparación desde el primer aviso de la app: ' + JSON.stringify(cmp));
+ok(A.sheets['Avisos'].grid[0][19] === 'Origen', 'la hoja tiene la columna Origen');
 A.fin('avisos');

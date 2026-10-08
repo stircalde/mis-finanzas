@@ -1373,3 +1373,20 @@ button.util.mini { background: none; border: 0; padding: 4px 0; border-radius: 8
 .av-link { background: none; border: 0; padding: 0 2px; color: var(--accent); font: inherit; font-weight: 600; cursor: pointer; text-decoration: underline; }
 .av-vacio { margin: 4px 0 0; color: var(--muted); font-size: .9rem; }
 .av-err { margin-top: 12px; }
+.av-lector { margin-top: 14px; }
+.av-perms { display: grid; gap: 10px; margin: 10px 0 6px; }
+.av-perm { display: flex; align-items: center; gap: 10px; }
+.av-pi { font-size: 1.2rem; width: 28px; text-align: center; }
+.av-pt { display: grid; gap: 1px; flex: 1; min-width: 0; }
+.av-pt small { color: var(--muted); font-size: .78rem; }
+.av-ok { color: var(--good); font-weight: 800; font-size: 1.1rem; padding: 0 8px; }
+.av-pb { padding: 6px 12px; font-size: .85rem; }
+.av-on { color: var(--good); }
+.av-xi { font-size: .8rem; }
+.av-cont { margin-top: 10px; font-size: .9rem; }
+.av-hist { list-style: none; margin: 8px 0 0; padding: 0; display: grid; gap: 6px; }
+.av-hist li { display: grid; font-size: .82rem; }
+.av-hist small { color: var(--muted); overflow-wrap: anywhere; }
+.av-comp { margin-top: 12px; padding: 12px; border-radius: 12px; background: var(--surface-2); border: 1px solid var(--line); display: grid; gap: 8px; font-size: .88rem; }
+.av-comp-n { display: flex; flex-wrap: wrap; gap: 6px 14px; }
+.av-comp small { color: var(--muted); }

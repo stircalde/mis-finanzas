@@ -3060,7 +3060,7 @@ function bolsilloDe(cfg, deuda) {
 
 const HOJA_AV = 'Avisos';
 const ENC_AV = ['ID', 'Hora del aviso', 'Fuentes', 'Avisos', 'Banco', 'Cuenta', 'Tipo', 'Monto', 'Comercio / persona', 'Destino',
-  'Recurrente', 'Tarjeta', 'Estado', 'ID movimiento', 'Nota', 'Recibido el', 'Resolución', 'Texto', 'PSE'];
+  'Recurrente', 'Tarjeta', 'Estado', 'ID movimiento', 'Nota', 'Recibido el', 'Resolución', 'Texto', 'PSE', 'Origen'];
 const AV_MODOS = ['avisar', 'auto'];
 
 const AV = (function () {
@@ -3218,9 +3218,15 @@ function hojaAvisos_() {
     h = libro.insertSheet(HOJA_AV);
     h.getRange(1, 1, 1, ENC_AV.length).setValues([ENC_AV]);
     h.setFrozenRows(1);
+  } else if (h.getLastColumn() < ENC_AV.length) {
+    h.getRange(1, 1, 1, ENC_AV.length).setValues([ENC_AV]);   // hojas creadas antes de la columna "Origen"
   }
   return h;
 }
+
+/** De dónde llegó un aviso: la macro del celular (MacroDroid), el lector de la app, o ambos. */
+function avOrigen_(p) { return limpiar(p.origen).toLowerCase() === 'app' ? 'app' : 'macro'; }
+function avMezclarOrigen_(a, b) { return !a ? b : !b || a === b ? a : 'ambos'; }
 
 /** Últimos avisos (por defecto 300) como objetos; `fila` es el número de fila en la hoja. */
 function leerAvisos_(max) {
@@ -3234,14 +3240,15 @@ function leerAvisos_(max) {
       fila: desde + i, id: String(v[0]), t: t, fuentes: String(v[2]).split('+').filter(Boolean), n: Number(v[3]) || 1,
       banco: String(v[4]), cuenta: String(v[5]), tipo: String(v[6]), monto: Number(v[7]) || 0, quien: String(v[8]), destino: String(v[9]),
       recurrente: v[10] === 'sí', tc: v[11] === 'sí', estado: String(v[12]), idMov: String(v[13] || ''), nota: String(v[14] || ''),
-      recibido: v[15] instanceof Date ? v[15] : null, res: String(v[16] || ''), texto: String(v[17] || ''), pse: v[18] === 'sí'
+      recibido: v[15] instanceof Date ? v[15] : null, res: String(v[16] || ''), texto: String(v[17] || ''), pse: v[18] === 'sí',
+      origen: String(v[19] || '') || 'macro'
     };
   }).filter(function (r) { return r.id && r.t; });
 }
 
 function avFilaDe_(r) {
   return [r.id, new Date(r.t), r.fuentes.join('+'), r.n, r.banco, r.cuenta, r.tipo, r.monto, r.quien, r.destino,
-    r.recurrente ? 'sí' : '', r.tc ? 'sí' : '', r.estado, r.idMov, r.nota, r.recibido || new Date(), r.res, String(r.texto).slice(0, 600), r.pse ? 'sí' : ''];
+    r.recurrente ? 'sí' : '', r.tc ? 'sí' : '', r.estado, r.idMov, r.nota, r.recibido || new Date(), r.res, String(r.texto).slice(0, 600), r.pse ? 'sí' : '', r.origen || 'macro'];
 }
 
 function avGuardar_(r) {
@@ -3297,11 +3304,12 @@ function registrarAviso(p, cfg) {
     ev = AV.parse({ app: limpiar(p.app).toLowerCase() || 'sms', titulo: titulo, texto: v, ts: t });
     return !!ev;
   });
-  if (!ev || !(ev.monto > 0)) return avNoReconocido_(p, titulo, variantes, t);
+  const origen = avOrigen_(p);
+  if (!ev || !(ev.monto > 0)) return avNoReconocido_(p, titulo, variantes, t, origen);
   const yo = cfg.ajustes.nombre || '';
   const nuevo = {
     t: ev.ts, tipo: ev.tipo === 'retiro' ? 'retiro' : ev.tipo, monto: ev.monto, banco: ev.banco || '', quien: ev.comercio || ev.persona || '',
-    cuenta: avCuenta_(cfg, ev.banco, ev.tc), destino: '', pse: !!ev.pse, tc: !!ev.tc, recurrente: !!ev.recurrente
+    cuenta: avCuenta_(cfg, ev.banco, ev.tc), destino: '', pse: !!ev.pse, tc: !!ev.tc, recurrente: !!ev.recurrente, origen: origen
   };
   const recientes = leerAvisos_(300);
 
@@ -3310,6 +3318,7 @@ function registrarAviso(p, cfg) {
   if (dup) {
     dup.n++;
     if (dup.fuentes.indexOf(ev.fuente) < 0) dup.fuentes.push(ev.fuente);
+    dup.origen = avMezclarOrigen_(dup.origen, origen);
     if (nuevo.quien && (!dup.quien || (nuevo.quien.length > dup.quien.length && !ev.correo))) dup.quien = nuevo.quien;
     if (!dup.cuenta && nuevo.cuenta) dup.cuenta = nuevo.cuenta;
     if (!dup.banco && nuevo.banco) dup.banco = nuevo.banco;
@@ -3332,6 +3341,7 @@ function registrarAviso(p, cfg) {
     par.banco = desde.banco; par.cuenta = desde.cuenta; par.destino = hacia; par.quien = 'Tú';
     par.n++;
     if (par.fuentes.indexOf(ev.fuente) < 0) par.fuentes.push(ev.fuente);
+    par.origen = avMezclarOrigen_(par.origen, origen);
     par.texto = (par.texto + ' | ' + ev.crudo).slice(0, 600);
     return avAsentar_(par, cfg, recientes, 'Transferencia entre tus cuentas detectada');
   }
@@ -3343,7 +3353,7 @@ function registrarAviso(p, cfg) {
 
 /** Un aviso de banco que el lector no entendió pero parece un movimiento: queda en "Por confirmar" como "No reconocido",
  *  con su texto original, para registrarlo a mano y ajustar el lector. El ruido (códigos, promociones) se sigue ignorando. */
-function avNoReconocido_(p, titulo, variantes, t) {
+function avNoReconocido_(p, titulo, variantes, t, origen) {
   const texto = String((titulo ? titulo + ' · ' : '') + (variantes[0] || '')).replace(/[{}\[\]]/g, ' ').replace(/\s+/g, ' ').trim();
   const pm = AV.pareceMovimiento(texto);
   if (!pm) return 'ℹ️ Ese aviso no es un movimiento. Lo ignoré.';
@@ -3354,12 +3364,13 @@ function avNoReconocido_(p, titulo, variantes, t) {
   if (dup) {
     dup.n++;
     if (dup.fuentes.indexOf(fuente) < 0) dup.fuentes.push(fuente);
+    dup.origen = avMezclarOrigen_(dup.origen, origen);
     avDiferir_(function () { avGuardar_(dup); });
     return '👌 Aviso no reconocido repetido. No lo dupliqué.';
   }
   const banco = ['nequi', 'daviplata', 'davibank', 'nubank', 'falabella'].filter(function (b) { return AV.norm(fuente + ' ' + texto).indexOf(AV.norm(b)) >= 0; })[0] || '';
   const r = { id: 'av' + Utilities.getUuid().slice(0, 8), t: t, tipo: 'noreconocido', monto: pm.monto, banco: banco, quien: '', cuenta: '', destino: '',
-    pse: false, tc: false, recurrente: false, fuentes: [fuente], n: 1, estado: 'Pendiente', idMov: '', nota: '', res: '', texto: texto, fila: 0 };
+    pse: false, tc: false, recurrente: false, fuentes: [fuente], n: 1, estado: 'Pendiente', idMov: '', nota: '', res: '', texto: texto, fila: 0, origen: origen };
   avDiferir_(function () { avGuardar_(r); });
   return '❓ No entendí ese aviso, pero parece un movimiento: quedó en "Por confirmar" como "No reconocido".';
 }
@@ -3449,12 +3460,21 @@ function resumenAvisos(cfg, movs) {
   const todos = leerAvisos_(300).filter(function (r) { return r.estado === 'Pendiente' || r.t >= corte; });
   let sug = 0;
   base.pendientes = todos.filter(function (r) { return r.estado === 'Pendiente'; }).length;
+  // Comparación MacroDroid vs. lector de la app (últimos 7 días, desde el primer aviso que llegó por la app).
+  const semana = Date.now() - 7 * 86400000;
+  const conApp = todos.filter(function (r) { return r.origen !== 'macro'; }).map(function (r) { return r.t; });
+  if (conApp.length) {
+    const desde = Math.max(semana, Math.min.apply(null, conApp));
+    const c = { ambos: 0, macro: 0, app: 0 };
+    todos.forEach(function (r) { if (r.t >= desde && c[r.origen] != null) c[r.origen]++; });
+    base.comparacion = c;
+  }
   base.items = todos.sort(function (a, b) { return b.t - a.t; }).slice(0, 80).map(function (r) {
     let cat = '';
     if (r.estado === 'Pendiente' && r.tipo === 'gasto' && r.quien && sug < 30) { sug++; cat = sugerirCategoria(r.quien, cfg, movs) || ''; }
     return { id: r.id, t: Utilities.formatDate(new Date(r.t), zona(), "yyyy-MM-dd'T'HH:mm"), fuentes: r.fuentes, n: r.n, banco: r.banco, cuenta: r.cuenta,
       tipo: r.tipo, monto: r.monto, quien: r.quien, destino: r.destino, recurrente: r.recurrente, tc: r.tc, estado: r.estado, idMov: r.idMov,
-      nota: r.nota, sugCategoria: cat, texto: r.texto.slice(0, r.tipo === 'noreconocido' ? 500 : 220), mio: r.tipo === 'entrada' && AV.esMio(r.quien, cfg.ajustes.nombre) };
+      nota: r.nota, origen: r.origen, sugCategoria: cat, texto: r.texto.slice(0, r.tipo === 'noreconocido' ? 500 : 220), mio: r.tipo === 'entrada' && AV.esMio(r.quien, cfg.ajustes.nombre) };
   });
   return base;
 }
