@@ -14,7 +14,7 @@ y lo deja en la hoja **Avisos** como *Pendiente*. En la app aparece en **M谩s 鈫
 | `clave` | tu clave (la misma de la app) |
 | `app` | `nequi`, `nubank`, `falabella`, `wallet`, `correo` o `sms` (seg煤n de d贸nde viene) |
 | `titulo` | t铆tulo de la notificaci贸n (vac铆o en SMS) |
-| `texto` | texto de la notificaci贸n o del SMS |
+| `texto` | texto de la notificaci贸n o del SMS. Para notificaciones, manda varias versiones separadas por `||`: texto, texto grande y ticker (Nequi pone el monto en el texto grande); el servidor usa la primera que entienda |
 | `ts` | hora en milisegundos (en MacroDroid: la variable de hora del sistema en ms) |
 
 ## Macros sugeridas
