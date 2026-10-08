@@ -22,7 +22,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - uses: actions/setup-java@v4
+      - uses: actions/setup-java@v5
         with:
           distribution: temurin
           java-version: '21'
@@ -44,8 +44,14 @@ jobs:
           if [ -z "$MF_FIRMA" ]; then
             echo "::error::Falta el secreto MF_FIRMA (Settings > Secrets and variables > Actions)."; exit 1
           fi
-          printf '%s\n' "$MF_FIRMA" | head -n 1 | tr -d '\r\n' > "$RUNNER_TEMP/pass"
-          printf '%s\n' "$MF_FIRMA" | tail -n +2 | tr -d '\r\n ' | base64 -d > "$RUNNER_TEMP/mf.jks"
+          # Tolerante a cómo se pegó: se quitan espacios y saltos; los primeros 32 caracteres son la contraseña y el resto la llave.
+          TODO=$(printf '%s' "$MF_FIRMA" | tr -d ' \r\n\t')
+          echo "Largo del secreto sin espacios: ${#TODO} (esperado 5796)"
+          printf '%s' "${TODO:0:32}" > "$RUNNER_TEMP/pass"
+          if ! printf '%s' "${TODO:32}" | base64 -d > "$RUNNER_TEMP/mf.jks" 2>"$RUNNER_TEMP/b64err"; then
+            echo "::error::La llave del secreto MF_FIRMA no es base64 válido (largo ${#TODO}). Vuelve a pegar todo el archivo."; cat "$RUNNER_TEMP/b64err"; exit 1
+          fi
+          echo "Llave: $(stat -c %s "$RUNNER_TEMP/mf.jks") bytes (esperado 4322)"
           echo "MF_KEYSTORE=$RUNNER_TEMP/mf.jks" >> "$GITHUB_ENV"
           echo "MF_KEYSTORE_PASSWORD=$(cat "$RUNNER_TEMP/pass")" >> "$GITHUB_ENV"
           echo "MF_KEY_PASSWORD=$(cat "$RUNNER_TEMP/pass")" >> "$GITHUB_ENV"
