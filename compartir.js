@@ -138,6 +138,20 @@
     return cv;
   }
 
+  /* ---------- en la app Android (Capacitor): plugins nativos para compartir y guardar ---------- */
+  function nativo() {
+    var C = window.Capacitor;
+    if (!C || !C.isNativePlatform || !C.isNativePlatform()) return null;
+    var p = function (n) { return (C.Plugins && C.Plugins[n]) || (C.registerPlugin ? C.registerPlugin(n) : null); };
+    var share = p('Share'), fs = p('Filesystem');
+    return share && fs ? { share: share, fs: fs } : null;
+  }
+  function aviso(h, t) {
+    var n = h.querySelector('.cmp-aviso');
+    if (!n) { n = document.createElement('p'); n.className = 'hint cmp-aviso'; h.querySelector('.cmp-acc').after(n); }
+    n.textContent = t;
+  }
+
   /* ---------- hoja de vista previa + compartir ---------- */
   function compartirFavor(o) {
     if (!MFx.datos()) return;
@@ -157,8 +171,25 @@
           var url = URL.createObjectURL(blob), nombre = 'favor-' + norm(r.persona).replace(/[^a-z0-9]+/g, '-') + '.png';
           prev.innerHTML = '<img alt="Vista previa del favor" src="' + url + '">';
           var file = null; try { file = new File([blob], nombre, { type: 'image/png' }); } catch (e) { file = null; }
+          bd.disabled = false; bs.disabled = false;
+          var nat = nativo();
+          if (nat) {
+            // App Android: el navegador interno no comparte ni descarga; se usa lo nativo (archivo temporal + menú de compartir del celular).
+            var b64 = cv.toDataURL('image/png').split(',')[1];
+            bs.addEventListener('click', function () {
+              nat.fs.writeFile({ path: nombre, data: b64, directory: 'CACHE' }).then(function (w) {
+                return nat.share.share({ title: 'Favor con ' + r.persona, files: [w.uri] });
+              }).catch(function (e) { if (!/cancel/i.test(String(e && e.message || e))) aviso(h, 'No pude compartir la imagen.'); });
+            });
+            bd.addEventListener('click', function () {
+              nat.fs.writeFile({ path: 'Mis finanzas/' + nombre, data: b64, directory: 'DOCUMENTS', recursive: true })
+                .then(function () { aviso(h, '✓ Guardada en Documentos › Mis finanzas'); })
+                .catch(function () { aviso(h, 'No pude guardarla. Usa 📤 Compartir y elige dónde guardarla.'); });
+            });
+            return;
+          }
           var puede = !!(file && navigator.canShare && navigator.canShare({ files: [file] }));
-          bd.disabled = false; bs.disabled = false; if (!puede) bs.hidden = true;
+          if (!puede) bs.hidden = true;
           bs.addEventListener('click', function () { navigator.share({ files: [file], title: 'Favor con ' + r.persona }).catch(function () { /* cancelado */ }); });
           bd.addEventListener('click', function () { var a = document.createElement('a'); a.href = url; a.download = nombre; document.body.appendChild(a); a.click(); a.remove(); });
         }, 'image/png');
