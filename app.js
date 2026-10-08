@@ -1489,7 +1489,7 @@
   // ---- Logo de la marca (SVG dinámico). Toma los colores de la Apariencia vía CSS (.mf-logo en app.css);
   // la geometría es la misma siempre. Los íconos de la PWA (manifest/favicon) son archivos estáticos aparte. ----
   // En la app Android, el ícono del lanzador sigue el color de Apariencia (plugin nativo Icono; en la web no hace nada).
-  var iconoT = 0, iconoUlt = null, ICONO_V = 'mf-v5-76';
+  var iconoT = 0, iconoUlt = null, ICONO_V = 'mf-v5-77';
   function iconoApp() {
     var dec = function (t) { var k = document.querySelector('.ap-hoja .kind'); if (k) k.textContent = ICONO_V + ' · ' + t; };
     var C = window.Capacitor;
@@ -1499,7 +1499,7 @@
     clearTimeout(iconoT);
     iconoT = setTimeout(function () {
       try {
-        plug.poner({ color: AP.color }).then(function () { iconoUlt = AP.color; dec('Ícono: ' + AP.color + ' ✓'); },
+        plug.poner({ color: AP.color }).then(function (r) { iconoUlt = AP.color; dec('Ícono: ' + AP.color + ' ✓' + (r && r.pendiente ? ' · cambia al salir de la app' : '')); },
           function (e) { dec('Ícono falló: ' + ((e && (e.message || e.code)) || e)); });
       } catch (e) { dec('Ícono error: ' + e.message); }
     }, 600);
