@@ -538,6 +538,9 @@ function agregarLeDebiaAntes(p, cfg) {
     return { fecha: leerFechaMov(x.fecha), monto: m };
   });
   if (sumaPagos > monto) throw new Error('Los pagos anteriores (' + pesos(sumaPagos) + ') superan el valor inicial (' + pesos(monto) + ').');
+  // Si ya anotaste el mismo favor antiguo (misma persona, concepto y valor, sin cuenta), no se duplica.
+  if (leerMovimientos().some(function (m) { return m.tipo === TIPO.MEPRESTARON && !m.cuenta && m.para === persona && m.desc === concepto && Math.abs(m.monto - monto) < 0.5; }))
+    return '👌 Ya tenías anotado "' + concepto + '" con ' + persona + ' por ' + pesos(monto) + '. No lo dupliqué.';
   // Se anota el valor inicial completo como préstamo y lo ya devuelto como pagos (ambos sin cuenta: no mueven saldos).
   agregarMovimiento([fecha, TIPO.MEPRESTARON, concepto, monto, '', '', '', persona, '', '', '']);
   if (pagos.length) {
@@ -2103,6 +2106,21 @@ function administrarMeta(p, cfg) {
     const ocupada = metas.find(function (x) { return x.cuenta === c.nombre && x.nombre !== anterior; });
     if (ocupada) throw new Error('"' + c.nombre + '" ya es el bolsillo de la meta "' + ocupada.nombre + '".');
   }
+  // Si la meta cambia de cuenta y la anterior era un bolsillo creado para ella, su plata pasa a la cuenta nueva y el bolsillo se archiva.
+  let msgCambio = '';
+  if (previa && previa.cuenta && previa.cuenta !== cuenta) {
+    const vieja = cfg.cuentas.find(function (x) { return x.nombre === previa.cuenta; });
+    const propia = !!(vieja && vieja.alimentaDesde && !vieja.apartaPara && vieja.tipo === 'Plata' && vieja.activa);
+    if (propia) {
+      const usa = cfg.fijos.filter(function (f) { return f.activo && f.cuenta === vieja.nombre; }).map(function (f) { return f.nombre; });
+      if (usa.length) throw new Error('Antes cambia la cuenta de estos gastos fijos (o quítalos): ' + usa.join(', ') + '.');
+      const saldo = saldoDe(cfg, vieja.nombre);
+      if (saldo < 0) throw new Error('El bolsillo "' + vieja.nombre + '" está en negativo (' + pesos(saldo) + '). Cuádralo antes de cambiar la cuenta de la meta.');
+      if (saldo > 0) agregarMovimiento([hoy(), TIPO.TRANSF, 'Meta "' + nombre + '": plata pasa a ' + cuenta, saldo, '', vieja.nombre, cuenta, '', '', '', '']);
+      guardarFilaConfig('Cuenta', vieja.nombre, { 'Activa': 'No' });
+      msgCambio = saldo > 0 ? '\n↪️ Los ' + pesos(saldo) + ' de "' + vieja.nombre + '" pasaron a "' + cuenta + '" y archivé el bolsillo anterior.' : '\n🗂️ Archivé el bolsillo anterior "' + vieja.nombre + '" (estaba en $0).';
+    } else msgCambio = '\nℹ️ "' + previa.cuenta + '" sigue como estaba: ahora la meta cuenta lo que haya en "' + cuenta + '".';
+  }
   const valores = { 'Emoji': emoji, 'Objetivo': objetivo, 'Fecha límite': fd || '', 'Cuenta': cuenta };
   if (p.foto !== undefined && p.foto !== null) {
     const foto = String(p.foto).trim();
@@ -2112,7 +2130,7 @@ function administrarMeta(p, cfg) {
   if (anterior && anterior !== nombre) valores['Meta'] = nombre;
   guardarFilaConfig('Meta', anterior || nombre, valores, !anterior);
   return (previa ? '✏️ Actualicé ' : '🏁 Creé ') + 'la meta "' + nombre + '": ' + pesos(objetivo) + ' en "' + cuenta + '"' + (fd ? ' para el ' + fmt(fd) : '') +
-    (nueva ? '\n🆕 Creé el bolsillo "' + nueva + '" (sale de ' + limpiar(p.principal) + ').' : '');
+    (nueva ? '\n🆕 Creé el bolsillo "' + nueva + '" (sale de ' + limpiar(p.principal) + ').' : '') + msgCambio;
 }
 
 /**
@@ -3148,12 +3166,24 @@ const AV = (function () {
   }
 
   /* ¿Ya lo registraste a mano? mismo monto, cuenta compatible y fecha ±1 día. libre(m) filtra movimientos ya enlazados. */
+  // Solo cuenta como "ya registrado" un movimiento del mismo sentido: una entrada nunca es duplicado de un gasto.
+  const SALE = ['Gasto', 'Transferencia', 'Le pagué'], ENTRA = ['Ingreso', 'Me pagaron', 'Me prestaron', 'Transferencia'];
+  function compatible(ev, m) {
+    if (ev.tipo === 'transferencia') return m.tipo === 'Transferencia' && (!ev.cuenta || m.cuenta === ev.cuenta) && (!ev.destino || m.destino === ev.destino);
+    if (ev.tipo === 'entrada') {
+      if (ENTRA.indexOf(m.tipo) < 0) return false;
+      const c = m.tipo === 'Transferencia' ? m.destino : m.cuenta;
+      return !ev.cuenta || c === ev.cuenta;
+    }
+    if (SALE.indexOf(m.tipo) < 0) return false;            // gasto, salida o retiro
+    return !ev.cuenta || m.cuenta === ev.cuenta;
+  }
   function yaRegistrado(ev, movimientos, libre) {
     const dia = 86400000;
     return movimientos.find(function (m) {
       if (Math.abs(m.monto - ev.monto) > 0.5) return false;
       if (Math.abs(m.fecha.getTime() + 12 * 3600000 - ev.t) > 1.6 * dia) return false;
-      if (ev.cuenta && m.cuenta && ev.cuenta !== m.cuenta && ev.cuenta !== m.destino && ev.destino !== m.cuenta && ev.destino !== m.destino) return false;
+      if (!compatible(ev, m)) return false;
       return !libre || libre(m);
     }) || null;
   }
