@@ -3243,7 +3243,14 @@ function registrarAviso(p, cfg) {
   const texto = String(p.texto || '').trim(), titulo = String(p.titulo || '').trim();
   if (!texto && !titulo) throw new Error('El aviso viene vacío.');
   const t = avTs_(p.ts);
-  const ev = AV.parse({ app: limpiar(p.app).toLowerCase() || 'sms', titulo: titulo, texto: texto, ts: t });
+  // La macro puede mandar varias versiones del texto separadas por "||" (texto normal, texto grande, ticker): se usa la primera que se entienda.
+  const variantes = texto.split(/\s*\|\|\s*/).map(function (x) { return x.trim(); }).filter(function (x, i, a) { return x && a.indexOf(x) === i; })
+    .sort(function (x, y) { return y.length - x.length; });
+  let ev = null;
+  (variantes.length ? variantes : ['']).some(function (v) {
+    ev = AV.parse({ app: limpiar(p.app).toLowerCase() || 'sms', titulo: titulo, texto: v, ts: t });
+    return !!ev;
+  });
   if (!ev || !(ev.monto > 0)) return 'ℹ️ Ese aviso no es un movimiento. Lo ignoré.';
   const yo = cfg.ajustes.nombre || '';
   const nuevo = {
