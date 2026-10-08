@@ -49,13 +49,19 @@ public final class Envio {
         return false;
     }
 
-    static void avisar(final Context ctx, String app, String titulo, String texto, long ts) {
+    static void avisar(final Context ctx, String app, String titulo, String texto, long ts) { avisar(ctx, app, titulo, texto, ts, null); }
+
+    /** alFinal (puede ser null) se llama cuando el envío terminó o quedó en cola: el receptor de SMS lo usa con goAsync(). */
+    static void avisar(final Context ctx, String app, String titulo, String texto, long ts, final Runnable alFinal) {
         final Context c = ctx.getApplicationContext();
-        if (!activo(c)) return;
-        if (repetido(app + "|" + titulo + "|" + texto)) return;
+        if (!activo(c) || repetido(app + "|" + titulo + "|" + texto)) { if (alFinal != null) alFinal.run(); return; }
         final JSONObject a = new JSONObject();
-        try { a.put("app", app); a.put("titulo", titulo); a.put("texto", texto); a.put("ts", ts); } catch (Exception e) { return; }
-        new Thread(new Runnable() { public void run() { synchronized (LOCK) { encolar(c, a); vaciar(c); } } }).start();
+        try { a.put("app", app); a.put("titulo", titulo); a.put("texto", texto); a.put("ts", ts); } catch (Exception e) { if (alFinal != null) alFinal.run(); return; }
+        // Primero queda guardado en la cola (si el sistema mata el proceso, se reintenta al abrir la app); luego se envía.
+        synchronized (LOCK) { encolar(c, a); }
+        new Thread(new Runnable() { public void run() {
+            try { synchronized (LOCK) { vaciar(c); } } finally { if (alFinal != null) alFinal.run(); }
+        } }).start();
     }
 
     /** Reintenta lo que quedó en cola (al abrir la app). */
