@@ -1,0 +1,19 @@
+{
+  "appId": "co.stircalde.misfinanzas",
+  "appName": "Mis finanzas",
+  "webDir": "www",
+  "server": {
+    "url": "https://stircalde.github.io/mis-finanzas/",
+    "cleartext": false,
+    "allowNavigation": ["stircalde.github.io"]
+  },
+  "android": {
+    "backgroundColor": "#0b1020"
+  },
+  "plugins": {
+    "SystemBars": {
+      "insetsHandling": "native",
+      "initialViewportFitValueHint": "cover"
+    }
+  }
+}

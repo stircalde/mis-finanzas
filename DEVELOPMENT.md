@@ -42,9 +42,15 @@ cards.js, cards/, logos/  catálogo de imágenes de tarjetas y logos de bancos
 backend/Codigo.gs         Google Apps Script (API + correos + cálculos). Es la misma versión que está en línea.
 backend/Dashboard.html    tablero antiguo servido por Apps Script (sin mantenimiento activo)
 avisos.js                 pantalla "Por confirmar" (avisos de bancos); resuelve con el formulario de registro.js
+android-app/              app Android (Capacitor 8): abre la PWA publicada; el APK lo compila .github/workflows/android.yml y queda en Releases
 docs/avisos-macro.md      cómo armar la macro del celular que reenvía notificaciones/SMS (sin claves)
 tests/                    pruebas del backend en Node (ver abajo)
 ```
+
+**App Android.** `android-app/` es un proyecto Capacitor que carga `https://stircalde.github.io/mis-finanzas/` (server.url):
+los cambios de la PWA llegan sin reinstalar; solo hay que compilar un APK nuevo cuando cambia la parte nativa.
+GitHub Actions compila y firma con el secreto `MF_FIRMA` (línea 1 contraseña, línea 2 llave en base64; alias `misfinanzas`)
+y publica `android-1.N` en Releases. versionCode = número de compilación. Sin el mismo secreto, el APK no actualiza encima del anterior.
 
 **Avisos de bancos.** La macro hace `POST accion=aviso` (app, titulo, texto, ts). El backend (`registrarAviso`, objeto `AV`) lee el texto,
 une avisos repetidos, detecta transferencias propias y lo ya registrado, y lo guarda en la hoja **Avisos** (Pendiente / Registrado / Ignorado / Ya estaba).
