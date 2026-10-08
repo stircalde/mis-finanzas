@@ -49,12 +49,13 @@ public final class Envio {
         return false;
     }
 
-    static void avisar(final Context ctx, String app, String titulo, String texto, long ts) { avisar(ctx, app, titulo, texto, ts, null); }
-
-    /** alFinal (puede ser null) se llama cuando el envío terminó o quedó en cola: el receptor de SMS lo usa con goAsync(). */
-    static void avisar(final Context ctx, String app, String titulo, String texto, long ts, final Runnable alFinal) {
+    /**
+     * llave: identifica la notificación concreta (clave del sistema + hora del evento); si llega dos veces la misma, se manda una.
+     * alFinal (puede ser null) se llama cuando el envío terminó o quedó en cola: el receptor de SMS lo usa con goAsync().
+     */
+    static void avisar(final Context ctx, String app, String titulo, String texto, long ts, String llave, final Runnable alFinal) {
         final Context c = ctx.getApplicationContext();
-        if (!activo(c) || repetido(app + "|" + titulo + "|" + texto)) { if (alFinal != null) alFinal.run(); return; }
+        if (!activo(c) || repetido(llave)) { if (alFinal != null) alFinal.run(); return; }
         final JSONObject a = new JSONObject();
         try { a.put("app", app); a.put("titulo", titulo); a.put("texto", texto); a.put("ts", ts); } catch (Exception e) { if (alFinal != null) alFinal.run(); return; }
         // Primero queda guardado en la cola (si el sistema mata el proceso, se reintenta al abrir la app); luego se envía.
@@ -69,6 +70,13 @@ public final class Envio {
         final Context c = ctx.getApplicationContext();
         if (!activo(c)) return;
         new Thread(new Runnable() { public void run() { synchronized (LOCK) { vaciar(c); } } }).start();
+    }
+
+    /** Lo llama EnvioWorker (WorkManager) cuando vuelve internet. Devuelve true si la cola quedó vacía. */
+    static boolean vaciarAhora(Context ctx) {
+        Context c = ctx.getApplicationContext();
+        if (!activo(c)) return true;
+        synchronized (LOCK) { vaciar(c); return cola(c).length() == 0; }
     }
 
     private static JSONArray cola(Context c) {
@@ -91,10 +99,16 @@ public final class Envio {
             if (a == null) continue;
             if (caido) { resto.put(a); continue; }
             String r = mandar(c, a);
-            if (r == null) { caido = true; resto.put(a); }
+            if (r == null) {
+                caido = true;
+                int n = a.optInt("intentos", 0) + 1;
+                if (n >= 60) anotar(c, a.optString("app"), a.optLong("ts"), "❌ No se pudo enviar tras 60 intentos: " + prefs(c).getString("error", ""));
+                else { try { a.put("intentos", n); } catch (Exception ignored) { } resto.put(a); }
+            }
             else anotar(c, a.optString("app"), a.optLong("ts"), r);
         }
-        prefs(c).edit().putString("cola", resto.toString()).apply();
+        prefs(c).edit().putString("cola", resto.toString()).commit();
+        if (resto.length() > 0) EnvioWorker.programar(c);   // reintento con WorkManager cuando haya internet, aunque no abras la app
     }
 
     /** Devuelve el mensaje del servidor, o null si no se pudo conectar (queda en cola). */
@@ -116,13 +130,14 @@ public final class Envio {
             OutputStream os = con.getOutputStream();
             os.write(cuerpo.getBytes(StandardCharsets.UTF_8)); os.close();
             int code = con.getResponseCode();
-            if (code >= 500) return null;
+            if (code >= 500 || code == 408 || code == 429) { p.edit().putString("error", "HTTP " + code).apply(); return null; }   // temporal: queda en cola
             StringBuilder sb = new StringBuilder();
             BufferedReader br = new BufferedReader(new InputStreamReader(code >= 400 ? con.getErrorStream() : con.getInputStream(), StandardCharsets.UTF_8));
             String l; while ((l = br.readLine()) != null && sb.length() < 4000) sb.append(l);
             br.close();
-            try { JSONObject j = new JSONObject(sb.toString()); return (j.optBoolean("ok") ? "" : "❌ ") + j.optString("mensaje", "ok"); }
-            catch (Exception e) { return "HTTP " + code; }
+            // Solo sale de la cola con una respuesta JSON del backend; cualquier otra cosa (página de error, redirect raro) se reintenta.
+            try { JSONObject j = new JSONObject(sb.toString()); if (!j.has("ok")) throw new Exception("sin ok"); return (j.optBoolean("ok") ? "" : "❌ ") + j.optString("mensaje", "ok"); }
+            catch (Exception e) { p.edit().putString("error", "Respuesta inesperada (HTTP " + code + ")").apply(); return null; }
         } catch (Exception e) {
             p.edit().putString("error", e.getClass().getSimpleName() + ": " + e.getMessage()).apply();
             return null;

@@ -3155,9 +3155,15 @@ const AV = (function () {
   function mismoHecho(a, b) {
     if (Math.abs(a.monto - b.monto) > 0.5) return false;
     if (a.tipo === 'transferencia' || b.tipo === 'transferencia') {
-      const o = a.tipo === 'transferencia' ? b : a;
-      if (o.tipo !== 'salida' && o.tipo !== 'entrada' && o.tipo !== 'transferencia') return false;
-      return Math.abs(a.t - b.t) <= 20 * MS_MIN;
+      const tr = a.tipo === 'transferencia' ? a : b, o = tr === a ? b : a;
+      if (Math.abs(a.t - b.t) > 20 * MS_MIN) return false;
+      if (o.tipo === 'transferencia') return (!tr.cuenta || !o.cuenta || tr.cuenta === o.cuenta) && (!tr.destino || !o.destino || tr.destino === o.destino);
+      if (o.tipo === 'salida') return !(o.banco && tr.banco && o.banco !== tr.banco);         // sale del mismo banco de origen
+      if (o.tipo === 'entrada') {
+        if (o.mio === false) return false;                                                    // te la mandó otra persona: es otro hecho
+        return !(o.cuenta && tr.destino && o.cuenta !== tr.destino);                           // entra a la cuenta de destino
+      }
+      return false;
     }
     if (a.tipo !== b.tipo) return false;
     if (a.banco && b.banco && a.banco !== b.banco) return false;
@@ -3172,7 +3178,7 @@ const AV = (function () {
   const SALE = ['Gasto', 'Transferencia', 'Le pagué'], ENTRA = ['Ingreso', 'Me pagaron', 'Me prestaron', 'Transferencia'];
   function compatible(ev, m) {
     // Sin cuenta asignada (p. ej. dos cuentas con el nombre del banco), la del movimiento debe ser al menos de ese banco.
-    const cuentaOk = function (c) { return ev.cuenta ? c === ev.cuenta : (!ev.banco || norm(c).indexOf(norm(ev.banco)) >= 0); };
+    const cuentaOk = function (c) { return !!ev.cuenta && c === ev.cuenta; };   // sin cuenta clara no se decide solo: queda por confirmar
     if (ev.tipo === 'transferencia') return m.tipo === 'Transferencia' && (!ev.cuenta || m.cuenta === ev.cuenta) && (!ev.destino || m.destino === ev.destino);
     if (ev.tipo === 'entrada') {
       if (ENTRA.indexOf(m.tipo) < 0) return false;
@@ -3213,7 +3219,7 @@ const AV = (function () {
     t = limpio(String(t || '').replace(/[{}\[\]]/g, ' '));
     if (/credifin|addi\b/i.test(t) && !/davibank|nequi|nubank|daviplata/i.test(t)) return null;   // nunca se leen
     if (/Pago exitoso por PSE/i.test(t)) return null;                                             // repite un pago ya avisado
-    if (/c\S?digo|clave|contrase|\botp\b|token|verificaci|inscribiste|promo|descuento|sorteo|oferta|aprovecha|preaprobad|gana\b|ganaste|invita/i.test(t)) return null;
+    if (/c\S?digo|clave|contrase|\botp\b|token|verificaci|inscribiste|promo|descuento|sorteo|oferta|aprovecha|preaprobad|gana\b|ganaste|invita|\bbono\b|cashback|beneficio|premio|regal|saldo disponible|tu saldo es|\brecibe\b|\btransfiere\b|\bpaga\b|cupo disponible/i.test(t)) return null;
     const m = /(?:\$|COP)\s?([\d.,]*\d)|\b(\d{1,3}(?:[.,]\d{3})+(?:,\d{1,2})?)\b/i.exec(t);
     if (!m) return null;
     if (!/compra|pag|env\S{0,2}o|envi|recib|transf|retir|saca|d\S?bito|debit|abon|consign|cargo|cobr|deposit|desembols|avance|transacci|movimiento/i.test(t)) return null;
@@ -3331,6 +3337,7 @@ function registrarAviso(p, cfg) {
     t: ev.ts, tipo: ev.tipo === 'retiro' ? 'retiro' : ev.tipo, monto: ev.monto, banco: ev.banco || '', quien: ev.comercio || ev.persona || '',
     cuenta: avCuenta_(cfg, ev.banco, ev.tc), destino: '', pse: !!ev.pse, tc: !!ev.tc, recurrente: !!ev.recurrente, origen: origen
   };
+  if (nuevo.tipo === 'entrada' && nuevo.quien) nuevo.mio = AV.esMio(nuevo.quien, yo);   // false = te la mandó otra persona
   const recientes = leerAvisos_(300);
 
   // 1) Mismo hecho avisado por otro canal (app + SMS + Billetera + correo): solo suma un aviso.

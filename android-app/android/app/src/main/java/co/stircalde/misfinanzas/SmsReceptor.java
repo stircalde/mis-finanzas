@@ -24,7 +24,9 @@ public class SmsReceptor extends BroadcastReceiver {
             for (SmsMessage m : ms) sb.append(m.getDisplayMessageBody());
             // goAsync(): Android no da por terminado el receptor hasta que el envío acabe (si no, puede matar el proceso a mitad).
             final PendingResult fin = goAsync();
-            Envio.avisar(c, "sms", "", sb.toString().replaceAll("\\s+", " ").trim(), ms[0].getTimestampMillis(), new Runnable() {
+            String cuerpo = sb.toString().replaceAll("\\s+", " ").trim();
+            long ts = ms[0].getTimestampMillis();
+            Envio.avisar(c, "sms", "", cuerpo, ts, "sms|" + de + "|" + ts + "|" + cuerpo, new Runnable() {
                 public void run() { fin.finish(); }
             });
         } catch (Exception ignored) { }

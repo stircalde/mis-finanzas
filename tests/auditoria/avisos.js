@@ -225,4 +225,21 @@ const dos = [{ id: 'a', monto: 8800, tipo: 'Gasto', cuenta: 'Nequi', fecha: new 
   { id: 'b', monto: 8800, tipo: 'Gasto', cuenta: 'Nequi', fecha: new Date(2026, 9, 7), registrado: new Date(2026, 9, 7, 10, 1) }];
 const usados = { a: 1 };
 ok(AV.yaRegistrado({ tipo: 'gasto', monto: 8800, t: new Date(2026, 9, 7, 10, 5).getTime(), cuenta: 'Nequi' }, dos, m => !usados[m.id]).id === 'b', 'con dos registros iguales, el segundo aviso se enlaza al movimiento libre');
+// 17) Auditoría ChatGPT 8-oct
+const t17 = Date.now() + 5 * H_;
+const fmt17 = (x) => { const d = new Date(x), z = n => String(n).padStart(2, '0'); return d.getFullYear() + '-' + z(d.getMonth() + 1) + '-' + z(d.getDate()) + '. ' + z(d.getHours()) + ':' + z(d.getMinutes()) + '.'; };
+AV_({ app: 'nequi colombia', titulo: 'Envío de plata exitoso', texto: 'Te contamos que el envío de plata por $91.000 fue exitoso.', ts: t17 });
+AV_({ app: 'banco falabella', titulo: '¡Transferencia recibida!', texto: 'HECTOR EJEMPLO te ha enviado $91.000,00 a tu cuenta. ' + fmt17(t17 + 60000), ts: t17 + 60000 });
+const tr17 = av().items.find(x => x.monto === 91000 && x.tipo === 'transferencia');
+ok(tr17 && tr17.cuenta === 'Nequi' && tr17.destino === 'Falabella', 'transferencia propia Nequi → Falabella armada: ' + JSON.stringify(tr17 && [tr17.cuenta, tr17.destino]));
+let r17 = AV_({ app: 'banco falabella', titulo: '¡Transferencia recibida!', texto: 'JUAN EJEMPLO te ha enviado $91.000,00 a tu cuenta. ' + fmt17(t17 + 8 * 60000), ts: t17 + 8 * 60000 });
+ok(av().items.filter(x => x.monto === 91000).length === 2 && av().items.some(x => x.monto === 91000 && x.tipo === 'entrada' && x.quien === 'JUAN EJEMPLO'),
+  'entrada de un tercero del mismo monto, 8 min después, NO se une a la transferencia propia: ' + r17.mensaje);
+r17 = AV_({ app: 'nequi colombia', titulo: 'Envío de plata exitoso', texto: 'Te contamos que el envío de plata por $91.000 fue exitoso.', ts: t17 + 2 * 60000, origen: 'app' });
+ok(/repetido/.test(r17.mensaje), 'la misma salida por la app sí se une a la transferencia: ' + r17.mensaje);
+ok(!AV.yaRegistrado({ tipo: 'entrada', monto: 100, t: Date.now(), cuenta: '', banco: 'daviplata' },
+  [{ monto: 100, tipo: 'Ingreso', cuenta: 'Bolsillo Daviplata Ejemplo', fecha: soloFecha(new Date()), registrado: new Date() }]), 'sin cuenta clara nunca es "Ya estaba"');
+['Recibe un bono de $50.000 por transferir $200.000', 'Tu saldo disponible es $1.500.000. Última transferencia $20.000', 'Gana cashback de $10.000 pagando con tu tarjeta', 'Paga tus servicios y recibe un regalo de $5.000']
+  .forEach(x => ok(!AV.pareceMovimiento(x), 'promoción/saldo no es "No reconocido": ' + x));
+ok(AV.pareceMovimiento('DAVIbank: Pago recibido a tu tarjeta por $500.000'), 'un pago real sigue siendo "No reconocido"');
 A.fin('avisos');
