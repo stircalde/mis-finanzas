@@ -195,9 +195,18 @@ ok(dIt && dIt.estado === 'Pendiente', 'Daviplata (sin cuenta clara) no coincide 
 let br = AV.parse({ app: 'nequi colombia', titulo: 'Te enviaron plata por Bre-B', texto: 'Te enviaron $200. Entra a tu app y revisa tu saldo.' });
 ok(br && br.tipo === 'entrada' && br.monto === 200 && br.banco === 'nequi', 'Bre-B de Nequi: ' + JSON.stringify(br));
 P({ accion: 'transferencia', desde: 'Nequi', hacia: 'Falabella', monto: 2300, fecha: '2026-10-07' }); A.tic();
-AV_({ app: 'nequi colombia', titulo: 'Envío de plata exitoso', texto: 'Te contamos que el envío de plata por $2.300 fue exitoso.', ts: T(23, 40) });
+AV_({ app: 'nequi colombia', titulo: 'Envío de plata exitoso', texto: 'Te contamos que el envío de plata por $2.300 fue exitoso.', ts: Date.now() + 10 * 60000 });
 const eIt = () => av().items.find(x => x.monto === 2300);
 ok(eIt() && eIt().estado === 'Ya estaba', 'salida propia sí coincide: ' + JSON.stringify(eIt()));
 c1 = P({ accion: 'avisoresolver', id: eIt().id, como: 'reabrir' }); A.tic();
 ok(c1.ok && eIt().estado === 'Pendiente', '"Ya estaba" se puede reabrir: ' + c1.mensaje);
+// 15) La hora importa: un movimiento registrado muchas horas ANTES del aviso no es el mismo; uno registrado después (mismo día) sí
+const ahora0 = Date.now();
+P({ accion: 'transferencia', desde: 'Nequi', hacia: 'Falabella', monto: 4400, fecha: '2026-10-07' }); A.tic();
+AV_({ app: 'nequi colombia', titulo: 'Envío de plata exitoso', texto: 'Te contamos que el envío de plata por $4.400 fue exitoso.', ts: ahora0 + 11 * 3600000 });
+const hIt = av().items.find(x => x.monto === 4400);
+ok(hIt && hIt.estado === 'Pendiente', 'registrado 11 h antes del aviso: no es el mismo: ' + JSON.stringify(hIt && [hIt.estado, hIt.nota]));
+AV_({ app: 'nequi colombia', titulo: 'Envío de plata exitoso', texto: 'Te contamos que el envío de plata por $5.500 fue exitoso.', ts: ahora0 - 3 * 3600000 });
+P({ accion: 'transferencia', desde: 'Nequi', hacia: 'Falabella', monto: 5500, fecha: '2026-10-07' }); A.tic();
+ok(AV.yaRegistrado(Object.assign({}, av().items.find(x => x.monto === 5500), { t: ahora0 - 3 * 3600000, cuenta: 'Nequi', tipo: 'salida' }), leerMovimientos()), 'registrado 3 h después del aviso (mismo día): sí es el mismo');
 A.fin('avisos');
