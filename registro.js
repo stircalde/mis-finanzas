@@ -72,8 +72,8 @@
     return campo(label, '<input class="in" data-k="' + k + '" type="text" autocomplete="off" enterkeyhint="next" placeholder="' + esc(ph || '') + '" value="' + esc(st[k] || '') + '">', nota, k);
   }
   function fMonto(k, label, nota, grande) {
-    return campo(label, '<div class="money' + (grande ? ' big' : '') + '"><span>$</span><input class="in" data-k="' + k + '" data-money="1" inputmode="numeric" autocomplete="off" placeholder="0"' + (avisoCtx && k === 'monto' ? ' readonly' : '') + ' value="' +
-      (st[k] == null || isNaN(st[k]) ? '' : miles(st[k])) + '"></div>', avisoCtx && k === 'monto' ? 'Es el monto exacto que avisó el banco.' : nota, k);
+    return campo(label, '<div class="money' + (grande ? ' big' : '') + '"><span>$</span><input class="in" data-k="' + k + '" data-money="1" inputmode="numeric" autocomplete="off" placeholder="0"' + (avisoCtx && !avisoCtx.libre && k === 'monto' ? ' readonly' : '') + ' value="' +
+      (st[k] == null || isNaN(st[k]) ? '' : miles(st[k])) + '"></div>', avisoCtx && k === 'monto' ? (avisoCtx.libre ? 'El lector no entendió el aviso: revisa el monto con el texto del banco.' : 'Es el monto exacto que avisó el banco.') : nota, k);
   }
   function fSelect(k, label, ops, ph, nota) {
     var h = '<select class="in" data-k="' + k + '">';
@@ -146,7 +146,8 @@
   // Lo que ya sabe el aviso se pone en el formulario del tipo elegido (también al cambiar de pestaña).
   function aplicarAviso() {
     var a = avisoCtx;
-    st.monto = a.monto; st._montoAuto = false;
+    if (!a.libre || !(st.monto > 0)) st.monto = a.monto > 0 ? a.monto : NaN;
+    st._montoAuto = false;
     if (a.fecha) st.fecha = a.fecha;
     if (tipo === 'gasto') { if (a.cuenta) st.cuenta = a.cuenta; if (a.quien && !st.desc) st.desc = a.quien; }
     if (tipo === 'ingreso' && a.cuenta) st.cuenta = a.cuenta;
@@ -432,7 +433,7 @@
     if (tiposVisibles().indexOf(tipo) < 0) { tipo = 'gasto'; reiniciar(true); }
     var y = hoja.querySelector('.reg-sheet').scrollTop;
     var kindEl = hoja.querySelector('.reg-sheet .sheet-h .kind');
-    if (kindEl) kindEl.textContent = avisoCtx ? '🔔 Aviso del banco · ' + pesos(avisoCtx.monto) + (avisoCtx.quien ? ' · ' + avisoCtx.quien : '') : 'Se guarda directo en tu hoja';
+    if (kindEl) kindEl.textContent = avisoCtx ? (avisoCtx.libre ? '❓ “' + String(avisoCtx.texto || 'Aviso no reconocido').slice(0, 140) + '”' : '🔔 Aviso del banco · ' + pesos(avisoCtx.monto)) + (avisoCtx.quien ? ' · ' + avisoCtx.quien : '') : 'Se guarda directo en tu hoja';
     cuerpo.innerHTML = '<div class="reg-tipos" role="tablist">' + tiposVisibles().map(function (k) {
       var n = k === 'fijo' ? ' (' + pendientesFijos().length + ')' : '';
       return '<button type="button" role="tab" class="op" data-tipo="' + k + '" aria-selected="' + (k === tipo) + '" aria-pressed="' + (k === tipo) + '">' + TIPOS[k].t + n + '</button>';
@@ -461,7 +462,7 @@
     if (k === 'tipoIng' || k === 'credito' || k === 'fijo') st._montoAuto = undefined;
     if (k === 'aplica' || k === 'compra') st._montoAuto = undefined;
     if (k === 'cat') st._catManual = true;
-    if (avisoCtx) { st.monto = avisoCtx.monto; st._montoAuto = false; }   // el monto del aviso no cambia
+    if (avisoCtx && !avisoCtx.libre) { st.monto = avisoCtx.monto; st._montoAuto = false; }   // el monto del aviso no cambia
     pintar();
   }
 

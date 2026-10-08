@@ -154,4 +154,22 @@ ok(e1 && e1.banco === 'nequi' && e1.monto === 12480 && e1.comercio === 'TIENDAS 
 // 11) La hoja no guarda claves y el panel no revienta con datos raros
 ok(!A.raro(D().avisos), 'sin NaN/undefined en el panel: ' + A.raro(D().avisos));
 ok(!P({ accion: 'aviso', texto: '', titulo: '' }).ok, 'aviso vacío es un error');
+// 12) "No reconocido": avisos de bancos que el lector no entiende pero parecen un movimiento quedan por confirmar con su texto
+ok(AV.pareceMovimiento('DAVIbank: Pago recibido a tu tarjeta por $500.000') && AV.pareceMovimiento('DAVIbank: Pago recibido a tu tarjeta por $500.000').monto === 500000, 'parece movimiento: pago a tarjeta');
+ok(!AV.pareceMovimiento('Tu código de verificación para pagar es 123456'), 'código: no es movimiento');
+ok(!AV.pareceMovimiento('Aprovecha: 20% de descuento pagando con Nequi hasta $50.000'), 'promoción: no es movimiento');
+ok(!AV.pareceMovimiento('Pago exitoso por PSE por $30.000'), 'PSE repetido: se sigue ignorando');
+ok(!AV.pareceMovimiento('Tu cuota de Credifin por $120.000 vence'), 'Credifin: nunca');
+let nr = AV_({ app: 'davibank', titulo: 'DAVIbank', texto: 'DAVIbank: Abono recibido a tu tarjeta por $480.000 el 2026/10/07', ts: T(22, 0) });
+const nrIt = () => av().items.filter(x => x.tipo === 'noreconocido');
+ok(/No reconocido/.test(nr.mensaje) && nrIt().length === 1 && nrIt()[0].monto === 480000 && nrIt()[0].estado === 'Pendiente' && /Abono recibido/.test(nrIt()[0].texto) && nrIt()[0].banco === 'davibank', 'no reconocido queda pendiente con su texto: ' + nr.mensaje + JSON.stringify(nrIt()));
+nr = AV_({ app: 'sms', titulo: 'DAVIbank', texto: '{DAVIbank: Abono recibido a tu tarjeta por $480.000 el 2026/10/07}', ts: T(22, 1) });
+ok(/repetido/.test(nr.mensaje) && nrIt().length === 1 && nrIt()[0].n === 2, 'no reconocido repetido no se duplica: ' + nr.mensaje);
+const nMovNr = nMov();
+nr = P({ accion: 'avisoresolver', id: nrIt()[0].id, como: 'gasto', datos: JSON.stringify({ descripcion: 'Prueba NR', cuenta: 'Nequi' }) }); A.tic();
+ok(!nr.ok && /monto/.test(nr.mensaje) && nMov() === nMovNr, 'no reconocido exige el monto escrito: ' + nr.mensaje);
+nr = P({ accion: 'avisoresolver', id: nrIt()[0].id, como: 'gasto', datos: JSON.stringify({ descripcion: 'Prueba NR', cuenta: 'Nequi', monto: 470000 }) }); A.tic();
+ok(nr.ok && nMov() === nMovNr + 1 && A.movs().some(m => m[2] === 'Prueba NR' && Number(m[3]) === 470000) && nrIt()[0].estado === 'Registrado', 'no reconocido se registra con el monto que escribiste: ' + nr.mensaje);
+ok(/no es un movimiento/.test(AV_({ app: 'nequi', texto: 'Nequi: tu clave dinámica es 445566', ts: T(22, 5) }).mensaje), 'clave dinámica sigue siendo ruido');
+ok(!A.raro(D().avisos), 'sin NaN/undefined con no reconocidos');
 A.fin('avisos');

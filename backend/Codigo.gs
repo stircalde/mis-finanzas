@@ -3188,7 +3188,22 @@ const AV = (function () {
     }) || null;
   }
 
-  return { num: num, parse: parse, mismoHecho: mismoHecho, yaRegistrado: yaRegistrado, esMio: esMio, norm: norm, MS_MIN: MS_MIN };
+  /* ¿Este aviso que el lector no entendió parece un movimiento de plata? (para no perderlo en silencio).
+     Necesita un monto y una palabra de movimiento; descarta códigos, promociones y lo que se ignora a propósito.
+     Devuelve { monto } (0 si no se pudo leer) o null. */
+  function pareceMovimiento(t) {
+    t = limpio(String(t || '').replace(/[{}\[\]]/g, ' '));
+    if (/credifin|addi\b/i.test(t) && !/davibank|nequi|nubank|daviplata/i.test(t)) return null;   // nunca se leen
+    if (/Pago exitoso por PSE/i.test(t)) return null;                                             // repite un pago ya avisado
+    if (/c\S?digo|clave|contrase|\botp\b|token|verificaci|inscribiste|promo|descuento|sorteo|oferta|aprovecha|preaprobad|gana\b|ganaste|invita/i.test(t)) return null;
+    const m = /(?:\$|COP)\s?([\d.,]*\d)|\b(\d{1,3}(?:[.,]\d{3})+(?:,\d{1,2})?)\b/i.exec(t);
+    if (!m) return null;
+    if (!/compra|pag|env\S{0,2}o|envi|recib|transf|retir|saca|d\S?bito|debit|abon|consign|cargo|cobr|deposit|desembols|avance|transacci|movimiento/i.test(t)) return null;
+    const monto = num(m[1] || m[2]);
+    return { monto: monto > 0 ? monto : 0 };
+  }
+
+  return { num: num, parse: parse, pareceMovimiento: pareceMovimiento, mismoHecho: mismoHecho, yaRegistrado: yaRegistrado, esMio: esMio, norm: norm, MS_MIN: MS_MIN };
 })();
 
 function avModo_() {
@@ -3282,7 +3297,7 @@ function registrarAviso(p, cfg) {
     ev = AV.parse({ app: limpiar(p.app).toLowerCase() || 'sms', titulo: titulo, texto: v, ts: t });
     return !!ev;
   });
-  if (!ev || !(ev.monto > 0)) return 'ℹ️ Ese aviso no es un movimiento. Lo ignoré.';
+  if (!ev || !(ev.monto > 0)) return avNoReconocido_(p, titulo, variantes, t);
   const yo = cfg.ajustes.nombre || '';
   const nuevo = {
     t: ev.ts, tipo: ev.tipo === 'retiro' ? 'retiro' : ev.tipo, monto: ev.monto, banco: ev.banco || '', quien: ev.comercio || ev.persona || '',
@@ -3324,6 +3339,29 @@ function registrarAviso(p, cfg) {
   nuevo.id = 'av' + Utilities.getUuid().slice(0, 8);
   nuevo.fuentes = [ev.fuente]; nuevo.n = 1; nuevo.estado = 'Pendiente'; nuevo.idMov = ''; nuevo.nota = ''; nuevo.res = ''; nuevo.texto = ev.crudo; nuevo.fila = 0;
   return avAsentar_(nuevo, cfg, recientes, 'Aviso nuevo');
+}
+
+/** Un aviso de banco que el lector no entendió pero parece un movimiento: queda en "Por confirmar" como "No reconocido",
+ *  con su texto original, para registrarlo a mano y ajustar el lector. El ruido (códigos, promociones) se sigue ignorando. */
+function avNoReconocido_(p, titulo, variantes, t) {
+  const texto = String((titulo ? titulo + ' · ' : '') + (variantes[0] || '')).replace(/[{}\[\]]/g, ' ').replace(/\s+/g, ' ').trim();
+  const pm = AV.pareceMovimiento(texto);
+  if (!pm) return 'ℹ️ Ese aviso no es un movimiento. Lo ignoré.';
+  const fuente = limpiar(p.app).toLowerCase() || 'sms';
+  const llave = AV.norm(texto);
+  const recientes = leerAvisos_(300);
+  const dup = recientes.find(function (r) { return r.tipo === 'noreconocido' && Math.abs(r.t - t) <= 30 * AV.MS_MIN && AV.norm(r.texto.split(' | ')[0]) === llave; });
+  if (dup) {
+    dup.n++;
+    if (dup.fuentes.indexOf(fuente) < 0) dup.fuentes.push(fuente);
+    avDiferir_(function () { avGuardar_(dup); });
+    return '👌 Aviso no reconocido repetido. No lo dupliqué.';
+  }
+  const banco = ['nequi', 'daviplata', 'davibank', 'nubank', 'falabella'].filter(function (b) { return AV.norm(fuente + ' ' + texto).indexOf(AV.norm(b)) >= 0; })[0] || '';
+  const r = { id: 'av' + Utilities.getUuid().slice(0, 8), t: t, tipo: 'noreconocido', monto: pm.monto, banco: banco, quien: '', cuenta: '', destino: '',
+    pse: false, tc: false, recurrente: false, fuentes: [fuente], n: 1, estado: 'Pendiente', idMov: '', nota: '', res: '', texto: texto, fila: 0 };
+  avDiferir_(function () { avGuardar_(r); });
+  return '❓ No entendí ese aviso, pero parece un movimiento: quedó en "Por confirmar" como "No reconocido".';
 }
 
 /** Decide qué pasa con un aviso recién creado o recién emparejado: ya estaba, se registra solo o queda pendiente. */
@@ -3382,7 +3420,10 @@ function resolverAviso(p, cfg) {
   try { datos = typeof p.datos === 'string' ? JSON.parse(p.datos || '{}') : (p.datos || {}); } catch (e) { throw new Error('Los datos del aviso no tienen un formato válido.'); }
   const q = {};
   Object.keys(datos).forEach(function (k) { q[k] = datos[k]; });
-  q.monto = r.monto;                         // el monto es el que dijo el banco
+  if (r.tipo === 'noreconocido') {          // el lector no entendió el monto: vale el que escribiste
+    q.monto = Number(q.monto) || 0;
+    if (!(q.monto > 0)) throw new Error('Escribe el monto del movimiento.');
+  } else q.monto = r.monto;                  // el monto es el que dijo el banco
   if (!limpiar(q.fecha)) q.fecha = avFechaISO_(r.t);
   const antes = PEND_ ? PEND_.length : 0;
   const msg = f(q, cfg);
@@ -3413,7 +3454,7 @@ function resumenAvisos(cfg, movs) {
     if (r.estado === 'Pendiente' && r.tipo === 'gasto' && r.quien && sug < 30) { sug++; cat = sugerirCategoria(r.quien, cfg, movs) || ''; }
     return { id: r.id, t: Utilities.formatDate(new Date(r.t), zona(), "yyyy-MM-dd'T'HH:mm"), fuentes: r.fuentes, n: r.n, banco: r.banco, cuenta: r.cuenta,
       tipo: r.tipo, monto: r.monto, quien: r.quien, destino: r.destino, recurrente: r.recurrente, tc: r.tc, estado: r.estado, idMov: r.idMov,
-      nota: r.nota, sugCategoria: cat, texto: r.texto.slice(0, 220), mio: r.tipo === 'entrada' && AV.esMio(r.quien, cfg.ajustes.nombre) };
+      nota: r.nota, sugCategoria: cat, texto: r.texto.slice(0, r.tipo === 'noreconocido' ? 500 : 220), mio: r.tipo === 'entrada' && AV.esMio(r.quien, cfg.ajustes.nombre) };
   });
   return base;
 }

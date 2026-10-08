@@ -25,15 +25,18 @@
     if (a.tipo === 'entrada') return a.quien ? a.quien + ' te envió' : 'Recibiste plata';
     if (a.tipo === 'retiro') return 'Retiro de efectivo';
     if (a.tipo === 'transferencia') return 'Entre tus cuentas';
+    if (a.tipo === 'noreconocido') return 'No reconocido' + (BANCOS[a.banco] ? ' · ' + BANCOS[a.banco][1] : '');
     return a.quien || 'Movimiento';
   }
   function sub(a) {
     var ico = BANCOS[a.banco] ? BANCOS[a.banco][0] : '🏦';
+    if (a.tipo === 'noreconocido') return ico + ' ' + esc((a.fuentes || []).join(' + ') || 'aviso') + ' · ' + hora(a.t);
     var cuenta = a.tipo === 'transferencia' ? esc(a.cuenta || '¿?') + ' → ' + esc(a.destino || '¿?') : a.cuenta ? esc(a.cuenta) : '<b class="av-warn">cuenta sin asignar</b>';
     return ico + ' ' + cuenta + ' · ' + hora(a.t);
   }
   function etiquetas(a) {
     var e = [];
+    if (a.tipo === 'noreconocido') e.push('❓ el lector no lo entendió · revisa el texto');
     if (a.tc) e.push('💳 tarjeta · entra a 1 cuota');
     if (a.recurrente) e.push('🔁 recurrente');
     if (a.n > 1) e.push(a.n + ' avisos del mismo movimiento');
@@ -45,7 +48,7 @@
   function cfgListo() { return MF.cfgRegistro() ? Promise.resolve(MF.cfgRegistro()) : MF.cargarCfgRegistro(); }
   function abrirForm(a, tab, pre) {
     cfgListo().then(function () {
-      var ctx = { id: a.id, monto: a.monto, cuenta: a.cuenta || '', fecha: a.t.slice(0, 10), quien: a.quien, entrada: a.tipo === 'entrada' };
+      var ctx = { id: a.id, monto: a.monto, cuenta: a.cuenta || '', fecha: a.t.slice(0, 10), quien: a.quien, entrada: a.tipo === 'entrada', libre: a.tipo === 'noreconocido', texto: a.texto };
       MF.registrarCon(tab, pre || {}, ctx);
     }).catch(function (e) { error = 'No pude cargar tus cuentas: ' + (e && e.message || e); repintar(); });
   }
@@ -90,6 +93,13 @@
         enviarAccion(a, { accion: 'avisoresolver', como: 'transferencia', datos: JSON.stringify({ desde: a.cuenta, hacia: a.destino }) }); }]);
       o.push(['✏️ Cambiar las cuentas', function () { abrirForm(a, 'mover', { desde: a.cuenta || undefined, hacia: a.destino || undefined }); }]);
       o.push(['💸 No, fue un gasto', function () { abrirForm(a, 'gasto'); }]);
+    } else if (a.tipo === 'noreconocido') {
+      o.push(['💸 Fue un gasto', function () { abrirForm(a, 'gasto'); }]);
+      o.push(['💰 Me entró plata', function () { abrirForm(a, 'ingreso'); }]);
+      o.push(['💳 Pagué una tarjeta, crédito o deuda', function () { abrirForm(a, 'pagar'); }]);
+      o.push(['🔄 Fue entre mis cuentas', function () { abrirForm(a, 'mover'); }]);
+      o.push(['🙈 No era un movimiento', function () { ignorar(a); }, 'tenue']);
+      return o;
     }
     o.push(['🙈 Ignorar', function () { ignorar(a); }, 'tenue']);
     return o;
@@ -101,12 +111,14 @@
 
   function tarjeta(a, lista) {
     var abierta = abierto === a.id, bloqueado = !!ocupado[a.id];
-    var signo = a.tipo === 'entrada' ? '+' : a.tipo === 'transferencia' ? '' : '−';
-    var cls = a.tipo === 'entrada' ? 'in' : a.tipo === 'transferencia' ? 'mid' : 'out';
+    var nr = a.tipo === 'noreconocido';
+    var signo = a.tipo === 'entrada' ? '+' : a.tipo === 'transferencia' || nr ? '' : '−';
+    var cls = a.tipo === 'entrada' ? 'in' : a.tipo === 'transferencia' || nr ? 'mid' : 'out';
     var h = '<div class="av-item' + (abierta ? ' open' : '') + '" data-id="' + esc(a.id) + '"><button type="button" class="av-fila" data-abrir aria-expanded="' + abierta + '">' +
-      '<div class="av-tx"><b>' + esc(titulo(a)) + '</b><small>' + sub(a) + '</small></div><div class="av-v ' + cls + '">' + signo + pesos(a.monto) + '</div></button>';
+      '<div class="av-tx"><b>' + esc(titulo(a)) + '</b><small>' + sub(a) + '</small></div><div class="av-v ' + cls + '">' + (nr ? (a.monto > 0 ? '¿' + pesos(a.monto) + '?' : '¿$?') : signo + pesos(a.monto)) + '</div></button>';
     if (lista === 'pend') {
       h += '<div class="av-tags">' + etiquetas(a) + '</div>';
+      if (nr && !abierta && a.texto) h += '<p class="av-crudo">“' + esc(a.texto) + '”</p>';
       if (abierta) {
         h += '<div class="av-ops">' + (bloqueado ? '<div class="av-gu"><span class="spin-mini"></span> Guardando…</div>' : opciones(a).map(function (x, i) {
           return '<button type="button" class="op av-op' + (x[2] ? ' tenue' : '') + '" data-op="' + i + '">' + esc(x[0]) + '</button>'; }).join('')) + '</div>' +

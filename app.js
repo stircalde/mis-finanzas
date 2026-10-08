@@ -1489,17 +1489,17 @@
   // ---- Logo de la marca (SVG dinámico). Toma los colores de la Apariencia vía CSS (.mf-logo en app.css);
   // la geometría es la misma siempre. Los íconos de la PWA (manifest/favicon) son archivos estáticos aparte. ----
   // En la app Android, el ícono del lanzador sigue el color de Apariencia (plugin nativo Icono; en la web no hace nada).
-  var iconoT = 0, iconoUlt = null, ICONO_V = 'mf-v5-77';
+  var iconoT = 0, iconoUlt = null;
   function iconoApp() {
-    var dec = function (t) { var k = document.querySelector('.ap-hoja .kind'); if (k) k.textContent = ICONO_V + ' · ' + t; };
+    var dec = function (t) { var k = document.querySelector('.ap-hoja .kind'); if (k) k.textContent = t; };
     var C = window.Capacitor;
     var plug = null;
     try { if (C && C.isNativePlatform && C.isNativePlatform()) plug = (C.Plugins && C.Plugins.Icono) || (C.registerPlugin ? C.registerPlugin('Icono') : null); } catch (e) { plug = null; }
-    if (!plug || !plug.poner) { dec('Ícono: no encuentro el plugin nativo (Cap=' + typeof C + ')'); return; }
+    if (!plug || !plug.poner) return;   // en la web (o un APK viejo) no hay ícono que cambiar
     clearTimeout(iconoT);
     iconoT = setTimeout(function () {
       try {
-        plug.poner({ color: AP.color }).then(function (r) { iconoUlt = AP.color; dec('Ícono: ' + AP.color + ' ✓' + (r && r.pendiente ? ' · cambia al salir de la app' : '')); },
+        plug.poner({ color: AP.color }).then(function (r) { iconoUlt = AP.color; dec('Se guarda en este dispositivo' + (r && r.pendiente ? ' · el ícono cambia al salir de la app' : '')); },
           function (e) { dec('Ícono falló: ' + ((e && (e.message || e.code)) || e)); });
       } catch (e) { dec('Ícono error: ' + e.message); }
     }, 600);
