@@ -3074,7 +3074,8 @@ const AV = (function () {
 
   /** n = { app, titulo, texto, ts } -> { banco, tc, tipo: gasto|entrada|salida|retiro, comercio, persona, monto, ts, recurrente, pse, correo, fuente } | null */
   function parse(n) {
-    const t = limpio((n.titulo ? n.titulo + ' ' : '') + (n.texto || ''));
+    // La macro puede perder tildes y signos (¡, í) y agregar llaves o corchetes: el lector no depende de ellos.
+    const t = limpio(String((n.titulo ? n.titulo + ' ' : '') + (n.texto || '')).replace(/[{}\[\]]/g, ' '));
     const ts = n.ts || Date.now();
     let m;
     const ev = function (o) { o.ts = o.ts || ts; o.fuente = n.app; o.crudo = t; return o; };
@@ -3102,7 +3103,7 @@ const AV = (function () {
     // Falabella
     if ((m = /Transferiste con .*?Enviaste \$?([\d.,]+) a (?:Llave \w+ de )?(.+?)\.\s*(\d{4}-\d{2}-\d{2}.*)$/i.exec(t)))
       return ev({ banco: 'falabella', tipo: 'salida', persona: limpio(m[2]), monto: num(m[1]), ts: fechaTexto(m[3], ts) });
-    if ((m = /Transferencia recibida.*?([A-ZÁÉÍÓÚÑ][\wÁÉÍÓÚÑ ]*?) te ha enviado \$?([\d.,]+) a tu cuenta\.\s*(\d{4}-\d{2}-\d{2}.*)$/i.exec(t)))
+    if ((m = /Transferencia recibida\W*([A-ZÁÉÍÓÚÑ][\wÁÉÍÓÚÑ ]*?) te ha enviado \$?([\d.,]+) a tu cuenta\.\s*(\d{4}-\d{2}-\d{2}.*)$/i.exec(t)))
       return ev({ banco: 'falabella', tipo: 'entrada', persona: limpio(m[1]), monto: num(m[2]), ts: fechaTexto(m[3], ts) });
 
     // Billetera de Google: título = comercio, texto = "COP12,480 con Tarjeta Nequi Visa ••4335"
@@ -3118,13 +3119,13 @@ const AV = (function () {
     if ((m = /Hiciste un pago en (.+?) por \$?([\d.,]+)/i.exec(t)))
       return ev({ banco: 'nequi', tipo: 'gasto', comercio: limpio(m[1]).replace(/- /g, ''), monto: num(m[2]), pse: true });
     if (/Pago exitoso por PSE/i.test(t)) return null;
-    if ((m = /env[ií]o de plata por \$?([\d.,]+) fue exitoso/i.exec(t)))
+    if ((m = /de plata por \$?([\d.,]+) fue exitoso/i.exec(t)))
       return ev({ banco: 'nequi', tipo: 'salida', persona: '', monto: num(m[1]) });
-    if ((m = /(.+?) te envió ([\d.,]+),?\s*¡lo mejor/i.exec(t.replace(/^Env[ií]o\s*/i, ''))))
+    if ((m = /^(.+?) te envi\S{0,2}\s+\$?([\d.,]+)/i.exec(t.replace(/^Env\S{0,2}o\s+/i, ''))))
       return ev({ banco: 'nequi', tipo: 'entrada', persona: limpio(m[1]), monto: num(m[2]) });
 
     // Correo de PlacetoPay: confirma un pago PSE que ya llegó por Nequi
-    if ((m = /Transacción aprobada en (\w+).*?COP \$?([\d.,]+)/i.exec(t)))
+    if ((m = /Transacci\S{0,2}n aprobada en (\w+).*?COP \$?([\d.,]+)/i.exec(t)))
       return ev({ banco: 'nequi', tipo: 'gasto', comercio: limpio(m[1]), monto: num(m[2]), pse: true, correo: true });
     return null;
   }
