@@ -124,6 +124,15 @@ ok(nMov() === m2, 'el mismo aviso repetido en auto no duplica el movimiento');
 // El mismo SMS reenviado por la macro (reintento) no crea otro aviso
 ok(av().items.filter(x => x.monto === 36920).length === 1, 'un solo aviso de 36.920');
 
+// 10b) La macro manda varias versiones del texto separadas por "||": se usa la que se entiende y no se duplica
+const antesV = av().items.length;
+r = AV_({ app: 'Nequi Colombia', titulo: 'Envío de plata exitoso', texto: '|| Te contamos que el envío de plata por $70.000 fue exitoso. Puedes revisar en tus movimientos. || Te contamos que el envío de plata por $70.000 fue exitoso. || ', ts: T(21, 30) });
+ok(r.ok && av().items.length === antesV + 1 && pend().some(x => x.monto === 70000 && x.tipo === 'salida'), 'variantes con "||": ' + r.mensaje);
+r = AV_({ app: 'Nequi Colombia', titulo: 'Compra exitosa', texto: 'Compra exitosa con Tarjeta Nequi || Compra exitosa con Tarjeta Nequi Pagaste 8.000,00 en TIENDA VARIANTE || Pagaste 8.000,00 en TIENDA VARIANTE', ts: T(21, 40) });
+ok(av().items.some(x => x.monto === 8000 && x.quien === 'TIENDA VARIANTE'), 'variantes: el comercio no se ensucia con texto repetido: ' + r.mensaje + JSON.stringify(av().items.filter(x => x.monto === 8000)));
+r = AV_({ app: 'sms', texto: 'Tu código es 123456 || otro texto sin monto', ts: T(21, 45) });
+ok(/no es un movimiento/.test(r.mensaje), 'variantes sin movimiento se ignoran');
+
 // 11) La hoja no guarda claves y el panel no revienta con datos raros
 ok(!A.raro(D().avisos), 'sin NaN/undefined en el panel: ' + A.raro(D().avisos));
 ok(!P({ accion: 'aviso', texto: '', titulo: '' }).ok, 'aviso vacío es un error');
