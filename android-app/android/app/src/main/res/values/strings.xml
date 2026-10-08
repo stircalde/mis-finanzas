@@ -1,0 +1,7 @@
+<?xml version='1.0' encoding='utf-8'?>
+<resources>
+    <string name="app_name">Mis finanzas</string>
+    <string name="title_activity_main">Mis finanzas</string>
+    <string name="package_name">co.stircalde.misfinanzas</string>
+    <string name="custom_url_scheme">co.stircalde.misfinanzas</string>
+</resources>
