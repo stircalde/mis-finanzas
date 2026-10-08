@@ -135,6 +135,19 @@ ok(av().items.some(x => x.monto === 8000 && x.quien === 'TIENDA VARIANTE'), 'var
 r = AV_({ app: 'sms', texto: 'Tu código es 123456 || otro texto sin monto', ts: T(21, 45) });
 ok(/no es un movimiento/.test(r.mensaje), 'variantes sin movimiento se ignoran');
 
+// 10c) Textos reales de la macro: sin tildes ni signos (se pierden en el envío) y con llaves alrededor
+const sinT = (o) => AV.parse(Object.assign({ ts: T(22, 0) }, o));
+let e1 = sinT({ app: 'nequi colombia', titulo: 'Envo de plata exitoso', texto: '{Te contamos que el envo de plata por $200 fue exitoso. Puedes revisar en tus movimientos el detalle del envo.}' });
+ok(e1 && e1.tipo === 'salida' && e1.monto === 200 && e1.banco === 'nequi', 'Nequi envío sin tildes: ' + JSON.stringify(e1));
+e1 = sinT({ app: 'banco falabella', titulo: 'Transferencia recibida!', texto: '{HECTOR te ha enviado $200,00 a tu cuenta. 2026-10-07. 20:07.}' });
+ok(e1 && e1.tipo === 'entrada' && e1.monto === 200 && e1.persona === 'HECTOR', 'Falabella sin ¡ y con llaves: ' + JSON.stringify(e1));
+e1 = sinT({ app: 'nequi colombia', titulo: 'Envo', texto: 'NURY PALACIOS te envi 700000, lo mejor!' });
+ok(e1 && e1.tipo === 'entrada' && e1.monto === 700000 && e1.persona === 'NURY PALACIOS', 'Nequi recibido sin tildes: ' + JSON.stringify(e1));
+e1 = sinT({ app: 'nequi colombia', titulo: 'Envío', texto: 'NURY PALACIOS te envió 700000, ¡lo mejor!' });
+ok(e1 && e1.monto === 700000 && e1.persona === 'NURY PALACIOS', 'Nequi recibido con tildes sigue igual: ' + JSON.stringify(e1));
+e1 = sinT({ app: 'nequi colombia', titulo: 'Compra exitosa', texto: '{Compra exitosa con Tarjeta Nequi Pagaste 12.480,00 en TIENDAS ARA}' });
+ok(e1 && e1.comercio === 'TIENDAS ARA' && e1.monto === 12480, 'comercio sin llave final: ' + JSON.stringify(e1));
+
 // 11) La hoja no guarda claves y el panel no revienta con datos raros
 ok(!A.raro(D().avisos), 'sin NaN/undefined en el panel: ' + A.raro(D().avisos));
 ok(!P({ accion: 'aviso', texto: '', titulo: '' }).ok, 'aviso vacío es un error');
