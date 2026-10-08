@@ -1495,7 +1495,11 @@
     clearTimeout(iconoT);
     iconoT = setTimeout(function () {
       if (iconoUlt === AP.color) return;
-      try { C.registerPlugin('Icono').poner({ color: AP.color }).then(function () { iconoUlt = AP.color; }, function () {}); } catch (e) {}
+      var dec = function (t) { var k = document.querySelector('.ap-hoja .kind'); if (k) k.textContent = t; };
+      try {
+        C.registerPlugin('Icono').poner({ color: AP.color }).then(function () { iconoUlt = AP.color; dec('Ícono: ' + AP.color + ' ✓'); },
+          function (e) { dec('Ícono falló: ' + ((e && (e.message || e.code)) || e)); });
+      } catch (e) { dec('Ícono error: ' + e.message); }
     }, 1200);
   }
   setTimeout(iconoApp, 4000);
