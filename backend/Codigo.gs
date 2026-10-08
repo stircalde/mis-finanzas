@@ -3219,7 +3219,7 @@ const AV = (function () {
     t = limpio(String(t || '').replace(/[{}\[\]]/g, ' '));
     if (/credifin|addi\b/i.test(t) && !/davibank|nequi|nubank|daviplata/i.test(t)) return null;   // nunca se leen
     if (/Pago exitoso por PSE/i.test(t)) return null;                                             // repite un pago ya avisado
-    if (/c\S?digo|clave|contrase|\botp\b|token|verificaci|inscribiste|promo|descuento|sorteo|oferta|aprovecha|preaprobad|gana\b|ganaste|invita|\bbono\b|cashback|beneficio|premio|regal|saldo disponible|tu saldo es|\brecibe\b|\btransfiere\b|\bpaga\b|cupo disponible/i.test(t)) return null;
+    if (/c\S?digo|clave|contrase|\botp\b|token|verificaci|inscribiste|promo|descuento|sorteo|oferta|aprovecha|preaprobad|gana\b|ganaste|invita|\bbono\b|cashback|beneficio|premio|regal|saldo disponible|tu saldo es|\brecibe\b|\btransfiere\b|\bpaga\b|cupo disponible|participa|aplican|\bt\s?y\s?c\b|t\S?rminos y condiciones|\bdesde \$|boleta|concierto|\bpromo|campa\S?a/i.test(t)) return null;
     const m = /(?:\$|COP)\s?([\d.,]*\d)|\b(\d{1,3}(?:[.,]\d{3})+(?:,\d{1,2})?)\b/i.exec(t);
     if (!m) return null;
     if (!/compra|pag|env\S{0,2}o|envi|recib|transf|retir|saca|d\S?bito|debit|abon|consign|cargo|cobr|deposit|desembols|avance|transacci|movimiento/i.test(t)) return null;
@@ -3385,9 +3385,11 @@ function avNoReconocido_(p, titulo, variantes, t, origen) {
   const pm = AV.pareceMovimiento(texto);
   if (!pm) return 'ℹ️ Ese aviso no es un movimiento. Lo ignoré.';
   const fuente = limpiar(p.app).toLowerCase() || 'sms';
-  const llave = AV.norm(texto);
+  // La macro pierde tildes y emojis ("Dbito" vs "Débito ✨"): la llave quita todo lo que no sea ASCII antes de comparar.
+  const llaveDe = function (x) { return AV.norm(String(x || '').replace(/[^\x00-\x7F]/g, '')); };
+  const llave = llaveDe(texto);
   const recientes = leerAvisos_(300);
-  const dup = recientes.find(function (r) { return r.tipo === 'noreconocido' && Math.abs(r.t - t) <= 30 * AV.MS_MIN && AV.norm(r.texto.split(' | ')[0]) === llave; });
+  const dup = recientes.find(function (r) { return r.tipo === 'noreconocido' && Math.abs(r.t - t) <= 30 * AV.MS_MIN && llaveDe(r.texto.split(' | ')[0]) === llave; });
   if (dup) {
     dup.n++;
     if (dup.fuentes.indexOf(fuente) < 0) dup.fuentes.push(fuente);
