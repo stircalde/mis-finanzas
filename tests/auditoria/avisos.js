@@ -148,6 +148,9 @@ ok(e1 && e1.monto === 700000 && e1.persona === 'NURY PALACIOS', 'Nequi recibido 
 e1 = sinT({ app: 'nequi colombia', titulo: 'Compra exitosa', texto: '{Compra exitosa con Tarjeta Nequi Pagaste 12.480,00 en TIENDAS ARA}' });
 ok(e1 && e1.comercio === 'TIENDAS ARA' && e1.monto === 12480, 'comercio sin llave final: ' + JSON.stringify(e1));
 
+e1 = sinT({ app: 'billetera de google', titulo: 'TIENDAS ARA', texto: '{COP12,480 con Tarjeta Nequi Visa 4335}||{COP12,480 con Tarjeta Nequi Visa 4335}' });
+ok(e1 && e1.banco === 'nequi' && e1.monto === 12480 && e1.comercio === 'TIENDAS ARA', 'Billetera de Google por la macro de bancos (sin •• por la codificación): ' + JSON.stringify(e1));
+
 // 11) La hoja no guarda claves y el panel no revienta con datos raros
 ok(!A.raro(D().avisos), 'sin NaN/undefined en el panel: ' + A.raro(D().avisos));
 ok(!P({ accion: 'aviso', texto: '', titulo: '' }).ok, 'aviso vacío es un error');
