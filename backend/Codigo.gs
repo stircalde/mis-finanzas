@@ -3107,10 +3107,10 @@ const AV = (function () {
       return ev({ banco: 'falabella', tipo: 'entrada', persona: limpio(m[1]), monto: num(m[2]), ts: fechaTexto(m[3], ts) });
 
     // Billetera de Google: título = comercio, texto = "COP12,480 con Tarjeta Nequi Visa ••4335"
-    if (n.app === 'wallet' && (m = /COP\s*([\d.,]+)\s+con\s+(Tarjeta\s+)?(.+?)\s*[•·*]+\s*\d{4}/i.exec(n.texto || ''))) {
+    if (/wallet|billetera/i.test(n.app || '') && (m = /COP\s*([\d.,]+)\s+con\s+(Tarjeta\s+)?(.+?)\s*[•·*]*\s*\d{4}/i.exec(String(n.texto || '')))) {
       const tarjeta = m[3];
       const banco = /nequi/i.test(tarjeta) ? 'nequi' : /nu\b|nubank/i.test(tarjeta) ? 'nubank' : /davi.*oro|oro/i.test(tarjeta) ? 'davibank' : /davi/i.test(tarjeta) ? 'daviplata' : '';
-      return ev({ banco: banco, tc: banco === 'nubank' || banco === 'davibank', tipo: 'gasto', comercio: limpio(n.titulo), monto: num(m[1]) });
+      return ev({ banco: banco, tc: banco === 'nubank' || banco === 'davibank', tipo: 'gasto', comercio: limpio(String(n.titulo || '').replace(/[{}\[\]]/g, ' ')), monto: num(m[1]) });
     }
 
     // Nequi (app y SMS)
