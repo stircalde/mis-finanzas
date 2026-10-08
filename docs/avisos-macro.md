@@ -27,7 +27,8 @@ MacroDroid pierde tildes y signos como "¡" al enviar: el lector del backend ya 
 
 1. **Notificaciones**: disparador *Notificación recibida* de Nequi, Nubank, Falabella y Billetera de Google (`app` = `wallet`).
    Acción *HTTP Request* POST a la URL de la API con los campos de arriba (`titulo` = título, `texto` = texto).
-2. **SMS**: disparador *SMS recibido* de los remitentes del banco (Davibank, Daviplata, Nequi 890806). `app` = `sms`, `texto` = mensaje.
+2. **SMS**: disparador *SMS recibido* solo de los remitentes de los bancos: Davibank 899979, Daviplata 85888, Nequi 85954 y 890806. `app` = `sms`, `texto` = mensaje.
+   La Billetera de Google va en la macro de bancos (el servidor la reconoce por el nombre de la app).
 3. **Correos de PSE** (opcional): notificación de Gmail con "Pago exitoso" / "Transacción aprobada". `app` = `correo`.
 4. Que la macro reintente si no hay internet (ya hay idempotencia: un aviso repetido no se duplica).
 
