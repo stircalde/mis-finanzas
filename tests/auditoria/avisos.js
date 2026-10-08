@@ -242,4 +242,11 @@ ok(!AV.yaRegistrado({ tipo: 'entrada', monto: 100, t: Date.now(), cuenta: '', ba
 ['Recibe un bono de $50.000 por transferir $200.000', 'Tu saldo disponible es $1.500.000. Última transferencia $20.000', 'Gana cashback de $10.000 pagando con tu tarjeta', 'Paga tus servicios y recibe un regalo de $5.000']
   .forEach(x => ok(!AV.pareceMovimiento(x), 'promoción/saldo no es "No reconocido": ' + x));
 ok(AV.pareceMovimiento('DAVIbank: Pago recibido a tu tarjeta por $500.000'), 'un pago real sigue siendo "No reconocido"');
+// 18) Publicidad de Daviplata (8-oct) y la misma por MacroDroid sin tildes/emoji
+const promo = 'Pop Latino en modo ON ✨ · Una noche de Pop Latino para brillar. Compra desde $20.000 con tu Tarjeta Débito DaviPlata y participa por una boleta doble para el concierto en el Movistar Arena del 16/10. Aplican TyC.';
+ok(!AV.pareceMovimiento(promo) && !AV.pareceMovimiento(promo.replace(/é/g, '').replace('✨', '')), 'publicidad de Daviplata no es "No reconocido"');
+const t18 = Date.now() + 7 * H_;
+AV_({ app: 'daviplata', texto: 'DaviPlata: Abono recibido de Débito por $33.000 ✨', ts: t18, origen: 'app' });
+const r18 = AV_({ app: 'daviplata', texto: '{DaviPlata: Abono recibido de Dbito por $33.000 }', ts: t18 + 30000 });
+ok(/repetido/.test(r18.mensaje) && av().items.filter(x => x.monto === 33000).length === 1 && av().items.find(x => x.monto === 33000).origen === 'ambos', 'No reconocido igual sin tildes ni emoji (MacroDroid) se une: ' + r18.mensaje);
 A.fin('avisos');
