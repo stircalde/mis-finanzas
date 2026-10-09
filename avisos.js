@@ -12,7 +12,7 @@
     var C = window.Capacitor;
     try { return C && C.isNativePlatform && C.isNativePlatform() && C.Plugins && C.Plugins.Lector && C.Plugins.Lector.estado ? C.Plugins.Lector : null; } catch (e) { return null; }
   }
-  var lecEstado = null, lecConfig = '';
+  var lecEstado = null, lecConfig = '', lecRevision = '';
   function configurarLector() {
     var L = lector(), clave = MF.clave && MF.clave();
     if (!L || !clave || !MF.API) return Promise.resolve(null);
@@ -195,6 +195,13 @@
       '<span><b>' + c.ambos + '</b> por ambos</span><span><b>' + c.macro + '</b> solo MacroDroid</span><span><b>' + c.app + '</b> solo App</span></div>' +
       '<small>' + (c.macro === 0 && c.ambos > 0 ? 'Hasta ahora el lector no se ha perdido ninguno. Si sigue así varios días, ya puedes apagar MacroDroid.' :
         c.macro > 0 ? 'Hay avisos que solo vio MacroDroid: no lo apagues todavía.' : 'Aún no hay suficientes avisos para comparar.') + '</small></div>';
+    if (e.notificaciones && e.conectado != null) {
+      var hm = function (ms) { if (!ms) return 'nunca'; var d = new Date(ms); return ('0' + d.getHours()).slice(-2) + ':' + ('0' + d.getMinutes()).slice(-2); };
+      h += '<div class="av-diag">' + (e.conectado ? '🟢 <b>Conectado</b> desde las ' + hm(e.conectadoDesde) : '🔴 <b>Desconectado</b>: Android no le está pasando notificaciones') +
+        '<br><small>Última notificación vista: ' + hm(e.ultimaVista) + ' · Último banco: ' + hm(e.ultimaBanco) + (e.ultimaBancoApp ? ' (' + esc(e.ultimaBancoApp) + ')' : '') + '</small>' +
+        (lecRevision ? '<br><small>' + esc(lecRevision) + '</small>' : '') + '</div>' +
+        '<div class="av-cta"><button type="button" class="btn" data-l="barra">🔄 Revisar barra ahora</button></div>';
+    }
     if (e.notificaciones) h += '<div class="av-cta"><button type="button" class="btn" data-l="pausa">' + (e.activo ? '⏸ Pausar lector' : '▶️ Reanudar lector') + '</button></div>';
     var n = el(h + '</section>');
     n.querySelectorAll('[data-l]').forEach(function (b) {
@@ -205,6 +212,10 @@
         else if (k === 'bat') p = L.pedirBateria();
         else if (k === 'ajustes') p = L.abrirAjustesApp();
         else if (k === 'pausa') p = L.activar({ activo: !e.activo });
+        else if (k === 'barra') p = L.revisarBarra().then(function (x) {
+          lecRevision = x.revisadas >= 0 ? 'Revisé ' + x.revisadas + ' notificaciones de la barra; las de bancos que faltaban ya se enviaron.' : 'El lector estaba desconectado: le pedí a Android que lo reconecte. Espera unos segundos y vuelve a tocar el botón.';
+          setTimeout(function () { MF.refrescar && MF.refrescar(); }, 4000);
+        });
         Promise.resolve(p).then(function () { return configurarLector(); }).then(function () { repintar(); }, function () { repintar(); });
       });
     });

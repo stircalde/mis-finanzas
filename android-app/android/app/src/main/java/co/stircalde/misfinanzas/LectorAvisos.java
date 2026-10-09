@@ -14,15 +14,22 @@ import java.util.List;
  * como "aviso". Las demás apps se ignoran sin leer su contenido.
  */
 public class LectorAvisos extends NotificationListenerService {
+    /** Diagnóstico para la tarjeta del lector (sin contenido de las notificaciones). */
+    static volatile LectorAvisos instancia = null;
+    static volatile long conectadoDesde = 0, ultimaVista = 0, ultimaBanco = 0;
+    static volatile String ultimaApp = "", ultimaBancoApp = "";
+
     @Override
     public void onNotificationPosted(StatusBarNotification sbn) {
         try {
             if (sbn == null || getPackageName().equals(sbn.getPackageName())) return;
+            ultimaVista = System.currentTimeMillis(); ultimaApp = sbn.getPackageName();
             Notification n = sbn.getNotification();
             if (n == null || (n.flags & Notification.FLAG_GROUP_SUMMARY) != 0) return;
             String pkg = sbn.getPackageName();
             String nombre = Bancos.nombre(this, pkg);
             if (nombre == null) return;                       // no es una app de banco de la lista blanca
+            ultimaBanco = System.currentTimeMillis(); ultimaBancoApp = nombre;
             Bundle x = n.extras;
             String titulo = txt(x.getCharSequence(Notification.EXTRA_TITLE));
             List<String> v = new ArrayList<>();
@@ -46,17 +53,26 @@ public class LectorAvisos extends NotificationListenerService {
      */
     @Override
     public void onListenerConnected() {
+        instancia = this; conectadoDesde = System.currentTimeMillis();
         Bancos.resolver(this);
         Envio.reintentar(this);
+        revisarBarra();
+    }
+
+    /** Manda los avisos de bancos que siguen en la barra (últimas 24 h); lo ya enviado no se repite. Devuelve cuántas revisó. */
+    int revisarBarra() {
+        int n = 0;
         try {
             StatusBarNotification[] activas = getActiveNotifications();
             long limite = System.currentTimeMillis() - 24 * 3600000L;
-            if (activas != null) for (StatusBarNotification sbn : activas) if (sbn != null && sbn.getPostTime() >= limite) onNotificationPosted(sbn);
+            if (activas != null) for (StatusBarNotification sbn : activas) if (sbn != null && sbn.getPostTime() >= limite) { n++; onNotificationPosted(sbn); }
         } catch (Exception ignored) { }
+        return n;
     }
 
     @Override
     public void onListenerDisconnected() {
+        instancia = null;
         if (Build.VERSION.SDK_INT >= 24) requestRebind(new ComponentName(this, LectorAvisos.class));
     }
 

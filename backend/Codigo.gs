@@ -3221,7 +3221,8 @@ const AV = (function () {
     if (/Pago exitoso por PSE/i.test(t)) return null;                                             // repite un pago ya avisado
     if (/c\S?digo|clave|contrase|\botp\b|token|verificaci|inscribiste|promo|descuento|sorteo|oferta|aprovecha|preaprobad|gana\b|ganaste|invita|\bbono\b|cashback|beneficio|premio|regal|saldo disponible|tu saldo es|\brecibe\b|\btransfiere\b|\bpaga\b|cupo disponible|participa|aplican|\bt\s?y\s?c\b|t\S?rminos y condiciones|\bdesde \$|boleta|concierto|\bpromo|campa\S?a/i.test(t)) return null;
     const m = /(?:\$|COP)\s?([\d.,]*\d)|\b(\d{1,3}(?:[.,]\d{3})+(?:,\d{1,2})?)\b/i.exec(t);
-    if (!m) return null;
+    // Sin monto, solo si es claramente un movimiento hecho ("Tu plata llegó con éxito", "Envío exitoso"): el monto lo pones tú.
+    if (!m) return /env\S{0,2}o exitoso|plata lleg\S{0,2} con \S{0,2}xito|transferencia exitosa|pago exitoso|compra exitosa|compra aprobada/i.test(t) ? { monto: 0 } : null;
     if (!/compra|pag|env\S{0,2}o|envi|recib|transf|retir|saca|d\S?bito|debit|abon|consign|cargo|cobr|deposit|desembols|avance|transacci|movimiento/i.test(t)) return null;
     const monto = num(m[1] || m[2]);
     return { monto: monto > 0 ? monto : 0 };
