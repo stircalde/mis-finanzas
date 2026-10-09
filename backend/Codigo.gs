@@ -3098,8 +3098,9 @@ const AV = (function () {
     let m;
     const ev = function (o) { o.ts = o.ts || ts; o.fuente = n.app; o.crudo = t; return o; };
 
-    // Credifin y Addi: nunca automáticos (cuotas especiales)
-    if (/credifin|addi\b/i.test(t) && !/davibank|nequi|nubank|daviplata/i.test(t)) return null;
+    // Credifin y Addi: sus PROPIOS avisos nunca se leen (cuotas especiales). Un pago que TÚ les haces desde otro banco
+    // ("compra aprobada … En MERCADO PAGO CREDIFIND") sí es un movimiento tuyo.
+    if (/credifin|addi\b/i.test(n.app || '') || /^(credifin|addi)\b/i.test(t)) return null;
 
     // Davibank (tarjeta de crédito) por SMS
     if ((m = /DAVIbank\s*:?\s*(Compra recurrente|Realizaste\s+transaccion) en (.+?) por ([\d.,]+) con tu tarjeta/i.exec(t)))
@@ -3111,12 +3112,18 @@ const AV = (function () {
       return ev({ banco: 'daviplata', tipo: 'gasto', comercio: '', monto: num(m[1]) });
     if ((m = /^Recibiste\s+([\d.,]+)\./i.exec(t)))
       return ev({ banco: 'daviplata', tipo: 'entrada', persona: '', monto: num(m[1]) });
+    if ((m = /Pasaste\s+\$?([\d.,]+)\s+a\s+(.+?)\s+usando Llaves/i.exec(t)))      // "Transaccion exitosa: Pasaste $84.500 a Juan Santamaria usando Llaves"
+      return ev({ banco: 'daviplata', tipo: 'salida', persona: limpio(m[2]), monto: num(m[1]) });
     if ((m = /DaviPlata:\s*acabas de Sacar\s+([\d.,]+)/i.exec(t)))
       return ev({ banco: 'daviplata', tipo: 'retiro', monto: num(m[1]) });
 
     // Nubank (tarjeta de crédito)
     if ((m = /Compra aprobada por \$?([\d.,]+).*?Tu compra en (.+?) por \$?([\d.,]+) con tu tarjeta terminada en/i.exec(t)))
       return ev({ banco: 'nubank', tc: true, tipo: 'gasto', comercio: limpio(m[2]), monto: num(m[3]) });
+
+    // Falabella: compra con la tarjeta (débito) — "BANCO FALABELLA, informa compra aprobada $56.592 09/10/2026 17:30 con tu tarjeta *3095 … En COMERCIO.-"
+    if ((m = /informa compra aprobada \$?([\d.,]+)\s+(\d{2})\/(\d{2})\/(\d{4})\s+(\d{2}):(\d{2}).*?\bEn\s+(.+?)\s*(?:\.-|\.)?\s*$/i.exec(t)))
+      return ev({ banco: 'falabella', tipo: 'gasto', comercio: limpio(m[7]), monto: num(m[1]), ts: new Date(+m[4], +m[3] - 1, +m[2], +m[5], +m[6]).getTime() });
 
     // Falabella
     if ((m = /Transferiste con .*?Enviaste \$?([\d.,]+) a (?:Llave \w+ de )?(.+?)\.\s*(\d{4}-\d{2}-\d{2}.*)$/i.exec(t)))
@@ -3217,7 +3224,7 @@ const AV = (function () {
      Devuelve { monto } (0 si no se pudo leer) o null. */
   function pareceMovimiento(t) {
     t = limpio(String(t || '').replace(/[{}\[\]]/g, ' '));
-    if (/credifin|addi\b/i.test(t) && !/davibank|nequi|nubank|daviplata/i.test(t)) return null;   // nunca se leen
+    if (/credifin|addi\b/i.test(t) && !/davibank|nequi|nubank|daviplata|falabella|compra aprobada|pagaste|pago a/i.test(t)) return null;   // sus propios avisos nunca se leen
     if (/Pago exitoso por PSE/i.test(t)) return null;                                             // repite un pago ya avisado
     if (/c\S?digo|clave|contrase|\botp\b|token|verificaci|inscribiste|promo|descuento|sorteo|oferta|aprovecha|preaprobad|gana\b|ganaste|invita|\bbono\b|cashback|beneficio|premio|regal|saldo disponible|tu saldo es|\brecibe\b|\btransfiere\b|\bpaga\b|cupo disponible|participa|aplican|\bt\s?y\s?c\b|t\S?rminos y condiciones|\bdesde \$|boleta|concierto|\bpromo|campa\S?a/i.test(t)) return null;
     const m = /(?:\$|COP)\s?([\d.,]*\d)|\b(\d{1,3}(?:[.,]\d{3})+(?:,\d{1,2})?)\b/i.exec(t);
@@ -3332,7 +3339,7 @@ function registrarAviso(p, cfg) {
     return !!ev;
   });
   const origen = avOrigen_(p);
-  if (!ev || !(ev.monto > 0)) return avNoReconocido_(p, titulo, variantes, t, origen);
+  if (!ev || !(ev.monto > 0)) return avNoReconocido_(p, titulo, variantes, t, origen, cfg);
   const yo = cfg.ajustes.nombre || '';
   const nuevo = {
     t: ev.ts, tipo: ev.tipo === 'retiro' ? 'retiro' : ev.tipo, monto: ev.monto, banco: ev.banco || '', quien: ev.comercio || ev.persona || '',
@@ -3381,7 +3388,7 @@ function registrarAviso(p, cfg) {
 
 /** Un aviso de banco que el lector no entendió pero parece un movimiento: queda en "Por confirmar" como "No reconocido",
  *  con su texto original, para registrarlo a mano y ajustar el lector. El ruido (códigos, promociones) se sigue ignorando. */
-function avNoReconocido_(p, titulo, variantes, t, origen) {
+function avNoReconocido_(p, titulo, variantes, t, origen, cfg) {
   const texto = String((titulo ? titulo + ' · ' : '') + (variantes[0] || '')).replace(/[{}\[\]]/g, ' ').replace(/\s+/g, ' ').trim();
   const pm = AV.pareceMovimiento(texto);
   if (!pm) return 'ℹ️ Ese aviso no es un movimiento. Lo ignoré.';
@@ -3399,7 +3406,9 @@ function avNoReconocido_(p, titulo, variantes, t, origen) {
     return '👌 Aviso no reconocido repetido. No lo dupliqué.';
   }
   const banco = ['nequi', 'daviplata', 'davibank', 'nubank', 'falabella'].filter(function (b) { return AV.norm(fuente + ' ' + texto).indexOf(AV.norm(b)) >= 0; })[0] || '';
-  const r = { id: 'av' + Utilities.getUuid().slice(0, 8), t: t, tipo: 'noreconocido', monto: pm.monto, banco: banco, quien: '', cuenta: '', destino: '',
+  // Si se sabe el banco, la cuenta queda puesta (al registrarlo ya sale "pagué con Nequi"); las tarjetas: Nubank y Davibank.
+  const cuenta = banco && cfg ? avCuenta_(cfg, banco, banco === 'nubank' || (banco === 'davibank' && !/daviplata/i.test(texto))) : '';
+  const r = { id: 'av' + Utilities.getUuid().slice(0, 8), t: t, tipo: 'noreconocido', monto: pm.monto, banco: banco, quien: '', cuenta: cuenta, destino: '',
     pse: false, tc: false, recurrente: false, fuentes: [fuente], n: 1, estado: 'Pendiente', idMov: '', nota: '', res: '', texto: texto, fila: 0, origen: origen };
   avDiferir_(function () { avGuardar_(r); });
   return '❓ No entendí ese aviso, pero parece un movimiento: quedó en "Por confirmar" como "No reconocido".';
@@ -3493,11 +3502,11 @@ function resumenAvisos(cfg, movs) {
   base.pendientes = todos.filter(function (r) { return r.estado === 'Pendiente'; }).length;
   // Comparación MacroDroid vs. lector de la app (últimos 7 días, desde el primer aviso que llegó por la app).
   const semana = Date.now() - 7 * 86400000;
-  const conApp = todos.filter(function (r) { return r.origen !== 'macro'; }).map(function (r) { return r.t; });
+  const conApp = todos.filter(function (r) { return r.origen !== 'macro' && r.estado !== 'Ignorado'; }).map(function (r) { return r.t; });
   if (conApp.length) {
     const desde = Math.max(semana, Math.min.apply(null, conApp));
     const c = { ambos: 0, macro: 0, app: 0 };
-    todos.forEach(function (r) { if (r.t >= desde && c[r.origen] != null) c[r.origen]++; });
+    todos.forEach(function (r) { if (r.t >= desde && r.estado !== 'Ignorado' && c[r.origen] != null) c[r.origen]++; });   // lo ignorado (publicidad) no cuenta
     base.comparacion = c;
   }
   base.items = todos.sort(function (a, b) { return b.t - a.t; }).slice(0, 80).map(function (r) {

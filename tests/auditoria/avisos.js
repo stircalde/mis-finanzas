@@ -253,4 +253,17 @@ ok(/repetido/.test(r18.mensaje) && av().items.filter(x => x.monto === 33000).len
 const sinMonto = AV_({ app: 'nequi colombia', titulo: 'Tu plata llegó con éxito 💜', texto: 'Envío exitoso, la plata ya está en el Nequi destino.✈ Recuerda que no se puede cancelar. Avísale a tu amigo que ya le llegó. ✨', ts: Date.now() + 9 * H_, origen: 'app' });
 ok(/No reconocido/.test(sinMonto.mensaje) && av().items.some(x => x.tipo === 'noreconocido' && x.monto === 0 && /plata ya est/.test(x.texto)), 'Nequi sin monto queda No reconocido: ' + sinMonto.mensaje);
 ok(!AV.pareceMovimiento('Hola, revisa las novedades de tu app'), 'texto sin monto ni movimiento sigue siendo ruido');
+// 20) Lote 9-oct: Falabella compra con tarjeta (a Credifin), Daviplata por Llaves, No reconocido con cuenta, ignorados fuera de la comparación
+let f20 = AV.parse({ app: 'banco falabella', titulo: 'Información sobre tu transacción', texto: 'BANCO FALABELLA, informa compra aprobada $56.592 09/10/2026 17:30 con tu tarjeta *0000. Mas info: WhatsApp +57 1 0000000 En MERCADO PAGO CREDIFIND SABANETA CCO.-' });
+ok(f20 && f20.tipo === 'gasto' && f20.banco === 'falabella' && f20.monto === 56592 && /CREDIFIND/.test(f20.comercio) && new Date(f20.ts).getHours() === 17, 'Falabella compra con tarjeta (pago a Credifin) se lee: ' + JSON.stringify(f20));
+ok(AV.parse({ app: 'credifin', texto: 'Tu cuota de Credifin por $120.000 vence mañana' }) === null && !AV.pareceMovimiento('Tu cuota de Credifin por $120.000 vence mañana'), 'los avisos propios de Credifin siguen sin leerse');
+f20 = AV.parse({ app: 'daviplata', titulo: 'DaviPlata', texto: 'Transaccion exitosa: Pasaste $84.500 a Juan Ejemplo usando Llaves. Conoce mas desde los movimientos de tu DaviPlata.' });
+ok(f20 && f20.tipo === 'salida' && f20.banco === 'daviplata' && f20.monto === 84500 && f20.persona === 'Juan Ejemplo', 'Daviplata por Llaves: ' + JSON.stringify(f20));
+const n20 = AV_({ app: 'nequi colombia', titulo: 'Tu plata llegó con éxito', texto: 'Envío exitoso, la plata ya está en el Nequi destino.', ts: Date.now() + 10 * H_ });
+const it20 = av().items.find(x => x.tipo === 'noreconocido' && /Nequi destino/.test(x.texto) && x.t > '2026');
+ok(it20 && it20.cuenta === 'Nequi', 'No reconocido de Nequi trae la cuenta Nequi: ' + JSON.stringify(it20 && it20.cuenta));
+const c20 = av().comparacion;
+P({ accion: 'avisoresolver', id: it20.id, como: 'ignorar' }); A.tic();
+const c21 = av().comparacion;
+ok(c20 && c21 && (c21.app + c21.macro + c21.ambos) === (c20.app + c20.macro + c20.ambos) - 1, 'lo ignorado sale de la comparación: ' + JSON.stringify([c20, c21]));
 A.fin('avisos');
