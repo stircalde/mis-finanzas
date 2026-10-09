@@ -3502,11 +3502,14 @@ function resumenAvisos(cfg, movs) {
   base.pendientes = todos.filter(function (r) { return r.estado === 'Pendiente'; }).length;
   // Comparación MacroDroid vs. lector de la app (últimos 7 días, desde el primer aviso que llegó por la app).
   const semana = Date.now() - 7 * 86400000;
-  const conApp = todos.filter(function (r) { return r.origen !== 'macro' && r.estado !== 'Ignorado'; }).map(function (r) { return r.t; });
+  // Solo la publicidad/ruido que ignoraste (No reconocido + Ignorado) sale de la comparación; un movimiento real ignorado
+  // (p. ej. una compra y su reverso) sigue contando, porque la comparación mide si el lector se pierde avisos.
+  const ruido = function (r) { return r.estado === 'Ignorado' && r.tipo === 'noreconocido'; };
+  const conApp = todos.filter(function (r) { return r.origen !== 'macro' && !ruido(r); }).map(function (r) { return r.t; });
   if (conApp.length) {
     const desde = Math.max(semana, Math.min.apply(null, conApp));
     const c = { ambos: 0, macro: 0, app: 0 };
-    todos.forEach(function (r) { if (r.t >= desde && r.estado !== 'Ignorado' && c[r.origen] != null) c[r.origen]++; });   // lo ignorado (publicidad) no cuenta
+    todos.forEach(function (r) { if (r.t >= desde && !ruido(r) && c[r.origen] != null) c[r.origen]++; });
     base.comparacion = c;
   }
   base.items = todos.sort(function (a, b) { return b.t - a.t; }).slice(0, 80).map(function (r) {

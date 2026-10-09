@@ -265,5 +265,9 @@ ok(it20 && it20.cuenta === 'Nequi', 'No reconocido de Nequi trae la cuenta Nequi
 const c20 = av().comparacion;
 P({ accion: 'avisoresolver', id: it20.id, como: 'ignorar' }); A.tic();
 const c21 = av().comparacion;
-ok(c20 && c21 && (c21.app + c21.macro + c21.ambos) === (c20.app + c20.macro + c20.ambos) - 1, 'lo ignorado sale de la comparación: ' + JSON.stringify([c20, c21]));
+ok(c20 && c21 && (c21.app + c21.macro + c21.ambos) === (c20.app + c20.macro + c20.ambos) - 1, 'un No reconocido ignorado (publicidad) sale de la comparación: ' + JSON.stringify([c20, c21]));
+const real = av().items.find(x => x.estado === 'Pendiente' && x.tipo !== 'noreconocido');
+P({ accion: 'avisoresolver', id: real.id, como: 'ignorar' }); A.tic();
+const c22 = av().comparacion;
+ok((c22.app + c22.macro + c22.ambos) === (c21.app + c21.macro + c21.ambos), 'un movimiento real ignorado (p. ej. reverso) sigue contando: ' + JSON.stringify([c21, c22]));
 A.fin('avisos');
