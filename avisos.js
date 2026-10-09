@@ -183,7 +183,7 @@
       (!e.notificaciones || !e.sms ? '<p class="nota av-xi">¿Android dice “se le negó el acceso”? Ve a Ajustes → Apps → Mis finanzas → <b>⋮</b> (arriba a la derecha) → <b>Permitir ajustes restringidos</b>, y vuelve a intentarlo. <button type="button" class="av-link" data-l="ajustes">Abrir ajustes</button></p>' : '') +
       fila(e.sms, '✉️', 'SMS de los bancos', 'Solo 899979, 85888, 85954 y 890806', 'sms', 'Permitir') +
       fila(e.bateria, '🔋', 'Batería sin restricciones', 'Para que no se duerma en segundo plano', 'bat', 'Permitir') +
-      '</div><p class="nota av-xi">En Xiaomi, activa también <b>Inicio automático</b> en los ajustes de la app. <button type="button" class="av-link" data-l="ajustes">Abrir ajustes</button></p>';
+      '</div><p class="nota av-xi">En Xiaomi, “limpiar todo” en recientes cierra el lector: deja la app fijada con el <b>candado 🔒</b> (mantén presionada su tarjeta en recientes). Si se cierra, al abrir la app recupera los avisos que sigan en la barra.</p>';
     if (e.notificaciones) {
       h += '<div class="av-cont"><b>' + (e.enviados || 0) + '</b> avisos enviados' + (e.cola ? ' · <b class="av-warn">' + e.cola + ' en cola</b> (se reintentan solos cuando haya internet)' : '') + '</div>';
       var hist = (e.historial || []).slice(-3).reverse();
