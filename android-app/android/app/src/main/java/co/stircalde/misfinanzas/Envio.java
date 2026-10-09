@@ -38,15 +38,34 @@ public final class Envio {
         return p.getBoolean("activo", true) && !p.getString("url", "").isEmpty() && !p.getString("clave", "").isEmpty();
     }
 
-    /** Las notificaciones se vuelven a publicar al actualizarse: el mismo texto en 10 minutos no se manda dos veces. */
-    static synchronized boolean repetido(String llave) {
+    /**
+     * ¿Esta notificación concreta ya se mandó? Se recuerda en memoria (10 min) y también en el celular (las últimas 400),
+     * para que al ponerse al día tras un reinicio o un cierre forzado no se reenvíe lo que ya llegó.
+     */
+    static synchronized boolean repetido(Context c, String llave) {
         long ahora = System.currentTimeMillis();
         Iterator<Map.Entry<String, Long>> it = RECIENTES.entrySet().iterator();
         while (it.hasNext()) if (ahora - it.next().getValue() > VENTANA) it.remove();
         if (RECIENTES.containsKey(llave)) return true;
+        String h = huella(llave);
+        JSONArray vistas;
+        try { vistas = new JSONArray(prefs(c).getString("vistas", "[]")); } catch (Exception e) { vistas = new JSONArray(); }
+        for (int i = 0; i < vistas.length(); i++) if (h.equals(vistas.optString(i))) { RECIENTES.put(llave, ahora); return true; }
         RECIENTES.put(llave, ahora);
         while (RECIENTES.size() > 200) { RECIENTES.remove(RECIENTES.keySet().iterator().next()); }
+        vistas.put(h);
+        while (vistas.length() > 400) vistas.remove(0);
+        prefs(c).edit().putString("vistas", vistas.toString()).commit();
         return false;
+    }
+
+    private static String huella(String s) {
+        try {
+            byte[] d = java.security.MessageDigest.getInstance("SHA-256").digest(s.getBytes(StandardCharsets.UTF_8));
+            StringBuilder sb = new StringBuilder();
+            for (int i = 0; i < 12; i++) sb.append(String.format("%02x", d[i]));
+            return sb.toString();
+        } catch (Exception e) { return String.valueOf(s.hashCode()); }
     }
 
     /**
@@ -55,7 +74,7 @@ public final class Envio {
      */
     static void avisar(final Context ctx, String app, String titulo, String texto, long ts, String llave, final Runnable alFinal) {
         final Context c = ctx.getApplicationContext();
-        if (!activo(c) || repetido(llave)) { if (alFinal != null) alFinal.run(); return; }
+        if (!activo(c) || repetido(c, llave)) { if (alFinal != null) alFinal.run(); return; }
         final JSONObject a = new JSONObject();
         try { a.put("app", app); a.put("titulo", titulo); a.put("texto", texto); a.put("ts", ts); } catch (Exception e) { if (alFinal != null) alFinal.run(); return; }
         // Primero queda guardado en la cola (si el sistema mata el proceso, se reintenta al abrir la app); luego se envía.

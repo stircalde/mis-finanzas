@@ -39,8 +39,21 @@ public class LectorAvisos extends NotificationListenerService {
         } catch (Exception ignored) { }
     }
 
+    /**
+     * Al (re)conectarse —por ejemplo, después de que Xiaomi cerró la app a la fuerza y la volviste a abrir— revisa las
+     * notificaciones de bancos que siguen en la barra (de las últimas 24 h) y manda las que se perdió. Las ya enviadas
+     * se reconocen por su huella y no se repiten.
+     */
     @Override
-    public void onListenerConnected() { Bancos.resolver(this); Envio.reintentar(this); }
+    public void onListenerConnected() {
+        Bancos.resolver(this);
+        Envio.reintentar(this);
+        try {
+            StatusBarNotification[] activas = getActiveNotifications();
+            long limite = System.currentTimeMillis() - 24 * 3600000L;
+            if (activas != null) for (StatusBarNotification sbn : activas) if (sbn != null && sbn.getPostTime() >= limite) onNotificationPosted(sbn);
+        } catch (Exception ignored) { }
+    }
 
     @Override
     public void onListenerDisconnected() {
