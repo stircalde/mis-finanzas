@@ -198,6 +198,8 @@
     if (e.notificaciones && e.conectado != null) {
       var hm = function (ms) { if (!ms) return 'nunca'; var d = new Date(ms); return ('0' + d.getHours()).slice(-2) + ':' + ('0' + d.getMinutes()).slice(-2); };
       h += '<div class="av-diag">' + (e.conectado ? '🟢 <b>Conectado</b> desde las ' + hm(e.conectadoDesde) : '🔴 <b>Desconectado</b>: Android no le está pasando notificaciones') +
+        (e.reconexiones ? '<br><small>Reconectado solo ' + e.reconexiones + (e.reconexiones === 1 ? ' vez' : ' veces') + ' (última: ' + hm(e.ultimaReconexion) + ')</small>' : '') +
+        (!e.conectado ? '<br><small>Si sigue en 🔴: Ajustes → busca “acceso a notificaciones” → apaga y prende Mis finanzas.</small>' : '') +
         '<br><small>Última notificación vista: ' + hm(e.ultimaVista) + ' · Último banco: ' + hm(e.ultimaBanco) + (e.ultimaBancoApp ? ' (' + esc(e.ultimaBancoApp) + ')' : '') + '</small>' +
         (lecRevision ? '<br><small>' + esc(lecRevision) + '</small>' : '') + '</div>' +
         '<div class="av-cta"><button type="button" class="btn" data-l="barra">🔄 Revisar barra ahora</button></div>';
@@ -213,7 +215,7 @@
         else if (k === 'ajustes') p = L.abrirAjustesApp();
         else if (k === 'pausa') p = L.activar({ activo: !e.activo });
         else if (k === 'barra') p = L.revisarBarra().then(function (x) {
-          lecRevision = x.revisadas >= 0 ? 'Revisé ' + x.revisadas + ' notificaciones de la barra; las de bancos que faltaban ya se enviaron.' : 'El lector estaba desconectado: le pedí a Android que lo reconecte. Espera unos segundos y vuelve a tocar el botón.';
+          lecRevision = x.revisadas >= 0 ? 'Revisé ' + x.revisadas + ' notificaciones de la barra; las de bancos que faltaban ya se enviaron.' : 'El lector estaba desconectado: lo reinicié. Espera unos segundos y vuelve a tocar el botón.';
           setTimeout(function () { MF.refrescar && MF.refrescar(); }, 4000);
         });
         Promise.resolve(p).then(function () { return configurarLector(); }).then(function () { repintar(); }, function () { repintar(); });

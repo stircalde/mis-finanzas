@@ -25,10 +25,32 @@ import com.getcapacitor.annotation.PermissionCallback;
 public class LectorPlugin extends Plugin {
 
     @Override
-    public void load() { Envio.reintentar(getContext()); }
+    public void load() { Envio.reintentar(getContext()); revisarConexion(); }
 
     @Override
-    protected void handleOnResume() { super.handleOnResume(); Envio.reintentar(getContext()); }
+    protected void handleOnResume() { super.handleOnResume(); Envio.reintentar(getContext()); revisarConexion(); }
+
+    /**
+     * Xiaomi/HyperOS a veces deja el permiso marcado pero desconecta el lector (p. ej. tras "limpiar todo").
+     * Si a los 4 s de abrir la app el lector sigue desconectado, se apaga y se prende su componente: eso obliga a
+     * Android a volver a conectarlo (lo mismo que apagar y prender el acceso a notificaciones a mano).
+     */
+    private void revisarConexion() {
+        final Context c = getContext();
+        new android.os.Handler(android.os.Looper.getMainLooper()).postDelayed(new Runnable() { public void run() {
+            try {
+                if (LectorAvisos.instancia != null) return;
+                if (!NotificationManagerCompat.getEnabledListenerPackages(c).contains(c.getPackageName())) return;
+                if (!Envio.prefs(c).getBoolean("activo", true)) return;
+                ComponentName cn = new ComponentName(c, LectorAvisos.class);
+                android.content.pm.PackageManager pm = c.getPackageManager();
+                pm.setComponentEnabledSetting(cn, android.content.pm.PackageManager.COMPONENT_ENABLED_STATE_DISABLED, android.content.pm.PackageManager.DONT_KILL_APP);
+                pm.setComponentEnabledSetting(cn, android.content.pm.PackageManager.COMPONENT_ENABLED_STATE_ENABLED, android.content.pm.PackageManager.DONT_KILL_APP);
+                if (Build.VERSION.SDK_INT >= 24) android.service.notification.NotificationListenerService.requestRebind(cn);
+                Envio.prefs(c).edit().putLong("reconexiones", Envio.prefs(c).getLong("reconexiones", 0) + 1).putLong("ultimaReconexion", System.currentTimeMillis()).apply();
+            } catch (Exception ignored) { }
+        } }, 4000);
+    }
 
     /** La app le pasa la URL de la API y la clave (quedan solo en este celular, nunca en el repositorio). */
     @PluginMethod
@@ -56,7 +78,13 @@ public class LectorPlugin extends Plugin {
         JSObject r = estadoObj();
         if (l != null) r.put("revisadas", l.revisarBarra());
         else {
-            try { if (Build.VERSION.SDK_INT >= 24) android.service.notification.NotificationListenerService.requestRebind(new ComponentName(getContext(), LectorAvisos.class)); } catch (Exception ignored) { }
+            try {
+                ComponentName cn = new ComponentName(getContext(), LectorAvisos.class);
+                android.content.pm.PackageManager pm = getContext().getPackageManager();
+                pm.setComponentEnabledSetting(cn, android.content.pm.PackageManager.COMPONENT_ENABLED_STATE_DISABLED, android.content.pm.PackageManager.DONT_KILL_APP);
+                pm.setComponentEnabledSetting(cn, android.content.pm.PackageManager.COMPONENT_ENABLED_STATE_ENABLED, android.content.pm.PackageManager.DONT_KILL_APP);
+                if (Build.VERSION.SDK_INT >= 24) android.service.notification.NotificationListenerService.requestRebind(cn);
+            } catch (Exception ignored) { }
             r.put("revisadas", -1);
         }
         call.resolve(r);
@@ -119,6 +147,8 @@ public class LectorPlugin extends Plugin {
         for (String nombre : Bancos.resolver(c).values()) apps.put(nombre);
         o.put("apps", apps);
         o.put("conectado", LectorAvisos.instancia != null);
+        o.put("reconexiones", p.getLong("reconexiones", 0));
+        o.put("ultimaReconexion", p.getLong("ultimaReconexion", 0));
         o.put("conectadoDesde", LectorAvisos.conectadoDesde);
         o.put("ultimaVista", LectorAvisos.ultimaVista);
         o.put("ultimaApp", LectorAvisos.ultimaApp);
