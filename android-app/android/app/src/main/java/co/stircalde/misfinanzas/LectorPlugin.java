@@ -49,6 +49,19 @@ public class LectorPlugin extends Plugin {
     @PluginMethod
     public void estado(PluginCall call) { call.resolve(estadoObj()); }
 
+    /** Botón "Revisar barra ahora": si el lector está conectado, revisa la barra; si no, le pide a Android que lo reconecte. */
+    @PluginMethod
+    public void revisarBarra(PluginCall call) {
+        LectorAvisos l = LectorAvisos.instancia;
+        JSObject r = estadoObj();
+        if (l != null) r.put("revisadas", l.revisarBarra());
+        else {
+            try { if (Build.VERSION.SDK_INT >= 24) android.service.notification.NotificationListenerService.requestRebind(new ComponentName(getContext(), LectorAvisos.class)); } catch (Exception ignored) { }
+            r.put("revisadas", -1);
+        }
+        call.resolve(r);
+    }
+
     @PluginMethod
     public void abrirNotificaciones(PluginCall call) {
         Intent i = new Intent(Settings.ACTION_NOTIFICATION_LISTENER_SETTINGS);
@@ -105,6 +118,12 @@ public class LectorPlugin extends Plugin {
         JSArray apps = new JSArray();
         for (String nombre : Bancos.resolver(c).values()) apps.put(nombre);
         o.put("apps", apps);
+        o.put("conectado", LectorAvisos.instancia != null);
+        o.put("conectadoDesde", LectorAvisos.conectadoDesde);
+        o.put("ultimaVista", LectorAvisos.ultimaVista);
+        o.put("ultimaApp", LectorAvisos.ultimaApp);
+        o.put("ultimaBanco", LectorAvisos.ultimaBanco);
+        o.put("ultimaBancoApp", LectorAvisos.ultimaBancoApp);
         return o;
     }
 }

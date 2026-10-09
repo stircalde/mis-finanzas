@@ -1390,3 +1390,5 @@ button.util.mini { background: none; border: 0; padding: 4px 0; border-radius: 8
 .av-comp { margin-top: 12px; padding: 12px; border-radius: 12px; background: var(--surface-2); border: 1px solid var(--line); display: grid; gap: 8px; font-size: .88rem; }
 .av-comp-n { display: flex; flex-wrap: wrap; gap: 6px 14px; }
 .av-comp small { color: var(--muted); }
+.av-diag { margin-top: 10px; padding: 10px 12px; border-radius: 12px; background: var(--surface-2); border: 1px solid var(--line); font-size: .86rem; }
+.av-diag small { color: var(--muted); }

@@ -249,4 +249,8 @@ const t18 = Date.now() + 7 * H_;
 AV_({ app: 'daviplata', texto: 'DaviPlata: Abono recibido de Débito por $33.000 ✨', ts: t18, origen: 'app' });
 const r18 = AV_({ app: 'daviplata', texto: '{DaviPlata: Abono recibido de Dbito por $33.000 }', ts: t18 + 30000 });
 ok(/repetido/.test(r18.mensaje) && av().items.filter(x => x.monto === 33000).length === 1 && av().items.find(x => x.monto === 33000).origen === 'ambos', 'No reconocido igual sin tildes ni emoji (MacroDroid) se une: ' + r18.mensaje);
+// 19) Nequi sin monto (8-oct): "Tu plata llegó con éxito 💜 Envío exitoso…" queda No reconocido con monto por escribir
+const sinMonto = AV_({ app: 'nequi colombia', titulo: 'Tu plata llegó con éxito 💜', texto: 'Envío exitoso, la plata ya está en el Nequi destino.✈ Recuerda que no se puede cancelar. Avísale a tu amigo que ya le llegó. ✨', ts: Date.now() + 9 * H_, origen: 'app' });
+ok(/No reconocido/.test(sinMonto.mensaje) && av().items.some(x => x.tipo === 'noreconocido' && x.monto === 0 && /plata ya est/.test(x.texto)), 'Nequi sin monto queda No reconocido: ' + sinMonto.mensaje);
+ok(!AV.pareceMovimiento('Hola, revisa las novedades de tu app'), 'texto sin monto ni movimiento sigue siendo ruido');
 A.fin('avisos');
