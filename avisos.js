@@ -90,6 +90,8 @@
     var cfg = MF.cfgRegistro();
     var hayMama = cfg && (cfg.ingresos || []).some(function (c) { return c.n === 'Aporte de mamá'; });
     var o = [];
+    var fijo = /^fijo:(.+)\|/.exec(a.nota || '');
+    if (fijo) o.push(['📌 Es mi gasto fijo ' + fijo[1], function () { enviarAccion(a, { accion: 'avisoresolver', como: 'fijo' }); }]);
     if (a.tipo === 'gasto') {
       o.push(['✅ Registrar gasto' + (a.tc ? ' (aclaro las cuotas)' : ''), function () { abrirForm(a, 'gasto'); }]);
       o.push(['🤝 Es para otra persona', function () { abrirForm(a, 'gasto', { para: '__otra' }); }]);

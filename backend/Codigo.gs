@@ -3424,10 +3424,48 @@ function avNoReconocido_(p, titulo, variantes, t, origen, cfg) {
 }
 
 /** Decide qué pasa con un aviso recién creado o recién emparejado: ya estaba, se registra solo o queda pendiente. */
+/** Gasto fijo al que corresponde un aviso de compra: misma cuenta (o banco), monto parecido (±3 % o $1.000, por
+ *  conversión de moneda) y a 3 días o menos de su fecha de cobro. Devuelve la ocurrencia de estadoFijos o null. */
+function avFijo_(r, cfg, movs, enl) {
+  if (r.tipo !== 'gasto' || !(r.monto > 0)) return null;
+  const dia = soloFecha(new Date(r.t));
+  let mejor = null, dif = Infinity;
+  estadoFijos(cfg, movs, dia).forEach(function (o) {
+    if (Math.abs(o.dias) > 3) return;
+    if (r.cuenta ? o.cuenta !== r.cuenta : !(r.banco && AV.norm(o.cuenta).indexOf(AV.norm(r.banco)) >= 0)) return;
+    const d = Math.abs(r.monto - o.valor);
+    if (d > Math.max(1000, o.valor * 0.03)) return;
+    if (o.pagado && (enl[o.id] || 0) >= 1) return;     // ese cobro ya tiene su aviso: este es otro gasto
+    if (d + Math.abs(o.dias) < dif) { dif = d + Math.abs(o.dias); mejor = o; }
+  });
+  return mejor;
+}
+
+/** Retiro de efectivo: la cuenta "Efectivo" (de tu plata y activa), si existe. */
+function avEfectivo_(cfg) {
+  const c = cfg.cuentas.find(function (x) { return x.activa !== false && x.tipo === 'Plata' && AV.norm(x.nombre) === AV.norm('Efectivo'); });
+  return c ? c.nombre : '';
+}
+
 function avAsentar_(r, cfg, recientes, titulo) {
   const enl = avEnlazados_(recientes);
   r.mio = r.tipo === 'entrada' ? AV.esMio(r.quien, cfg.ajustes.nombre) : undefined;
-  const ya = AV.yaRegistrado(r, leerMovimientos(), function (m) { return (enl[m.id] || 0) < (m.tipo === TIPO.TRANSF ? 2 : 1); });
+  const movs = leerMovimientos();
+  // Cobro de un gasto fijo (YouTube, gimnasio…): ya estaba si se registró; si es automático (o estás en modo
+  // automático) se registra ya como ese gasto fijo; si lo pagas tú, queda por confirmar con la opción "Es mi gasto fijo".
+  const fx = avFijo_(r, cfg, movs, enl);
+  if (fx && fx.pagado) {
+    r.estado = 'Ya estaba'; r.idMov = fx.id; r.nota = 'Es tu gasto fijo "' + fx.nombre + '"';
+    avDiferir_(function () { avGuardar_(r); });
+    return '👌 Es tu gasto fijo ' + fx.nombre + ' (ya estaba registrado).';
+  }
+  if (fx && (fx.cobro === 'Automático' || avModo_() === 'auto')) {
+    registrarFijoManual({ fijo: fx.nombre, periodo: fx.periodo, fecha: avFechaISO_(r.t), monto: r.monto, cuenta: r.cuenta || fx.cuenta }, cfg);
+    r.estado = 'Registrado'; r.idMov = fx.id; r.nota = 'Automático · tu gasto fijo ' + fx.nombre;
+    avDiferir_(function () { avGuardar_(r); });
+    return '✅ Registrado como tu gasto fijo ' + fx.nombre + ': ' + pesos(r.monto);
+  }
+  const ya = AV.yaRegistrado(r, movs, function (m) { return (enl[m.id] || 0) < (m.tipo === TIPO.TRANSF ? 2 : 1); });
   if (ya) {
     r.estado = 'Ya estaba'; r.idMov = ya.id; r.nota = 'Coincide con "' + ya.desc + '" que ya registraste';
     avDiferir_(function () { avGuardar_(r); });
@@ -3442,6 +3480,14 @@ function avAsentar_(r, cfg, recientes, titulo) {
     avDiferir_(function () { avGuardar_(r); });
     return '✅ Registrado solo: ' + pesos(monto) + ' en ' + (r.quien || r.cuenta) + ' (' + r.cuenta + ')';
   }
+  const efectivo = r.tipo === 'retiro' && r.cuenta ? avEfectivo_(cfg) : '';
+  if (avModo_() === 'auto' && efectivo) {
+    const antes = PEND_ ? PEND_.length : 0;
+    registrarTransferencia({ desde: r.cuenta, hacia: efectivo, monto: monto, fecha: avFechaISO_(r.t) }, cfg);
+    r.estado = 'Registrado'; r.idMov = PEND_ && PEND_[antes] ? String(PEND_[antes][12]) : ULT_ID_; r.nota = 'Automático · retiro a ' + efectivo;
+    avDiferir_(function () { avGuardar_(r); });
+    return '✅ Retiro registrado solo: ' + pesos(monto) + ' · ' + r.cuenta + ' → ' + efectivo;
+  }
   if (avModo_() === 'auto' && r.tipo === 'transferencia' && r.cuenta && r.destino) {
     const antes = PEND_ ? PEND_.length : 0;
     registrarTransferencia({ desde: r.cuenta, hacia: r.destino, monto: monto, fecha: avFechaISO_(r.t) }, cfg);
@@ -3450,6 +3496,7 @@ function avAsentar_(r, cfg, recientes, titulo) {
     return '✅ Transferencia registrada sola: ' + pesos(monto) + ' · ' + r.cuenta + ' → ' + r.destino;
   }
   r.estado = 'Pendiente';
+  if (fx) r.nota = 'fijo:' + fx.nombre + '|' + fx.periodo;   // la app ofrece "Es mi gasto fijo …"
   avDiferir_(function () { avGuardar_(r); });
   return '🔔 ' + titulo + ' por confirmar: ' + pesos(monto) + (r.quien ? ' · ' + r.quien : '');
 }
@@ -3471,6 +3518,14 @@ function resolverAviso(p, cfg) {
     r.estado = 'Ignorado'; r.nota = limpiar(p.nota) || 'Lo ignoraste';
     avDiferir_(function () { avGuardar_(r); });
     return '🙈 Aviso ignorado.';
+  }
+  if (como === 'fijo') {
+    const m = /^fijo:(.+)\|([^|]+)$/.exec(r.nota);
+    if (!m) throw new Error('Ese aviso no corresponde a un gasto fijo.');
+    const msgF = registrarFijoManual({ fijo: m[1], periodo: m[2], fecha: avFechaISO_(r.t), monto: r.monto, cuenta: r.cuenta }, cfg);
+    r.estado = 'Registrado'; r.idMov = 'fijo:' + m[1] + ':' + m[2]; r.nota = 'Tu gasto fijo ' + m[1];
+    avDiferir_(function () { avGuardar_(r); });
+    return msgF;
   }
   const manejadores = { gasto: registrarGasto, ingreso: registrarIngreso, mepagaron: registrarMePagaron, meprestaron: registrarMePrestaron,
     lepague: registrarLePague, transferencia: registrarTransferencia, pagocredito: registrarPagoCredito };
