@@ -453,10 +453,17 @@
     (d.movimientos || []).forEach(function (m) { if (m.persona) n[m.persona] = 1; if (m.para) n[m.para] = 1; });
     return Object.keys(n);
   }
-  function fPersona(st, k, label, ph) {
-    return campo(label, '<input class="in" data-k="' + k + '" list="dl-personas" type="text" autocomplete="off" placeholder="' + esc(ph || 'Nombre') + '" value="' + esc(st[k] || '') + '">' +
-      '<datalist id="dl-personas">' + nombresConocidos().map(function (n) { return '<option value="' + esc(n) + '">'; }).join('') + '</datalist>');
+  // Nombre de una persona: botones con las que ya conoces (sin lista nativa que tape el formulario) + campo para escribir otra.
+  function fPersonaChips(st, k, label, nombres, ph) {
+    var vistos = {}, lista = [];
+    nombres.forEach(function (n) { n = String(n || '').trim(); var c = n.toLowerCase(); if (n && !vistos[c]) { vistos[c] = 1; lista.push(n); } });
+    var actual = String(st[k] || '').trim().toLowerCase();
+    var chips = lista.length ? '<div class="opciones">' + lista.slice(0, 14).map(function (n) {
+      return '<button type="button" class="op" data-op="' + k + '" data-v="' + esc(n) + '" aria-pressed="' + (n.toLowerCase() === actual) + '">' + esc(n) + '</button>';
+    }).join('') + '</div>' : '';
+    return campo(label, chips + '<input class="in" data-k="' + k + '" type="text" autocomplete="off" placeholder="' + esc(ph || (lista.length ? 'U otra persona' : 'Nombre')) + '" value="' + esc(st[k] || '') + '"' + (chips ? ' style="margin-top:8px"' : '') + '>');
   }
+  function fPersona(st, k, label, ph) { return fPersonaChips(st, k, label, nombresConocidos(), ph); }
   function paraDeEstado(st) {
     if (st.paraModo === 'mio') return '';
     if (st.paraModo === 'uno') { var u = String(st.paraUno || '').trim(); if (!u) throw new Error('Escribe para quién fue el gasto.'); return u; }
@@ -769,8 +776,7 @@
     var st = { persona: '', concepto: '', monto: NaN, saldoActual: NaN, fecha: hoyISO(), fechaPago: '' };
     hojaFormulario(les ? 'Favor antiguo: lo que le debes' : 'Favor antiguo: lo que te deben',
       'Para lo que se te olvidó anotar al empezar. No mueve tus cuentas: solo suma a lo que ' + (les ? 'le debes.' : 'te deben.'), st, function (st) {
-      var h = campo(les ? '¿A quién se lo debías?' : '¿Quién te lo debe?', '<input class="in" data-k="persona" list="dl-personas" type="text" autocomplete="off" placeholder="Nombre" value="' + esc(st.persona) + '">' +
-          '<datalist id="dl-personas">' + Object.keys(nombres).map(function (n) { return '<option value="' + esc(n) + '">'; }).join('') + '</datalist>') +
+      var h = fPersonaChips(st, 'persona', les ? '¿A quién se lo debías?' : '¿Quién te lo debe?', Object.keys(nombres)) +
         fTexto(st, 'concepto', les ? '¿Por qué se lo debías?' : '¿Por qué te lo debe?', 'Ej: Mercado de agosto, préstamo de julio') +
         fMonto(st, 'monto', 'Valor inicial', les ? 'Lo que le debías al principio.' : 'Lo que le prestaste al principio.') +
         fMonto(st, 'saldoActual', 'Saldo actual (opcional)', 'Lo que todavía ' + (les ? 'le debes' : 'te debe') + '. Si ya ' + (les ? 'le pagaste' : 'te pagó') + ' algo, la diferencia queda como pago anterior. Vacío = no ' + (les ? 'le has pagado' : 'te ha pagado') + ' nada.');
