@@ -1732,7 +1732,8 @@ function armarDashboard(est, movs, cfg, claveMes, hoyF) {
     }),
     fijosCfg: cfg.fijos.map(function (f) {
       return { nombre: f.nombre, valor: f.valor, frecuencia: f.frecuencia, dia: f.dia, proximo: f.proximo ? fmt(f.proximo) : '', categoria: f.categoria,
-        cuenta: f.cuenta, cobro: f.cobro, aviso: f.aviso, activo: f.activo, canceladoEl: f.canceladoEl ? fmt(f.canceladoEl) : '' };
+        cuenta: f.cuenta, cobro: f.cobro, aviso: f.aviso, activo: f.activo, canceladoEl: f.canceladoEl ? fmt(f.canceladoEl) : '',
+        compartido: f.compartido, porPersona: f.porPersona };
     }),
     cuentasCfg: cfg.cuentas.map(function (c) {
       return { nombre: c.nombre, tipo: c.tipo, emoji: c.emoji, color: c.color, modo: c.modo, diaCorte: c.diaCorte instanceof Date ? '' : c.diaCorte, diaPago: c.diaPago,
@@ -2223,6 +2224,14 @@ function administrarFijo(p, cfg) {
     const datos = { 'Valor': valor, 'Frecuencia': frec, 'Día': frec === 'Mensual' ? dia : (prox ? prox.getDate() : dia), 'Próximo cobro': frec === 'Mensual' ? '' : prox,
       'Categoría': limpiar(p.categoria) || 'Otros', 'Cuenta': cta.nombre, 'Cobro': p.cobro === 'Automático' ? 'Automático' : 'Manual',
       'Aviso': p.aviso === 'Cancelar' ? 'Cancelar' : '', 'Activo': 'Sí' };
+    if (p.compartido !== undefined) {   // las apps viejas no lo mandan: no se toca
+      const comp = String(p.compartido || '').split(',').map(function (s) { return limpiar(s); }).filter(String);
+      const pp = comp.length ? aNumero(p.porPersona) : 0;
+      if (comp.length && !(pp > 0)) throw new Error('Escribe cuánto te paga cada uno.');
+      if (pp * comp.length > valor) throw new Error('Lo que te pagan entre todos supera el valor.');
+      datos['Compartido con'] = comp.join(', ');
+      datos['Cada uno pone'] = comp.length ? pp : '';
+    }
     if (!f || !f.activo) datos['Desde'] = hoyF;   // un gasto nuevo (o que vuelve) no se cobra hacia atrás
     guardarFilaConfig('Gasto fijo', nombre, datos, !f);
     return (f ? '✏️ Actualicé ' : '📌 Agregué ') + nombre + ' · ' + pesos(valor) + (frec === 'Mensual' ? ' cada mes el día ' + dia : frec === 'Anual' ? ' al año' : ' una vez');
