@@ -43,6 +43,7 @@
     if (a.tipo === 'salida') return 'Enviaste plata' + (a.quien ? ' a ' + a.quien : '');
     if (a.tipo === 'entrada') return a.quien ? a.quien + ' te envió' : 'Recibiste plata';
     if (a.tipo === 'retiro') return 'Retiro de efectivo';
+    if (a.tipo === 'devolucion') return 'Devolución' + (a.quien ? ' de ' + a.quien : '');
     if (a.tipo === 'transferencia') return 'Entre tus cuentas';
     if (a.tipo === 'noreconocido') return 'No reconocido' + (BANCOS[a.banco] ? ' · ' + BANCOS[a.banco][1] : '');
     return a.quien || 'Movimiento';
@@ -107,6 +108,11 @@
       o.push(['🤝 Me pagaron algo que me debían', function () { abrirForm(a, 'ingreso', { tipoIng: '__mepagaron' }); }]);
       o.push(['🙋 Me prestaron plata', function () { abrirForm(a, 'ingreso', { tipoIng: '__meprestaron' }); }]);
       o.push(['🔄 Viene de otra cuenta mía', function () { abrirForm(a, 'mover'); }]);
+    } else if (a.tipo === 'devolucion') {
+      if (a.anula) o.push(['↩️ Anula la compra "' + a.anula.desc + '" del ' + MF.fechaCorta(a.anula.fecha), function () {
+        enviarAccion(a, { accion: 'avisoresolver', como: 'anular', mov: a.anula.id }); }]);
+      o.push(['💳 Bajar la deuda de ' + (a.cuenta || 'la tarjeta') + (a.anula ? ' (sin borrar la compra)' : ''), function () {
+        enviarAccion(a, { accion: 'avisoresolver', como: 'devolucion' }); }]);
     } else if (a.tipo === 'retiro') {
       o.push(['🪙 Retiré efectivo', function () { abrirForm(a, 'mover', { hacia: 'Efectivo' }); }]);
       o.push(['💸 Fue un gasto', function () { abrirForm(a, 'gasto'); }]);
@@ -134,8 +140,8 @@
   function tarjeta(a, lista) {
     var abierta = abierto === a.id, bloqueado = !!ocupado[a.id];
     var nr = a.tipo === 'noreconocido';
-    var signo = a.tipo === 'entrada' ? '+' : a.tipo === 'transferencia' || nr ? '' : '−';
-    var cls = a.tipo === 'entrada' ? 'in' : a.tipo === 'transferencia' || nr ? 'mid' : 'out';
+    var signo = a.tipo === 'entrada' || a.tipo === 'devolucion' ? '+' : a.tipo === 'transferencia' || nr ? '' : '−';
+    var cls = a.tipo === 'entrada' || a.tipo === 'devolucion' ? 'in' : a.tipo === 'transferencia' || nr ? 'mid' : 'out';
     var h = '<div class="av-item' + (abierta ? ' open' : '') + '" data-id="' + esc(a.id) + '"><button type="button" class="av-fila" data-abrir aria-expanded="' + abierta + '">' +
       '<div class="av-tx"><b>' + esc(titulo(a)) + '</b><small>' + sub(a) + '</small></div><div class="av-v ' + cls + '">' + (nr ? (a.monto > 0 ? '¿' + pesos(a.monto) + '?' : '¿$?') : signo + pesos(a.monto)) + '</div></button>';
     if (lista === 'pend') {

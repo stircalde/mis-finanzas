@@ -856,7 +856,12 @@
       if (ctx) { signo = ctx === m.cuenta ? '−' : '+'; cls = ctx === m.destino ? 'in' : ''; }
       else cls = 'mv';
       extra = '<small>' + (esDeuda(m.destino) ? 'pago' : esDeuda(m.cuenta) ? 'avance' : 'entre cuentas') + '</small>';
-    } else if (m.tipo === 'Ajuste') { if (ctx !== m.cuenta) meta.push(etiqueta(m.cuenta)); cls = 'mv'; signo = m.monto < 0 ? '−' : '+'; extra = '<small>ajuste</small>'; }
+    } else if (m.tipo === 'Ajuste') {
+      // Verde si el ajuste mejora tu plata (más saldo o menos deuda); rojo si la empeora.
+      var mejora = esDeuda(m.cuenta) ? m.monto < 0 : m.monto > 0;
+      if (ctx !== m.cuenta) meta.push(etiqueta(m.cuenta)); cls = mejora ? 'in' : 'aj-mal'; signo = m.monto < 0 ? '−' : '+';
+      extra = '<small>' + (mejora ? 'ajuste a tu favor' : 'ajuste en contra') + '</small>';
+    }
     if (ctx && esDeuda(ctx)) {
       if (m.tipo === 'Gasto') { signo = '+'; cls = ''; }
       else if (m.tipo === 'Transferencia' && m.destino === ctx) { signo = '−'; cls = 'in'; }
@@ -1386,7 +1391,14 @@
       '<div class="stat"><div class="k">Entró en ' + mesN + '</div><div class="v num" style="color:var(--good)">+' + pesos(entra) + '</div></div>' +
       '<div class="stat"><div class="k">Salió en ' + mesN + '</div><div class="v num">−' + pesos(sale) + '</div></div>' +
       '<div class="stat"><div class="k">Movimientos del mes</div><div class="v num">' + nMes + '</div></div>'));
+    app.appendChild(botonAjustar(nombre, false));
     app.appendChild(listaCorta('Movimientos de ' + nombre, movs, nombre, 'movsCuenta', 10, 'Aún no hay movimientos en esta cuenta.'));
+  }
+  // "Ajustar saldo" dentro de cada cuenta y crédito: abre Registrar → Ajustar con la cuenta ya elegida.
+  function botonAjustar(nombre, deuda) {
+    var b = el('<div class="aj-acceso"><button type="button" class="btn aj-btn">⚖️ Ajustar ' + (deuda ? 'deuda' : 'saldo') + '<small>' + (deuda ? 'Si no coincide con lo que dice el banco' : 'Si no coincide con lo que tienes realmente') + '</small></button></div>');
+    b.querySelector('button').addEventListener('click', function () { MF.registrarCon('ajuste', { cuenta: nombre }); });
+    return b;
   }
 
   function listaCorta(titulo, items, ctx, clave, n, vacio) {
@@ -1467,6 +1479,7 @@
     app.appendChild(head);
     // El detalle del próximo pago y el calendario completo se consultan tocando "Próximo pago" (ya no se repiten abajo).
     if (c.planes && c.planes.length) app.appendChild(seccionPlanes(c));
+    if (!c.persona) app.appendChild(botonAjustar(nombre, true));
     app.appendChild(listaCorta('Compras y pagos', movs, nombre, 'movsCred', 10, 'Aún no hay compras ni pagos registrados con este crédito.'));
   }
 

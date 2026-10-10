@@ -395,12 +395,21 @@
       return datos;
     }, function (st) {
       if (nuevo) return '';
-      return '<button type="button" class="btn adm-btn rojo" data-accion="archivar">🗂️ Archivar ' + esc(c.nombre) + '</button>';
+      var nota = c.tipo === 'Plata' && c.saldo > 0 ? '<p class="adm-nota">Tiene ' + pesos(c.saldo) + '. Al archivarla, esa plata pasa a ' + esc((c.alimentaDesde && c.alimentaDesde !== c.nombre) ? c.alimentaDesde : 'otra cuenta tuya') + '.' +
+        (c.apartaPara ? ' ' + esc(c.apartaPara) + ' dejará de apartar plata aquí.' : '') + '</p>' : '';
+      return nota + '<button type="button" class="btn adm-btn rojo" data-accion="archivar">🗂️ Archivar ' + esc(c.nombre) + '</button>';
     });
     var confirmar = false;
+    // Con saldo, la plata pasa a la cuenta de donde se alimenta (o a otra de tu plata) en el mismo paso.
+    var conSaldo = !nuevo && c.tipo === 'Plata' && c.saldo > 0, otras = (MF.datos().cuentasCfg || []).filter(function (x) { return x.tipo === 'Plata' && x.activa !== false && !x.mama && x.nombre !== (c && c.nombre); });
+    var destino = conSaldo ? ((otras.find(function (x) { return x.nombre === c.alimentaDesde; }) || otras[0] || {}).nombre || '') : '';
     ctrl.alAccion(function (b, form) {
-      if (!confirmar) { confirmar = true; b.textContent = '¿Seguro? Toca otra vez para archivarla'; return; }
-      ejecutar(form, b, { accion: 'cuentaadmin', op: 'archivar', nombre: c.nombre });
+      if (!confirmar) {
+        confirmar = true;
+        b.textContent = conSaldo && destino ? '¿Seguro? Los ' + pesos(c.saldo) + ' pasan a ' + destino + ' · toca otra vez' : '¿Seguro? Toca otra vez para archivarla';
+        return;
+      }
+      ejecutar(form, b, { accion: 'cuentaadmin', op: 'archivar', nombre: c.nombre, moverA: conSaldo ? destino : '' });
     });
   }
 

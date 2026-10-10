@@ -1738,7 +1738,7 @@ function armarDashboard(est, movs, cfg, claveMes, hoyF) {
     cuentasCfg: cfg.cuentas.map(function (c) {
       return { nombre: c.nombre, tipo: c.tipo, emoji: c.emoji, color: c.color, modo: c.modo, diaCorte: c.diaCorte instanceof Date ? '' : c.diaCorte, diaPago: c.diaPago,
         mesPago: c.mesPago, tasa: c.tasa, cupo: c.cupo, maxCuotas: c.maxCuotas, pideValor: c.pideValor, unaSinInteres: c.unaSinInteres,
-        interesDesde1: interesDesde1(c), activa: c.activa, saldo: Math.round(est.saldos[c.nombre] || 0), mama: c.nombre === CUENTA_MAMA, imagen: c.imagen || '' };
+        interesDesde1: interesDesde1(c), activa: c.activa, apartaPara: c.apartaPara || '', alimentaDesde: c.alimentaDesde || '', saldo: Math.round(est.saldos[c.nombre] || 0), mama: c.nombre === CUENTA_MAMA, imagen: c.imagen || '' };
     }),
     listaCategorias: cfg.categorias.map(function (c) { return { nombre: c.nombre, emoji: c.emoji }; }),
     metas: estadoMetas(cfg, est, hoyF),
@@ -2316,10 +2316,19 @@ function administrarCuenta(p, cfg) {
   if (op === 'archivar') {
     const usa = cfg.fijos.filter(function (f) { return f.activo && f.cuenta === nombre; }).map(function (f) { return f.nombre; });
     if (usa.length) throw new Error('Antes cambia la cuenta de estos gastos fijos (o quítalos): ' + usa.join(', ') + '.');
-    const saldo = Math.round(saldoDe(cfg, nombre) || 0);
+    let saldo = Math.round(saldoDe(cfg, nombre) || 0);
+    let movido = '';
+    // Un bolsillo (o cuenta) de plata con saldo: si dices a dónde, la plata se mueve allá y se archiva en un paso.
+    if (saldo > 0 && c.tipo === 'Plata' && limpiar(p.moverA)) {
+      const destino = cuentaPorNombre(cfg, limpiar(p.moverA));
+      if (destino.nombre === nombre || destino.tipo !== 'Plata' || destino.activa === false) throw new Error('Elige otra cuenta de tu plata para mover el saldo.');
+      registrarTransferencia({ desde: nombre, hacia: destino.nombre, monto: saldo }, cfg);
+      movido = '\n🔄 Pasé ' + pesos(saldo) + ' a ' + destino.nombre + '.';
+      saldo = 0;
+    }
     if (saldo !== 0) throw new Error(nombre + ' todavía tiene ' + pesos(Math.abs(saldo)) + (c.tipo === 'Deuda' ? ' de deuda' : ' de saldo') + '. Déjala en $0 (paga, mueve la plata o ajusta el saldo) y luego la archivas.');
     guardarFilaConfig('Cuenta', nombre, { 'Activa': 'No' });
-    return '🗂️ Archivé ' + nombre + '. Su historial se conserva y la puedes reactivar cuando quieras.';
+    return '🗂️ Archivé ' + nombre + '.' + movido + (c.apartaPara ? '\n💳 ' + c.apartaPara + ' ya no aparta plata en este bolsillo.' : '') + '\nSu historial se conserva y la puedes reactivar cuando quieras.';
   }
   if (op === 'reactivar') { guardarFilaConfig('Cuenta', nombre, { 'Activa': 'Sí' }); return '✅ ' + nombre + ' está activa otra vez.'; }
   if (op === 'imagen') { guardarFilaConfig('Cuenta', nombre, { 'Imagen': imagenValida(p.imagen) }); return '🖼️ Imagen de ' + nombre + ' actualizada.'; }
@@ -3127,6 +3136,9 @@ const AV = (function () {
       return ev({ banco: 'daviplata', tipo: 'retiro', monto: num(m[1]) });
 
     // Nubank (tarjeta de crédito)
+    // Nubank: devolución a la tarjeta — "Recibiste una devolución de RAPPI*RAPPI COLOMBIA por $134,00 … Tarjeta de Crédito Nu."
+    if ((m = /Recibiste una devoluci\S{0,2}n de (.+?) por \$?([\d.,]+).*?Tarjeta de Cr\S{0,2}dito Nu/i.exec(t)))
+      return ev({ banco: 'nubank', tc: true, tipo: 'devolucion', comercio: limpio(m[1]), monto: num(m[2]) });
     if ((m = /Compra aprobada por \$?([\d.,]+).*?Tu compra en (.+?) por \$?([\d.,]+) con tu tarjeta terminada en/i.exec(t)))
       return ev({ banco: 'nubank', tc: true, tipo: 'gasto', comercio: limpio(m[2]), monto: num(m[3]) });
 
@@ -3193,6 +3205,7 @@ const AV = (function () {
   // Solo cuenta como "ya registrado" un movimiento del mismo sentido: una entrada nunca es duplicado de un gasto.
   const SALE = ['Gasto', 'Transferencia', 'Le pagué'], ENTRA = ['Ingreso', 'Me pagaron', 'Me prestaron', 'Transferencia'];
   function compatible(ev, m) {
+    if (ev.tipo === 'devolucion') return false;            // una devolución nunca es "ya registrada": se decide con la compra
     // Sin cuenta asignada (p. ej. dos cuentas con el nombre del banco), la del movimiento debe ser al menos de ese banco.
     const cuentaOk = function (c) { return !!ev.cuenta && c === ev.cuenta; };   // sin cuenta clara no se decide solo: queda por confirmar
     if (ev.tipo === 'transferencia') return m.tipo === 'Transferencia' && (!ev.cuenta || m.cuenta === ev.cuenta) && (!ev.destino || m.destino === ev.destino);
@@ -3441,6 +3454,18 @@ function avFijo_(r, cfg, movs, enl) {
   return mejor;
 }
 
+/** Compra que una devolución anula: un gasto de la misma tarjeta y el mismo monto en los 60 días anteriores
+ *  (si hay varias, la de comercio parecido y la más reciente). No toca los extractos ("hist:"). */
+function avCompraDe_(r, movs) {
+  const desde = r.t - 60 * 86400000, q = AV.norm(r.quien).split(/[^A-Z0-9]+/).filter(function (w) { return w.length >= 4; });
+  const c = movs.filter(function (m) {
+    return m.tipo === TIPO.GASTO && m.cuenta === r.cuenta && Math.abs(m.monto - r.monto) <= 0.5 && m.id && String(m.id).indexOf('hist:') !== 0 &&
+      m.fecha.getTime() >= soloFecha(new Date(desde)).getTime() && m.fecha.getTime() <= r.t;
+  }).map(function (m) { const d = AV.norm(m.desc); return { m: m, s: q.some(function (w) { return d.indexOf(w) >= 0; }) ? 1 : 0 }; });
+  c.sort(function (a, b) { return b.s - a.s || b.m.fecha - a.m.fecha; });
+  return c.length ? c[0].m : null;
+}
+
 /** Retiro de efectivo: la cuenta "Efectivo" (de tu plata y activa), si existe. */
 function avEfectivo_(cfg) {
   const c = cfg.cuentas.find(function (x) { return x.activa !== false && x.tipo === 'Plata' && AV.norm(x.nombre) === AV.norm('Efectivo'); });
@@ -3519,6 +3544,22 @@ function resolverAviso(p, cfg) {
     avDiferir_(function () { avGuardar_(r); });
     return '🙈 Aviso ignorado.';
   }
+  if (como === 'anular' || como === 'devolucion') {
+    if (r.tipo !== 'devolucion') throw new Error('Ese aviso no es una devolución.');
+    if (!r.cuenta) throw new Error('No sé a qué tarjeta llegó la devolución.');
+    if (como === 'anular') {
+      const c = avCompraDe_(r, leerMovimientos());
+      if (!c || c.id !== limpiar(p.mov)) throw new Error('No encontré la compra que se anula. Elige "Bajar la deuda".');
+      borrarMovimiento({ id: c.id, confirmo: 'ELIMINAR' }, cfg);
+      r.estado = 'Registrado'; r.idMov = ''; r.nota = 'Se anuló con "' + c.desc + '" (quedó en Eliminados)';
+      avDiferir_(function () { avGuardar_(r); });
+      return '↩️ Se anuló la compra "' + c.desc + '" de ' + pesos(c.monto) + '. Quedó en Eliminados por si acaso.';
+    }
+    agregarMovimiento([leerFechaMov(avFechaISO_(r.t)), TIPO.AJUSTE, 'Devolución ' + (r.quien || ''), -r.monto, '', r.cuenta, '', '', '', '', '']);
+    r.estado = 'Registrado'; r.idMov = ULT_ID_; r.nota = 'Devolución: bajó la deuda de ' + r.cuenta;
+    avDiferir_(function () { avGuardar_(r); });
+    return '↩️ Devolución de ' + pesos(r.monto) + ': la deuda de ' + r.cuenta + ' bajó.';
+  }
   if (como === 'fijo') {
     const m = /^fijo:(.+)\|([^|]+)$/.exec(r.nota);
     if (!m) throw new Error('Ese aviso no corresponde a un gasto fijo.');
@@ -3555,6 +3596,11 @@ function cambiarModoAvisos(p) {
   return m === 'auto' ? '⚡ Modo automático: los gastos simples y las transferencias entre tus cuentas se registran solos.' : '🔔 Modo "solo avisar": nada se registra hasta que lo confirmes.';
 }
 
+function avAnula_(r, movs) {
+  const c = avCompraDe_(r, movs || leerMovimientos());
+  return c ? { id: String(c.id), desc: c.desc, fecha: Utilities.formatDate(c.fecha, zona(), 'yyyy-MM-dd') } : null;
+}
+
 /** Lo que muestra la app en "Por confirmar": pendientes + lo reciente ya resuelto. */
 function resumenAvisos(cfg, movs) {
   const h = SpreadsheetApp.getActiveSpreadsheet().getSheetByName(HOJA_AV);
@@ -3581,7 +3627,7 @@ function resumenAvisos(cfg, movs) {
     if (r.estado === 'Pendiente' && r.tipo === 'gasto' && r.quien && sug < 30) { sug++; cat = sugerirCategoria(r.quien, cfg, movs) || ''; }
     return { id: r.id, t: Utilities.formatDate(new Date(r.t), zona(), "yyyy-MM-dd'T'HH:mm"), fuentes: r.fuentes, n: r.n, banco: r.banco, cuenta: r.cuenta,
       tipo: r.tipo, monto: r.monto, quien: r.quien, destino: r.destino, recurrente: r.recurrente, tc: r.tc, estado: r.estado, idMov: r.idMov,
-      nota: r.nota, origen: r.origen, sugCategoria: cat, texto: r.texto.slice(0, r.tipo === 'noreconocido' ? 500 : 220), mio: r.tipo === 'entrada' && AV.esMio(r.quien, cfg.ajustes.nombre) };
+      nota: r.nota, origen: r.origen, sugCategoria: cat, anula: r.estado === 'Pendiente' && r.tipo === 'devolucion' ? avAnula_(r, movs) : null, texto: r.texto.slice(0, r.tipo === 'noreconocido' ? 500 : 220), mio: r.tipo === 'entrada' && AV.esMio(r.quien, cfg.ajustes.nombre) };
   });
   return base;
 }
