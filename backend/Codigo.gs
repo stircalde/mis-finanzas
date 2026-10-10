@@ -30,7 +30,7 @@ const CAT_MONEDAS = 'Monedas';
 const CAT_APORTE = 'Aporte de mamá';
 const CUENTA_MAMA = 'Mamá';               // cuenta tipo Deuda: lo que mamá te presta
 const CUENTA_REGALO = 'Mamá (regalo)';    // cuenta de paso (siempre en $0) para lo que mamá paga y te regala
-const ESQUEMA = 9;
+const ESQUEMA = 10;
 // Los movimientos históricos (cargados de extractos, ID "hist:…") no mueven saldos:
 // ya están incluidos en el saldo inicial. En el resumen general solo cuentan desde esta fecha.
 const RESUMEN_DESDE = new Date(2026, 8, 1);
@@ -738,6 +738,7 @@ function diccionarioCategorias(cfg) {
     ['\\b(luz|agua|gas|internet|movistar|claro|tigo|arriendo|servicios|epm|centrales electricas|aseo)\\b', 'Servicios públicos'],
     ['\\b(drogueria|farmacia|farmatel|cruz verde|locatel|medicamentos?|medico|cita medica|odontologo|examenes?)\\b', 'Salud y farmacia'],
     ['\\b(perras?|perros?|gatos?|mascotas?|veterinari[ao]|concentrado|petco)\\b', 'Mascotas'],
+    ['\\b(peluquerias?|barberias?|barber|corte de (?:cabello|pelo)|cabello|manicure|pedicure|unas|spa|salon de belleza|esteticas?|depilacion|cejas|pestanas|keratina|tinte|cosmeticos?|maquillaje)\\b', 'Estética'],
     ['\\b(regalo|regalos|detalle|cumpleanos|obsequio)\\b', 'Regalos y detalles'],
     ['\\b(homecenter|dollarcity|colchon|edredon|almohadas?|sillas?|muebles?|cortinas?|ikea|easy|decoracion)\\b', 'Hogar y enseres'],
     ['\\b(amazon|temu|aliexpress|mercado ?libre|cargador|audifonos|celular|computador|teclado|mouse|cable|accesorios?)\\b', 'Tecnología y accesorios']
@@ -2590,9 +2591,17 @@ function asegurarEsquema() {
   const actual = Number(props.getProperty('esquema')) || 0;
   if (actual >= ESQUEMA) return;
   // Aquí van las migraciones futuras: if (actual < 10) migrarA10();
+  if (actual < 10) agregarCategoria_('Estética', '💇');   // 10-oct-2026: cortes de cabello, uñas, barbería…
   props.setProperty('esquema', String(ESQUEMA));
   CACHE_CFG_ = null;
   CACHE_MOVS_ = null;
+}
+
+/** Agrega una categoría de gasto a Configuración si todavía no existe (no toca las que ya tienes). */
+function agregarCategoria_(nombre, emoji) {
+  const cfg = leerConfig();
+  if ((cfg.categorias || []).some(function (c) { return normalizarTexto(c.nombre || c) === normalizarTexto(nombre); })) return;
+  guardarFilaConfig('Categoría', nombre, { 'Emoji': emoji, 'Presupuesto': '' }, true);
 }
 
 /* Las migraciones 5–9 (una sola vez, con el historial inicial del dueño) ya se aplicaron y se retiraron del código. */
@@ -2896,6 +2905,7 @@ function hojaConfig() {
     ['Hogar y enseres', '🏠', ''],
     ['Salud y farmacia', '💊', ''],
     ['Mascotas', '🐕', ''],
+    ['Estética', '💇', ''],
     ['Regalos y detalles', '🎁', ''],
     ['Tecnología y accesorios', '💻', ''],
     ['Préstamos a personas', '🤝', ''],
