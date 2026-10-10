@@ -285,6 +285,66 @@
     window.scrollTo(0, y);
     var w2 = document.querySelector('.wallet'); if (w2) w2.scrollLeft = wx;
   }
+  // Montos en tarjetas pequeñas (.stat .v): si no caben, primero se achica la letra (hasta 72 %);
+  // si aun así no caben, se abrevian ("−$1,06 M", "$442 mil") y al tocarlos se ve el valor exacto.
+  function abreviarMonto(txt) {
+    var m = txt.match(/^(.*?)\$\s?([\d.]+)(.*)$/);
+    if (!m) return null;
+    var n = parseInt(m[2].replace(/\./g, ''), 10);
+    if (!(n >= 1000)) return null;
+    var c = n >= 1e6 ? (n / 1e6).toFixed(n >= 1e8 ? 0 : n >= 1e7 ? 1 : 2).replace('.', ',').replace(/,?0+$/, '') + ' M'
+      : Math.round(n / 1e3) + ' mil';
+    return m[1] + '$' + c + m[3];
+  }
+  function ajustarMontos(forzar) {
+    var els = app.querySelectorAll('.stat .v'), cambiados = [];
+    for (var i = 0; i < els.length; i++) {
+      var e = els[i], txt = e.textContent;
+      if (!forzar && e.__mfOk === txt) continue;
+      if (e.__mfCorto && txt === e.__mfCorto) { txt = e.__mfFull; e.textContent = txt; }
+      e.classList.remove('abrev'); e.removeAttribute('title'); e.__mfFull = e.__mfCorto = null;
+      e.style.fontSize = '';
+      if (e.scrollWidth <= e.clientWidth + 1) { e.__mfOk = txt; cambiados.push(e); continue; }
+      var base = parseFloat(getComputedStyle(e).fontSize), f = base;
+      while (f > base * 0.72 && e.scrollWidth > e.clientWidth + 1) { f -= base * 0.04; e.style.fontSize = f + 'px'; }
+      if (e.scrollWidth > e.clientWidth + 1 && txt.indexOf('•') < 0) {
+        var corto = abreviarMonto(txt);
+        if (corto) {
+          e.style.fontSize = ''; e.textContent = corto;
+          f = base; while (f > base * 0.72 && e.scrollWidth > e.clientWidth + 1) { f -= base * 0.04; e.style.fontSize = f + 'px'; }
+          e.__mfFull = txt; e.__mfCorto = corto; e.title = txt; e.classList.add('abrev');
+          txt = corto;
+        }
+      }
+      e.__mfOk = txt;
+      cambiados.push(e);
+    }
+    // Las tarjetas de una misma fila quedan con el mismo tamaño de letra (el menor).
+    var grupos = [];
+    cambiados.forEach(function (e) { var g = e.parentNode && e.parentNode.parentNode; if (g && grupos.indexOf(g) < 0) grupos.push(g); });
+    grupos.forEach(function (g) {
+      var vs = g.querySelectorAll(':scope > .stat .v'), min = Infinity, j;
+      for (j = 0; j < vs.length; j++) min = Math.min(min, parseFloat(getComputedStyle(vs[j]).fontSize));
+      for (j = 0; j < vs.length; j++) if (parseFloat(getComputedStyle(vs[j]).fontSize) > min) vs[j].style.fontSize = min + 'px';
+    });
+  }
+  (function () {
+    var t = null, prog = function (forzar) { cancelAnimationFrame(t); t = requestAnimationFrame(function () { ajustarMontos(forzar); }); };
+    if (window.MutationObserver) new MutationObserver(function () { prog(false); }).observe(app, { childList: true, subtree: true });
+    window.addEventListener('resize', function () { prog(true); });
+    // Tocar un monto abreviado muestra el valor exacto unos segundos (no en tarjetas que abren otra pantalla).
+    document.addEventListener('click', function (ev) {
+      var e = ev.target.closest && ev.target.closest('.stat .v.abrev');
+      if (!e || e.closest('.tap')) return;
+      var full = e.__mfFull, corto = e.__mfCorto;
+      e.__mfOk = full; e.textContent = full; e.classList.add('exacto');
+      var base = parseFloat(getComputedStyle(e).fontSize), f = base;
+      while (f > 9 && e.scrollWidth > e.clientWidth + 1) { f -= 0.5; e.style.fontSize = f + 'px'; }
+      clearTimeout(e.__mfT);
+      e.__mfT = setTimeout(function () { if (e.textContent === full) { e.textContent = corto; e.__mfOk = null; e.classList.remove('exacto'); ajustarMontos(false); } }, 3000);
+    });
+  })();
+
   function pintar() {
     var r = pintarVista();
     encajarTextos();

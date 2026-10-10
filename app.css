@@ -1392,3 +1392,8 @@ button.util.mini { background: none; border: 0; padding: 4px 0; border-radius: 8
 .av-comp small { color: var(--muted); }
 .av-diag { margin-top: 10px; padding: 10px 12px; border-radius: 12px; background: var(--surface-2); border: 1px solid var(--line); font-size: .86rem; }
 .av-diag small { color: var(--muted); }
+
+/* Montos que no caben: letra ajustada y abreviados (tocar = valor exacto) */
+.stat .v { overflow: hidden; text-overflow: clip; }
+.stat .v.abrev { cursor: pointer; text-decoration: underline dotted color-mix(in srgb, currentColor 45%, transparent); text-underline-offset: 4px; }
+.stat .v.abrev.exacto { text-decoration: none; }
