@@ -197,6 +197,12 @@ function registrarPagoCredito(p, cfg) {
   const monto = aNumero(p.monto);
   if (!(monto > 0)) throw new Error('El monto no es válido.');
   const fecha = leerFechaMov(p.fecha);
+  // Descuento por pagar antes: se valida antes de escribir nada (pago + descuento no pueden superar la deuda).
+  const descuento = cred.nombre === CUENTA_MAMA ? 0 : Math.round(aNumero(p.descuento) || 0);
+  if (descuento > 0) {
+    const debia = Math.round(saldoDe(cfg, cred.nombre));
+    if (monto + descuento > debia + 1) throw new Error('El pago más el descuento (' + pesos(monto + descuento) + ') supera lo que debes (' + pesos(debia) + ').');
+  }
   let linea;
   if (p.origen === 'regalo') {
     agregarMovimiento([fecha, TIPO.INGRESO, 'Mamá pagó ' + cred.nombre, monto, CAT_APORTE, cred.nombre, '', '', '', '', '']);
@@ -211,6 +217,11 @@ function registrarPagoCredito(p, cfg) {
     if (desde.nombre === cred.nombre) throw new Error('El origen y el crédito son la misma cuenta.');
     agregarMovimiento([fecha, TIPO.TRANSF, 'Pago ' + cred.nombre, monto, '', desde.nombre, cred.nombre, '', '', '', '']);
     linea = '💸 Salió de ' + desde.nombre + ' · queda en ' + pesos(saldoDe(cfg, desde.nombre));
+  }
+  // Descuento por pagar antes (créditos con interés diario, p. ej. Credifin): baja la deuda y no es gasto.
+  if (descuento > 0) {
+    agregarMovimiento([fecha, TIPO.AJUSTE, 'Descuento por pagar antes', -descuento, '', cred.nombre, '', '', '', '', '']);
+    linea += '\n🏷️ Descuento por pagar antes: −' + pesos(descuento) + ' (baja la deuda, no es gasto)';
   }
   const est = calcular(leerMovimientos(), cfg, hoy());
   const d = est.deudas.find(function (x) { return x.nombre === cred.nombre; });

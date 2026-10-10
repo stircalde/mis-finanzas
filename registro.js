@@ -253,6 +253,14 @@
       if (d.s > 0 && d.s !== d.pm) rap.push(['<b>' + pesos(d.s) + '</b> ' + (d.mama || d.persona ? 'todo lo que le debes' : 'todo lo que debes'), d.s]);
       h += fMonto('monto', '¿Cuánto vas a pagar?', '', true);
       if (rap.length && !avisoCtx) h += '<div class="rapidos">' + rap.map(function (r) { return '<button type="button" class="op" data-llenar="' + r[1] + '" aria-pressed="' + (st.monto === r[1]) + '">' + r[0] + '</button>'; }).join('') + '</div>';
+      if (!d.persona && !d.mama) {
+        // Créditos que cobran interés diario (p. ej. Credifin): si pagas antes, te descuentan y la cuota queda saldada.
+        h += fChips('antes', '¿Te hicieron descuento por pagar antes?', [['', 'No'], ['si', '🏷️ Sí, pagué menos']]);
+        if (st.antes === 'si') {
+          if (st.descuento == null && d.pm > 0 && st.monto > 0 && st.monto < d.pm) st.descuento = d.pm - st.monto;
+          h += fMonto('descuento', '¿Cuánto te descontaron?', 'Baja la deuda sin contar como gasto. Ej.: cuota de $56.681 que pagaste con $48.341 → descuento $8.340.');
+        }
+      }
       var ori = [];
       if (d.bolsillo && !d.persona) { var b = plata(d.bolsillo); if (b) ori.push([b.n, '🎯 ' + b.n + ' · tiene ' + pesos(b.s)]); }
       cfg.plata.forEach(function (c) { if (!ori.some(function (o) { return o[0] === c.n; })) ori.push([c.n, c.e + ' ' + c.n + ' · tiene ' + pesos(c.s)]); });
@@ -362,6 +370,12 @@
         }
         if (st.origen === '__mama' && !st.mama) falta('Dime si tu mamá te lo regaló o te lo prestó.');
         var dt = { accion: 'pagocredito', fecha: f, credito: st.credito, monto: st.monto };
+        if (st.antes === 'si') {
+          if (!(st.descuento > 0)) falta('Escribe cuánto te descontaron (o elige "No").');
+          var cd = credito();
+          if (cd && st.monto + st.descuento > cd.s + 1) falta('El pago más el descuento (' + pesos(st.monto + st.descuento) + ') supera lo que debes (' + pesos(cd.s) + ').');
+          dt.descuento = st.descuento;
+        }
         if (st.origen === '__mama') dt.origen = st.mama; else { dt.origen = 'cuenta'; dt.cuenta = st.origen; }
         return dt;
       }
