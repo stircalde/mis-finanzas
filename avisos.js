@@ -261,11 +261,11 @@
     });
     var si = modo.querySelector('[data-si]'); if (si) si.addEventListener('click', function () { confirmandoAuto = false; cambiarModo('auto'); });
     var no = modo.querySelector('[data-no]'); if (no) no.addEventListener('click', function () { confirmandoAuto = false; repintar(); });
-    app.appendChild(modo);
-    var tl = tarjetaLector(av); if (tl) app.appendChild(tl);
 
     app.appendChild(seccion('Necesitan tu decisión', pend.length ? '<b>' + pend.length + '</b>' : '', pend, 'pend',
       items.length ? 'No tienes avisos pendientes. 🙌' : 'Todavía no ha llegado ningún aviso. Cuando llegue una notificación o SMS de tu banco, aparecerá aquí.'));
+    var tl = tarjetaLector(av); if (tl) app.appendChild(tl);
+    app.appendChild(modo);
     if (auto.length) app.appendChild(seccion('Registrados automáticamente', '<b>' + auto.length + '</b>', auto, 'otros', ''));
     if (ya.length) app.appendChild(seccion('Ya estaban en tu app', '<b>' + ya.length + '</b>', ya, 'otros', ''));
     if (rev.length) {
