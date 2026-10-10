@@ -43,6 +43,7 @@
     if (a.tipo === 'salida') return 'Enviaste plata' + (a.quien ? ' a ' + a.quien : '');
     if (a.tipo === 'entrada') return a.quien ? a.quien + ' te envió' : 'Recibiste plata';
     if (a.tipo === 'retiro') return 'Retiro de efectivo';
+    if (a.tipo === 'devolucion') return 'Devolución' + (a.quien ? ' de ' + a.quien : '');
     if (a.tipo === 'transferencia') return 'Entre tus cuentas';
     if (a.tipo === 'noreconocido') return 'No reconocido' + (BANCOS[a.banco] ? ' · ' + BANCOS[a.banco][1] : '');
     return a.quien || 'Movimiento';
@@ -85,6 +86,22 @@
       repintar();
     });
   }
+  // Persona de Favores que corresponde al nombre que trae el aviso (sin tildes ni mayúsculas; "Álvaro" = "ALVARO VILLALBA").
+  function sinTilde(x) { return String(x || '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase().replace(/[^a-z0-9ñ ]+/g, ' ').trim(); }
+  function personaFavor(nombre) {
+    var aviso = sinTilde(nombre).split(/\s+/).filter(Boolean);
+    if (!aviso.length) return null;
+    var d = MF.datos() || {}, mejor = null;
+    var mira = function (lista, lado) {
+      (lista || []).forEach(function (p) {
+        var t = sinTilde(p.persona).split(/\s+/).filter(Boolean);
+        if (!t.length || t.join('').length < 3 || !t.every(function (w) { return aviso.indexOf(w) >= 0; })) return;
+        if (!mejor || t.length > mejor.n) mejor = { persona: p.persona, saldo: p.saldo || 0, lado: lado, n: t.length };
+      });
+    };
+    mira(d.meDeben, 'meDebe'); mira(d.lesDebo, 'leDebo');
+    return mejor;
+  }
   function ignorar(a) { enviarAccion(a, { accion: 'avisoresolver', como: 'ignorar' }); }
   function opciones(a) {
     var cfg = MF.cfgRegistro();
@@ -96,17 +113,28 @@
       o.push(['✅ Registrar gasto' + (a.tc ? ' (aclaro las cuotas)' : ''), function () { abrirForm(a, 'gasto'); }]);
       o.push(['🤝 Es para otra persona', function () { abrirForm(a, 'gasto', { para: '__otra' }); }]);
     } else if (a.tipo === 'salida') {
+      var ps = personaFavor(a.quien);
+      if (ps && ps.lado === 'leDebo') o.push(['🙋 Le pagaste a ' + ps.persona + ' · le debes ' + pesos(ps.saldo), function () { abrirForm(a, 'pagar', { credito: 'p|' + ps.persona }); }]);
+      if (ps && ps.lado === 'meDebe') o.push(['🤝 Le prestaste más a ' + ps.persona + ' · ya te debe ' + pesos(ps.saldo), function () { abrirForm(a, 'gasto', { para: '__otra', paraQuien: ps.persona, desc: 'Préstamo' }); }]);
       o.push(['💸 Fue un gasto', function () { abrirForm(a, 'gasto'); }]);
       o.push(['🤝 Pagué o presté por alguien', function () { abrirForm(a, 'gasto', { para: '__otra' }); }]);
       o.push(['🙋 Le devolví plata a alguien', function () { abrirForm(a, 'pagar'); }]);
       o.push(['💳 Pagué una tarjeta o crédito', function () { abrirForm(a, 'pagar'); }]);
       o.push(['🔄 Fue a otra cuenta mía', function () { abrirForm(a, 'mover'); }]);
     } else if (a.tipo === 'entrada') {
+      var pe = personaFavor(a.quien);
+      if (pe && pe.lado === 'meDebe') o.push(['🤝 ' + pe.persona + ' te pagó · te debe ' + pesos(pe.saldo), function () { abrirForm(a, 'ingreso', { tipoIng: '__mepagaron', persona: pe.persona }); }]);
+      if (pe && pe.lado === 'leDebo') o.push(['🙋 ' + pe.persona + ' te prestó más · le debes ' + pesos(pe.saldo), function () { abrirForm(a, 'ingreso', { tipoIng: '__meprestaron', persona: pe.persona }); }]);
       o.push(['💰 Es un ingreso', function () { abrirForm(a, 'ingreso'); }]);
       if (hayMama) o.push(['👩 Aporte de mamá', function () { abrirForm(a, 'ingreso', { tipoIng: 'Aporte de mamá' }); }]);
       o.push(['🤝 Me pagaron algo que me debían', function () { abrirForm(a, 'ingreso', { tipoIng: '__mepagaron' }); }]);
       o.push(['🙋 Me prestaron plata', function () { abrirForm(a, 'ingreso', { tipoIng: '__meprestaron' }); }]);
       o.push(['🔄 Viene de otra cuenta mía', function () { abrirForm(a, 'mover'); }]);
+    } else if (a.tipo === 'devolucion') {
+      if (a.anula) o.push(['↩️ Anula la compra "' + a.anula.desc + '" del ' + MF.fechaCorta(a.anula.fecha), function () {
+        enviarAccion(a, { accion: 'avisoresolver', como: 'anular', mov: a.anula.id }); }]);
+      o.push(['💳 Bajar la deuda de ' + (a.cuenta || 'la tarjeta') + (a.anula ? ' (sin borrar la compra)' : ''), function () {
+        enviarAccion(a, { accion: 'avisoresolver', como: 'devolucion' }); }]);
     } else if (a.tipo === 'retiro') {
       o.push(['🪙 Retiré efectivo', function () { abrirForm(a, 'mover', { hacia: 'Efectivo' }); }]);
       o.push(['💸 Fue un gasto', function () { abrirForm(a, 'gasto'); }]);
@@ -134,8 +162,8 @@
   function tarjeta(a, lista) {
     var abierta = abierto === a.id, bloqueado = !!ocupado[a.id];
     var nr = a.tipo === 'noreconocido';
-    var signo = a.tipo === 'entrada' ? '+' : a.tipo === 'transferencia' || nr ? '' : '−';
-    var cls = a.tipo === 'entrada' ? 'in' : a.tipo === 'transferencia' || nr ? 'mid' : 'out';
+    var signo = a.tipo === 'entrada' || a.tipo === 'devolucion' ? '+' : a.tipo === 'transferencia' || nr ? '' : '−';
+    var cls = a.tipo === 'entrada' || a.tipo === 'devolucion' ? 'in' : a.tipo === 'transferencia' || nr ? 'mid' : 'out';
     var h = '<div class="av-item' + (abierta ? ' open' : '') + '" data-id="' + esc(a.id) + '"><button type="button" class="av-fila" data-abrir aria-expanded="' + abierta + '">' +
       '<div class="av-tx"><b>' + esc(titulo(a)) + '</b><small>' + sub(a) + '</small></div><div class="av-v ' + cls + '">' + (nr ? (a.monto > 0 ? '¿' + pesos(a.monto) + '?' : '¿$?') : signo + pesos(a.monto)) + '</div></button>';
     if (lista === 'pend') {
