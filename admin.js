@@ -110,11 +110,29 @@
   }
 
   /* =================== GASTOS FIJOS Y SUSCRIPCIONES =================== */
+  // Personas que ya aparecen en Favores o en otros gastos compartidos (sin repetir, sin importar tildes ni mayúsculas).
+  function sinTilde(x) { return String(x || '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase().trim(); }
+  function personasConocidas(d, f) {
+    var out = [], vistos = {};
+    var pon = function (n) { n = String(n || '').trim(); var k = sinTilde(n); if (n && !vistos[k]) { vistos[k] = 1; out.push(n); } };
+    ((f && f.compartido) || []).forEach(pon);
+    (d.fijosCfg || []).forEach(function (x) { (x.compartido || []).forEach(pon); });
+    (d.meDeben || []).forEach(function (x) { pon(x.persona); });
+    (d.lesDebo || []).forEach(function (x) { pon(x.persona); });
+    return out;
+  }
+  function gentePara(st) {
+    var out = Object.keys(st.gente || {}).filter(function (n) { return st.gente[n]; }), vistos = {};
+    out.forEach(function (n) { vistos[sinTilde(n)] = 1; });
+    String(st.otra || '').split(',').forEach(function (n) { n = n.trim(); if (n && !vistos[sinTilde(n)]) { vistos[sinTilde(n)] = 1; out.push(n); } });
+    return out;
+  }
+
   function formFijo(f) {
     var d = MF.datos(), nuevo = !f;
     var st = f ? { nombre: f.nombre, valor: f.valor, frecuencia: f.frecuencia, dia: f.dia, proximo: f.proximo, categoria: f.categoria, cuenta: f.cuenta, cobro: f.cobro, aviso: f.aviso || '',
-        compartido: (f.compartido || []).join(', '), porPersona: f.porPersona || '' }
-      : { compartido: '', porPersona: '', frecuencia: 'Mensual', dia: new Date().getDate(), cobro: 'Manual', aviso: '', categoria: 'Suscripciones' };
+        modo: (f.compartido || []).length ? 'comp' : 'solo', gente: (f.compartido || []).reduce(function (o, n) { o[n] = true; return o; }, {}), otra: '', porPersona: f.porPersona || '' }
+      : { modo: 'solo', gente: {}, otra: '', porPersona: '', frecuencia: 'Mensual', dia: new Date().getDate(), cobro: 'Manual', aviso: '', categoria: 'Suscripciones' };
     hojaFormulario(nuevo ? 'Nuevo gasto fijo' : 'Editar ' + f.nombre, nuevo ? 'Suscripción, servicio o cuota que pagas seguido' : 'Cambia lo que necesites', st, function (st) {
       var h = fTexto(st, 'nombre', 'Nombre', 'Ej: Netflix, arriendo, gimnasio', !nuevo) + fMonto(st, 'valor', 'Valor');
       h += fChips(st, 'frecuencia', '¿Cada cuánto?', [['Mensual', 'Cada mes'], ['Anual', 'Cada año'], ['Una vez', 'Una sola vez']]);
@@ -123,11 +141,18 @@
         st.cobro === 'Automático' ? 'Se registra solo el día del cobro.' : 'Te recuerdo antes y lo marcas como pagado.');
       h += fSelect(st, 'cuenta', st.cobro === 'Automático' ? '¿A qué cuenta o tarjeta se cobra?' : '¿Con qué lo pagas normalmente?', opsCuentas(), 'Elige la cuenta');
       h += fSelect(st, 'categoria', 'Categoría', (d.listaCategorias || []).map(function (c) { return [c.nombre, (c.emoji ? c.emoji + ' ' : '') + c.nombre]; }), 'Elige una');
-      h += fTexto(st, 'compartido', '¿Lo compartes? Con quién', 'Ej: Álvaro, Felipe, Abril (vacío = solo tuyo)');
-      var nComp = String(st.compartido || '').split(',').filter(function (x) { return x.trim(); }).length;
-      h += fMonto(st, 'porPersona', 'Cada uno te paga', nComp && st.valor > 0 && st.porPersona > 0
-        ? 'Te deben ' + pesos(st.porPersona * nComp) + ' al mes · tú pones ' + pesos(Math.max(0, st.valor - st.porPersona * nComp)) + '. Cada cobro les suma esa deuda en Favores.'
-        : 'Solo si lo compartes. Cada cobro les suma esa deuda en Favores.');
+      h += fChips(st, 'modo', '¿Para quién es?', [['solo', '🙋 Solo para mí'], ['comp', '👥 Compartido']]);
+      if (st.modo === 'comp') {
+        var nombres = personasConocidas(d, f);
+        h += campo('¿Con quién lo compartes?', '<div class="opciones">' + nombres.map(function (n) {
+          return '<button type="button" class="op" data-alt="gente" data-v="' + esc(n) + '" aria-pressed="' + !!st.gente[n] + '">' + esc(n) + '</button>';
+        }).join('') + '</div>', nombres.length ? 'Toca para elegir. Puedes elegir varias.' : '');
+        h += fTexto(st, 'otra', 'Otra persona', 'Nombre (varias separadas por coma)');
+        var nComp = gentePara(st).length;
+        h += fMonto(st, 'porPersona', 'Cada uno te paga', nComp && st.valor > 0 && st.porPersona > 0
+          ? nComp + (nComp === 1 ? ' persona' : ' personas') + ': te deben ' + pesos(st.porPersona * nComp) + ' en cada cobro · tú pones ' + pesos(Math.max(0, st.valor - st.porPersona * nComp)) + '.'
+          : 'Cada cobro les suma esa deuda en Favores.');
+      }
       h += fChips(st, 'aviso', '¿Es una prueba gratis que piensas cancelar?', [['', 'No'], ['Cancelar', '✂️ Sí, avísame para cancelarla']]);
       return h;
     }, function (st) {
@@ -138,7 +163,8 @@
       if (st.frecuencia === 'Mensual' && !(Number(st.dia) >= 1 && Number(st.dia) <= 31)) throw new Error('El día debe estar entre 1 y 31.');
       if (st.frecuencia !== 'Mensual' && !st.proximo) throw new Error('Elige la fecha del próximo cobro.');
       if (!st.cuenta) throw new Error('Elige la cuenta.');
-      var comp = String(st.compartido || '').split(',').map(function (x) { return x.trim(); }).filter(String);
+      var comp = st.modo === 'comp' ? gentePara(st) : [];
+      if (st.modo === 'comp' && !comp.length) throw new Error('Elige con quién lo compartes, o marca "Solo para mí".');
       if (comp.length && !(st.porPersona > 0)) throw new Error('Escribe cuánto te paga cada uno.');
       if (comp.length && st.porPersona * comp.length > st.valor) throw new Error('Lo que te pagan entre todos (' + pesos(st.porPersona * comp.length) + ') supera el valor.');
       return { accion: 'fijoadmin', op: 'guardar', nombre: nombre, valor: st.valor, frecuencia: st.frecuencia, dia: st.dia, proximo: st.proximo || '',
