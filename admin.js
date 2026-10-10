@@ -112,8 +112,9 @@
   /* =================== GASTOS FIJOS Y SUSCRIPCIONES =================== */
   function formFijo(f) {
     var d = MF.datos(), nuevo = !f;
-    var st = f ? { nombre: f.nombre, valor: f.valor, frecuencia: f.frecuencia, dia: f.dia, proximo: f.proximo, categoria: f.categoria, cuenta: f.cuenta, cobro: f.cobro, aviso: f.aviso || '' }
-      : { frecuencia: 'Mensual', dia: new Date().getDate(), cobro: 'Manual', aviso: '', categoria: 'Suscripciones' };
+    var st = f ? { nombre: f.nombre, valor: f.valor, frecuencia: f.frecuencia, dia: f.dia, proximo: f.proximo, categoria: f.categoria, cuenta: f.cuenta, cobro: f.cobro, aviso: f.aviso || '',
+        compartido: (f.compartido || []).join(', '), porPersona: f.porPersona || '' }
+      : { compartido: '', porPersona: '', frecuencia: 'Mensual', dia: new Date().getDate(), cobro: 'Manual', aviso: '', categoria: 'Suscripciones' };
     hojaFormulario(nuevo ? 'Nuevo gasto fijo' : 'Editar ' + f.nombre, nuevo ? 'Suscripción, servicio o cuota que pagas seguido' : 'Cambia lo que necesites', st, function (st) {
       var h = fTexto(st, 'nombre', 'Nombre', 'Ej: Netflix, arriendo, gimnasio', !nuevo) + fMonto(st, 'valor', 'Valor');
       h += fChips(st, 'frecuencia', '¿Cada cuánto?', [['Mensual', 'Cada mes'], ['Anual', 'Cada año'], ['Una vez', 'Una sola vez']]);
@@ -122,6 +123,11 @@
         st.cobro === 'Automático' ? 'Se registra solo el día del cobro.' : 'Te recuerdo antes y lo marcas como pagado.');
       h += fSelect(st, 'cuenta', st.cobro === 'Automático' ? '¿A qué cuenta o tarjeta se cobra?' : '¿Con qué lo pagas normalmente?', opsCuentas(), 'Elige la cuenta');
       h += fSelect(st, 'categoria', 'Categoría', (d.listaCategorias || []).map(function (c) { return [c.nombre, (c.emoji ? c.emoji + ' ' : '') + c.nombre]; }), 'Elige una');
+      h += fTexto(st, 'compartido', '¿Lo compartes? Con quién', 'Ej: Álvaro, Felipe, Abril (vacío = solo tuyo)');
+      var nComp = String(st.compartido || '').split(',').filter(function (x) { return x.trim(); }).length;
+      h += fMonto(st, 'porPersona', 'Cada uno te paga', nComp && st.valor > 0 && st.porPersona > 0
+        ? 'Te deben ' + pesos(st.porPersona * nComp) + ' al mes · tú pones ' + pesos(Math.max(0, st.valor - st.porPersona * nComp)) + '. Cada cobro les suma esa deuda en Favores.'
+        : 'Solo si lo compartes. Cada cobro les suma esa deuda en Favores.');
       h += fChips(st, 'aviso', '¿Es una prueba gratis que piensas cancelar?', [['', 'No'], ['Cancelar', '✂️ Sí, avísame para cancelarla']]);
       return h;
     }, function (st) {
@@ -132,8 +138,12 @@
       if (st.frecuencia === 'Mensual' && !(Number(st.dia) >= 1 && Number(st.dia) <= 31)) throw new Error('El día debe estar entre 1 y 31.');
       if (st.frecuencia !== 'Mensual' && !st.proximo) throw new Error('Elige la fecha del próximo cobro.');
       if (!st.cuenta) throw new Error('Elige la cuenta.');
+      var comp = String(st.compartido || '').split(',').map(function (x) { return x.trim(); }).filter(String);
+      if (comp.length && !(st.porPersona > 0)) throw new Error('Escribe cuánto te paga cada uno.');
+      if (comp.length && st.porPersona * comp.length > st.valor) throw new Error('Lo que te pagan entre todos (' + pesos(st.porPersona * comp.length) + ') supera el valor.');
       return { accion: 'fijoadmin', op: 'guardar', nombre: nombre, valor: st.valor, frecuencia: st.frecuencia, dia: st.dia, proximo: st.proximo || '',
-        categoria: st.categoria || 'Otros', cuenta: st.cuenta, cobro: st.cobro, aviso: st.aviso };
+        categoria: st.categoria || 'Otros', cuenta: st.cuenta, cobro: st.cobro, aviso: st.aviso,
+        compartido: comp.join(', '), porPersona: comp.length ? st.porPersona : '' };
     });
   }
 
@@ -756,5 +766,5 @@
     });
   }
 
-  window.MFAdmin = { fijo: fijo, fijos: fijos, cuentas: cuentas, movimiento: movimiento, deudaAntigua: deudaAntigua, anadirRegistro: anadirRegistro, limites: limites, metas: metas };
+  window.MFAdmin = { formFijo: formFijo, fijo: fijo, fijos: fijos, cuentas: cuentas, movimiento: movimiento, deudaAntigua: deudaAntigua, anadirRegistro: anadirRegistro, limites: limites, metas: metas };
 })();
