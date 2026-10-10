@@ -86,7 +86,7 @@
       repintar();
     });
   }
-  // Persona de Favores que corresponde al nombre que trae el aviso (sin tildes ni mayúsculas; "Álvaro" = "ALVARO VILLALBA").
+  // Persona de Favores que corresponde al nombre que trae el aviso (sin tildes ni mayúsculas; "Ana" = "ANA PEREZ").
   function sinTilde(x) { return String(x || '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase().replace(/[^a-z0-9ñ ]+/g, ' ').trim(); }
   function personaFavor(nombre) {
     var aviso = sinTilde(nombre).split(/\s+/).filter(Boolean);

@@ -3151,7 +3151,7 @@ const AV = (function () {
       return ev({ banco: 'daviplata', tipo: 'gasto', comercio: '', monto: num(m[1]) });
     if ((m = /^Recibiste\s+([\d.,]+)\./i.exec(t)))
       return ev({ banco: 'daviplata', tipo: 'entrada', persona: '', monto: num(m[1]) });
-    if ((m = /Pasaste\s+\$?([\d.,]+)\s+a\s+(.+?)\s+usando Llaves/i.exec(t)))      // "Transaccion exitosa: Pasaste $84.500 a Juan Santamaria usando Llaves"
+    if ((m = /Pasaste\s+\$?([\d.,]+)\s+a\s+(.+?)\s+usando Llaves/i.exec(t)))      // "Transaccion exitosa: Pasaste $10.000 a Ana Perez usando Llaves"
       return ev({ banco: 'daviplata', tipo: 'salida', persona: limpio(m[2]), monto: num(m[1]) });
     if ((m = /DaviPlata:\s*acabas de Sacar\s+([\d.,]+)/i.exec(t)))
       return ev({ banco: 'daviplata', tipo: 'retiro', monto: num(m[1]) });
@@ -3163,7 +3163,7 @@ const AV = (function () {
     if ((m = /Compra aprobada por \$?([\d.,]+).*?Tu compra en (.+?) por \$?([\d.,]+) con tu tarjeta terminada en/i.exec(t)))
       return ev({ banco: 'nubank', tc: true, tipo: 'gasto', comercio: limpio(m[2]), monto: num(m[3]) });
 
-    // Falabella: compra con la tarjeta (débito) — "BANCO FALABELLA, informa compra aprobada $56.592 09/10/2026 17:30 con tu tarjeta *3095 … En COMERCIO.-"
+    // Falabella: compra con la tarjeta (débito) — "BANCO FALABELLA, informa compra aprobada $10.000 01/10/2026 10:00 con tu tarjeta *0000 … En COMERCIO.-"
     if ((m = /informa compra aprobada \$?([\d.,]+)\s+(\d{2})\/(\d{2})\/(\d{4})\s+(\d{2}):(\d{2}).*?\bEn\s+(.+?)\s*(?:\.-|\.)?\s*$/i.exec(t)))
       return ev({ banco: 'falabella', tipo: 'gasto', comercio: limpio(m[7]), monto: num(m[1]), ts: new Date(+m[4], +m[3] - 1, +m[2], +m[5], +m[6]).getTime() });
 

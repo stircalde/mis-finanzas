@@ -52,14 +52,14 @@ ok(!P({ accion: 'previsualizarborrado', id: 'no-existe' }).ok, 'id inexistente f
 // 4) Editar "para quién": a una persona, compartido y volver a mío.
 P({ accion: 'gasto', descripcion: 'Mercado compartido', monto: '90000', cuenta: 'Nequi', fecha: '2026-09-29' }); A.tic();
 const g = mov('Mercado compartido');
-r = P({ accion: 'editarmov', id: g.id, para: 'Alexandra' }); A.tic();
-ok(r.ok && D().meDeben.some(x => x.persona === 'Alexandra' && x.saldo >= 90000), 'para una persona: ' + r.mensaje);
-r = P({ accion: 'editarmov', id: g.id, para: 'Alexandra:30000; Majo:20000' }); A.tic();
+r = P({ accion: 'editarmov', id: g.id, para: 'Ana' }); A.tic();
+ok(r.ok && D().meDeben.some(x => x.persona === 'Ana' && x.saldo >= 90000), 'para una persona: ' + r.mensaje);
+r = P({ accion: 'editarmov', id: g.id, para: 'Ana:30000; Marta:20000' }); A.tic();
 const dd = D();
-ok(r.ok && dd.meDeben.some(x => x.persona === 'Majo' && x.saldo >= 20000), 'compartido: ' + r.mensaje);
-ok(!P({ accion: 'editarmov', id: g.id, para: 'Alexandra:80000; Majo:20000' }).ok, 'lo repartido no puede superar el monto');
+ok(r.ok && dd.meDeben.some(x => x.persona === 'Marta' && x.saldo >= 20000), 'compartido: ' + r.mensaje);
+ok(!P({ accion: 'editarmov', id: g.id, para: 'Ana:80000; Marta:20000' }).ok, 'lo repartido no puede superar el monto');
 r = P({ accion: 'editarmov', id: g.id, para: '' }); A.tic();
-ok(r.ok && !D().meDeben.some(x => x.persona === 'Majo' && x.saldo >= 20000), 'volver a "para mí": ' + r.mensaje);
+ok(r.ok && !D().meDeben.some(x => x.persona === 'Marta' && x.saldo >= 20000), 'volver a "para mí": ' + r.mensaje);
 const t = P({ accion: 'transferencia', desde: 'Nequi', hacia: 'Daviplata', monto: '1000' }); A.tic();
 ok(!P({ accion: 'editarmov', id: D().movimientos.find(x => x.tipo === 'Transferencia').id, para: 'X' }).ok, 'una transferencia no tiene "para quién"');
 
