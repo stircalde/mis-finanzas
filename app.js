@@ -345,6 +345,19 @@
     });
   })();
 
+  // En los formularios de registro y edición, "Enter" (o "Siguiente" del teclado) no guarda: pasa al siguiente campo
+  // o cierra el teclado. Solo se guarda con el botón Guardar.
+  document.addEventListener('keydown', function (e) {
+    if (e.key !== 'Enter' || e.isComposing) return;
+    var t = e.target;
+    if (!t || t.tagName !== 'INPUT' || !t.closest || !t.closest('form.reg-form')) return;
+    e.preventDefault();
+    var campos = [].slice.call(t.form.querySelectorAll('input:not([type=hidden]):not([disabled]), select:not([disabled]), textarea:not([disabled])'))
+      .filter(function (x) { return x.offsetParent !== null; });
+    var sig = campos[campos.indexOf(t) + 1];
+    if (sig && sig.tagName === 'INPUT' && sig.type !== 'date') sig.focus(); else t.blur();
+  }, true);
+
   function pintar() {
     var r = pintarVista();
     encajarTextos();
